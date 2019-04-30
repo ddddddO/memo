@@ -11,16 +11,19 @@ configure do
 end
 
 get '/' do
-  name = settings.model.select()
-  "sinatra!!!!!#{name}"
+  erb :auth
 end
 
-get '/tmp_erb' do
-  erb :tmp_erb
+enable :sessions
+
+post '/login' do
+  user_id = settings.model.login(params[:name], params[:passwd])
+  p user_id
+  session[:user_id] = user_id
+  redirect to('/list')
 end
 
 get '/list' do
-  @foo = 'get_list'
   erb :'/memo/list'
 end
 
