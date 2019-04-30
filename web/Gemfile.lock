@@ -5,6 +5,7 @@ GEM
     kgio (2.11.2)
     multi_json (1.13.1)
     mustermann (1.0.3)
+    pg (1.1.4)
     rack (2.0.7)
     rack-protection (2.0.5)
       rack
@@ -30,6 +31,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  pg
   sinatra
   sinatra-contrib
   unicorn

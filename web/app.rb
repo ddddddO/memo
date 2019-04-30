@@ -2,9 +2,17 @@ require 'sinatra'
 require 'sinatra/base'
 require 'sinatra/reloader'
 
+require './models/model'
+
+# ref:sinatra を要確認 
+
+configure do
+  set(:model) { Model.new } # DB接続処理
+end
 
 get '/' do
-  'sinatra!!!!!'
+  name = settings.model.select()
+  "sinatra!!!!!#{name}"
 end
 
 get '/tmp_erb' do

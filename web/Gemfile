@@ -16,3 +16,5 @@ gem 'sinatra-contrib'
 
 # NOTE: ！！unicorn は、WSLで使えないっぽい！！
 gem 'unicorn'
+
+gem 'pg'
