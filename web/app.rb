@@ -9,3 +9,8 @@ end
 get '/tmp_erb' do
   erb :tmp_erb
 end
+
+get '/list' do
+  @foo = 'get_list'
+  erb :'/memo/list'
+end
