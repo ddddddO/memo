@@ -33,15 +33,14 @@ class Model
     return 'failed to login'
   end
 
-  def select()
-    q = 'SELECT name FROM users'
-    rslt = @conn.exec(q)
+  def list(user_id)
+    q = 'SELECT subject, content FROM memos WHERE users_id=$1'
+    rslt = @conn.exec(q, [user_id])
 
-    n = ''
+    rows = []
     rslt.each do |row|
-      n = row['name']
-      puts n
+      rows.push(row)
     end
-    n
+    rows
   end
 end

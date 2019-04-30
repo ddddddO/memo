@@ -18,12 +18,12 @@ enable :sessions
 
 post '/login' do
   user_id = settings.model.login(params[:name], params[:passwd])
-  p user_id
   session[:user_id] = user_id
   redirect to('/list')
 end
 
 get '/list' do
+  @memos = settings.model.list(session[:user_id])
   erb :'/memo/list'
 end
 

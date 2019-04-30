@@ -1,2 +1,9 @@
-memo LIST
-<%= @foo %>
+<!DOCTYPE html>
+<head></head>
+<body>
+  <h3>メモ一覧</h3><br>
+  <% @memos.each do |memo| %>
+    <%= memo['subject'] %><br>
+  <% end %>
+</body>
+</html>
