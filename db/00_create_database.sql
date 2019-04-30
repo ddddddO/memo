@@ -1,0 +1,1 @@
+CREATE DATABASE "tag-mng" OWNER postgres ENCODING 'UTF-8' TEMPLATE template0;
