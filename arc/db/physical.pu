@@ -1,0 +1,38 @@
+@startuml
+
+' ENTITYs
+entity "users" as users {
+  id[PK]
+  --
+  name
+  passwd 
+}
+
+entity "memos" as memos {
+  id[PK]
+  --
+  subject
+  content
+  users_id[FK]
+}
+
+entity "memo_tag" as memo_tag {
+  memos_id[FK]
+  tags_id[FK]
+  --
+
+}
+
+entity "tags" as tags {
+  id[PK]
+  --
+  name
+}
+
+
+' RELATIONs
+users --o{ memos
+memos -o{ memo_tag
+memo_tag }|- tags
+
+@enduml

@@ -1,0 +1,30 @@
+@startuml
+
+' ENTITYs
+entity "ユーザー" as user {
+  ユーザーID
+  --
+  ユーザー名
+  パスワード 
+}
+
+entity "メモ" as memo {
+  メモID
+  --
+  タイトル
+  内容
+}
+
+entity "タグ" as tag {
+  タグID
+  --
+  タグ名
+}
+
+
+' RELATIONs
+user --o{ memo
+memo }o--|{ tag
+
+
+@enduml
