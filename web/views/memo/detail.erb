@@ -6,5 +6,12 @@
   <%= @memo[0]['subject'] %><br>
   <h4>内容</h4>
   <%= @memo[0]['content'] %><br>
+  <br>
+  <form method="post" action="/update_view">
+    <input type="hidden" name="memo_id" value=<%= @memo[0]['id'] %>>
+    <input type="hidden" name="subject" value=<%= @memo[0]['subject'] %>>
+    <input type="hidden" name="content" value=<%= @memo[0]['content'] %>>
+    <input type="submit" value="編集">
+  </form>
 </body>
 </html>

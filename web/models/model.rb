@@ -54,4 +54,11 @@ class Model
     end
     rows
   end
+
+  def update(args)
+    q = 'UPDATE memos SET subject=$1, content=$2 WHERE id=$3 AND users_id=$4 RETURNING id'
+    rslt = @conn.exec(q, [args['subject'], args['content'], args['memo_id'], args['user_id']])
+    
+    return rslt[0]['id']
+  end
 end

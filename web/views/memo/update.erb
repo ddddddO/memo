@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<head></head>
+<body>
+  <h3>メモ更新</h3>
+  <form id="mef" method="post" action="/update">
+    <input type="hidden" name= "memo_id" value=<%= params['memo_id'] %>>
+    <h4>タイトル</h4>
+    <input type="text" name="subject" value=<%= params['subject'] %>>
+    <h4>内容</h4>
+    <textarea name="content" form="mef" rows="10" cols=50><%= params['content'] %></textarea><br>
+    <input type="hidden" name="_method" value="PUT">
+    <input type="submit" value="登録">
+  </form>
+</body>
+</html>

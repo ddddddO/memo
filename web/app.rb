@@ -34,9 +34,32 @@ get '/detail/:memo_id' do
   erb :'/memo/detail'
 end
 
+
+# put method ref: https://qiita.com/suin/items/d17bdfc8dba086d36115
+# formのmethodをdelete/putへ対応: http://portaltan.hatenablog.com/entry/2015/07/22/122031
+# 更新(新規・編集)画面への遷移用
+post '/update_view' do
+  if params.nil?
+    # メモ新規作成用
+    params[:memo_id] = -1
+    params[:subject] = ''
+    params[:content] = ''
+  end
+
+  erb :'memo/update'
+end
+
+put '/update' do
+  # メモ新規・編集処理はupsertで対応。一旦、DBのid連番対応するまでupdateのみの実装
+  params[:user_id] = session[:user_id]
+  memo_id = settings.model.update(params)
+
+  # メモ詳細へ戻る
+  redirect to("/detail/#{memo_id}")
+end
+
 # client error
 error 400..499 do
-  #status = response.status
   @e = "クライアントエラー: #{response.status}"
   @msg = "正しい操作をしてください。"
   erb :error
