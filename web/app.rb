@@ -27,6 +27,13 @@ get '/list' do
   erb :'/memo/list'
 end
 
+# ディレクトリトラバーサルへは、sessionのuser_idを条件に含めSQL実行で回避
+# TODO: 不正なパスを入力された場合のハンドリング
+get '/detail/:memo_id' do
+  @memo = settings.model.detail(params[:memo_id], session[:user_id])
+  erb :'/memo/detail'
+end
+
 # client error
 error 400..499 do
   #status = response.status

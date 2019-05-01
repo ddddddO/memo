@@ -3,7 +3,8 @@
 <body>
   <h3>メモ一覧</h3><br>
   <% @memos.each do |memo| %>
-    <%= memo['subject'] %><br>
+    <% path = "/detail/#{memo['id']}" %>
+    <a href=<%= path %>><%= memo['subject'] %><br>
   <% end %>
 </body>
 </html>

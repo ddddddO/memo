@@ -34,8 +34,19 @@ class Model
   end
 
   def list(user_id)
-    q = 'SELECT subject, content FROM memos WHERE users_id=$1'
+    q = 'SELECT id, subject FROM memos WHERE users_id=$1'
     rslt = @conn.exec(q, [user_id])
+
+    rows = []
+    rslt.each do |row|
+      rows.push(row)
+    end
+    rows
+  end
+
+  def detail(memo_id, user_id)
+    q = 'SELECT id, subject, content FROM memos WHERE id=$1 AND users_id=$2'
+    rslt = @conn.exec(q, [memo_id, user_id])
 
     rows = []
     rslt.each do |row|
