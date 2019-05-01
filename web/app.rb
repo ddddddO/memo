@@ -34,14 +34,13 @@ get '/detail/:memo_id' do
   erb :'/memo/detail'
 end
 
-
 # put method ref: https://qiita.com/suin/items/d17bdfc8dba086d36115
 # formのmethodをdelete/putへ対応: http://portaltan.hatenablog.com/entry/2015/07/22/122031
-# 更新(新規・編集)画面への遷移用
+# 更新画面への遷移用
 post '/update_view' do
   if params.nil?
     # メモ新規作成用
-    params[:memo_id] = -1
+    params[:memo_id] = ''
     params[:subject] = ''
     params[:content] = ''
   end

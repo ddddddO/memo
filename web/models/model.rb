@@ -56,8 +56,27 @@ class Model
   end
 
   def update(args)
-    q = 'UPDATE memos SET subject=$1, content=$2 WHERE id=$3 AND users_id=$4 RETURNING id'
-    rslt = @conn.exec(q, [args['subject'], args['content'], args['memo_id'], args['user_id']])
+    # 一時的
+    if args['memo_id'].empty?
+      args['memo_id'] = "3"
+    end
+
+    q = <<~EOS
+      INSERT INTO memos(id, subject, content, users_id)
+      VALUES($1, $2, $3, $4)
+      ON CONFLICT(id)
+      DO UPDATE SET subject=$5, content=$6
+      RETURNING id
+    EOS
+
+    rslt = @conn.exec(q,[
+        args['memo_id'],
+        args['subject'],
+        args['content'],
+        args['user_id'],
+        args['subject'],
+        args['content']
+    ])
     
     return rslt[0]['id']
   end

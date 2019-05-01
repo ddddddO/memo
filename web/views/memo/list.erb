@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <head></head>
 <body>
-  <h3>メモ一覧</h3><br>
+  <h3>メモ一覧</h3>
+  <form method="post" action="/update_view">
+    <input type="submit" value="新規メモ">
+  </form><br>
+
   <% @memos.each do |memo| %>
     <% path = "/detail/#{memo['id']}" %>
     <a href=<%= path %>><%= memo['subject'] %><br>
