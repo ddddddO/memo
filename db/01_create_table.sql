@@ -14,8 +14,9 @@ CREATE TABLE memos(
 );
 
 CREATE TABLE tags(
-    id      INTEGER NOT NULL,
-    name    TEXT    NOT NULL,
+    id       INTEGER NOT NULL,
+    name     TEXT    NOT NULL,
+    users_id INTEGER REFERENCES users(id),
     PRIMARY KEY(id)
 );
 
