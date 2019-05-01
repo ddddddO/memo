@@ -25,6 +25,6 @@ entity "タグ" as tag {
 ' RELATIONs
 user --o{ memo
 memo }o--|{ tag
-
+user --o{ tag
 
 @enduml

@@ -27,6 +27,7 @@ entity "tags" as tags {
   id[PK]
   --
   name
+  users_id[FK]
 }
 
 
@@ -34,5 +35,6 @@ entity "tags" as tags {
 users --o{ memos
 memos -o{ memo_tag
 memo_tag }|- tags
+users --o{ tags
 
 @enduml
