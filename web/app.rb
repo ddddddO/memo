@@ -23,6 +23,10 @@ post '/login' do
 end
 
 get '/list' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
   @memos = settings.model.list(session[:user_id])
   erb :'/memo/list'
 end
@@ -30,6 +34,10 @@ end
 # ディレクトリトラバーサルへは、sessionのuser_idを条件に含めSQL実行で回避
 # TODO: 不正なパスを入力された場合のハンドリング
 get '/detail/:memo_id' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
   @memo = settings.model.detail(params[:memo_id], session[:user_id])
   erb :'/memo/detail'
 end
@@ -38,6 +46,10 @@ end
 # formのmethodをdelete/putへ対応: http://portaltan.hatenablog.com/entry/2015/07/22/122031
 # 更新画面への遷移用
 post '/update_view' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
   if params.nil?
     # メモ新規作成用
     params[:memo_id] = ''
@@ -49,6 +61,10 @@ post '/update_view' do
 end
 
 put '/update' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
   # メモ新規・編集処理はupsertで対応。一旦、DBのid連番対応するまでupdateのみの実装
   params[:user_id] = session[:user_id]
   memo_id = settings.model.update(params)
