@@ -15,10 +15,16 @@ get '/' do
 end
 
 enable :sessions
+# sessionとcookieの関係については以下
+# https://riocampos-tech.hatenablog.com/entry/20140616/private_study_about_rack_session_or_cookie
+# github.com/ddddddO/work/ruby/dec_cookie_in_session.rb
+#
+# set :sessions, secret: 'xxx'
 
 post '/login' do
   user_id = settings.model.login(params[:name], params[:passwd])
   session[:user_id] = user_id
+
   redirect to('/list')
 end
 
