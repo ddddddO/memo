@@ -4,7 +4,7 @@ hostname=$(hostname)
 command="bundle exec ruby app.rb"
 
 if [ $hostname = "raspberrypi" ]; then
-	command="bundle exec unicorn app.rb -c config/unicorn.rb"
+	command="bundle exec unicorn -c config/unicorn.rb"
 fi
 
 echo $command
