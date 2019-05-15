@@ -17,3 +17,8 @@ listen 8777, :tcp_nopush => true
 pid File.expand_path('../../tmp/pids/unicorn.pid', __FILE__)
 
 preload_app true
+
+# 以下ファイルにパーミッションを与えること
+# unicorn_stderr.log
+# unicorn_stdout.log
+# unicorn.pid
