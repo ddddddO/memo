@@ -56,6 +56,42 @@ class Model
   end
 
   def update(args)
+    rslt = ''
+
+    if args['memo_id'].empty?
+      # メモ新規作成
+      q = <<~EOS
+        INSERT INTO memos(subject, content, users_id)
+        VALUES($1, $2, $3)
+        RETURNING id
+      EOS
+
+      rslt = @conn.exec(q, [
+        args['subject'],
+        args['content'],
+        args['user_id']
+      ])
+    else
+      # メモ編集
+      q = <<~EOS
+        UPDATE memos SET subject=$1, content=$2
+        WHERE id=$3 AND users_id=$4
+        RETURNING id
+      EOS
+
+      rslt = @conn.exec(q, [
+        args['subject'],
+        args['content'],
+        args['memo_id'],
+        args['user_id']
+      ])
+    end
+
+    rslt[0]['id']
+  end
+
+=begin
+  def update(args)
     # 一時的
     if args['memo_id'].empty?
       args['memo_id'] = "3"
@@ -80,4 +116,6 @@ class Model
     
     return rslt[0]['id']
   end
+=end
+
 end
