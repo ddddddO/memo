@@ -46,6 +46,25 @@ class Model
 
   def detail(memo_id, user_id)
     q = 'SELECT id, subject, content FROM memos WHERE id=$1 AND users_id=$2'
+    
+    # メモ詳細画面にタグ情報を出力&メモ編集画面にタグ情報を渡すため.後日画面実装して確かめる
+=begin
+    q = <<~EOS
+      SELECT DISTINCT 
+        m.id,
+        m.subject,
+        m.content,
+        ARRAY(
+          SELECT 
+            t.name
+          FROM tags t JOIN memo_tag mtg 
+          ON t.id = mtg.tags_id
+        ) AS t_names 
+      FROM memos m JOIN memo_tag mt 
+      ON m.id = mt.memos_id WHERE m.id = $1 AND m.users_id = $2;
+    EOS
+=end
+
     rslt = @conn.exec(q, [memo_id, user_id])
 
     rows = []
@@ -55,6 +74,7 @@ class Model
     rows
   end
 
+  # upsert..できないか？シーケンスがネック
   def update(args)
     rslt = ''
 
@@ -90,32 +110,7 @@ class Model
     rslt[0]['id']
   end
 
-=begin
-  def update(args)
-    # 一時的
-    if args['memo_id'].empty?
-      args['memo_id'] = "3"
-    end
+  def 
 
-    q = <<~EOS
-      INSERT INTO memos(id, subject, content, users_id)
-      VALUES($1, $2, $3, $4)
-      ON CONFLICT(id)
-      DO UPDATE SET subject=$5, content=$6
-      RETURNING id
-    EOS
-
-    rslt = @conn.exec(q,[
-        args['memo_id'],
-        args['subject'],
-        args['content'],
-        args['user_id'],
-        args['subject'],
-        args['content']
-    ])
-    
-    return rslt[0]['id']
-  end
-=end
 
 end
