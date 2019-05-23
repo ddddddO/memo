@@ -109,8 +109,4 @@ class Model
 
     rslt[0]['id']
   end
-
-  def 
-
-
 end
