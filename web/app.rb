@@ -37,7 +37,6 @@ get '/list' do
   erb :'/memo/list'
 end
 
-# ディレクトリトラバーサルへは、sessionのuser_idを条件に含めSQL実行で回避
 # TODO: 不正なパスを入力された場合のハンドリング
 get '/detail/:memo_id' do
   if session[:user_id].nil?
@@ -71,13 +70,13 @@ put '/update' do
     redirect to('/')
   end
 
-  # メモ新規・編集処理はupsertで対応。一旦、DBのid連番対応するまでupdateのみの実装
   params[:user_id] = session[:user_id]
   memo_id = settings.model.update(params)
 
   # メモ詳細へ戻る
   redirect to("/detail/#{memo_id}")
 end
+
 
 # client error
 error 400..499 do

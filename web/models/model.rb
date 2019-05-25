@@ -45,25 +45,23 @@ class Model
   end
 
   def detail(memo_id, user_id)
-    q = 'SELECT id, subject, content FROM memos WHERE id=$1 AND users_id=$2'
+    #q = 'SELECT id, subject, content FROM memos WHERE id=$1 AND users_id=$2'
     
     # メモ詳細画面にタグ情報を出力&メモ編集画面にタグ情報を渡すため.後日画面実装して確かめる
-=begin
     q = <<~EOS
       SELECT DISTINCT 
-        m.id,
-        m.subject,
-        m.content,
+        m.id AS id,
+        m.subject AS subject,
+        m.content AS content,
         ARRAY(
           SELECT 
             t.name
           FROM tags t JOIN memo_tag mtg 
           ON t.id = mtg.tags_id
-        ) AS t_names 
+        ) AS tag_names 
       FROM memos m JOIN memo_tag mt 
       ON m.id = mt.memos_id WHERE m.id = $1 AND m.users_id = $2;
     EOS
-=end
 
     rslt = @conn.exec(q, [memo_id, user_id])
 

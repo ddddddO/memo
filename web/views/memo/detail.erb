@@ -2,18 +2,19 @@
 <head></head>
 <body>
   <h3>メモ詳細</h3>
-  <h4>タイトル</h4>
-  <%= @memo[0]['subject'] %><br>
-  <h4>内容</h4>
-  <%= @memo[0]['content'] %><br>
-  <br>
   <form method="post" action="/update_view">
-    <input type="hidden" name="memo_id" value=<%= @memo[0]['id'] %>>
-    <input type="hidden" name="subject" value=<%= @memo[0]['subject'] %>>
-    <input type="hidden" name="content" value=<%= @memo[0]['content'] %>>
+    <!--memo_id type hidden-->
+    <input type=hidden name="memo_id" value=<%= @memo[0]['id'] %>>
+    <h4>タグ</h4>
+    <input readonly name="tag_names" value=<%= @memo[0]['tag_names'] %>><br>
+    <h4>タイトル</h4>
+    <input readonly name="subject" value=<%= @memo[0]['subject'] %>><br>
+    <h4>内容</h4>
+    <textarea readonly name="content" rows="10" cols="50"><%= @memo[0]['content'] %></textarea><br>
+    
     <input type="submit" value="編集">
   </form>
-  <br>
+
   <form method="get" action="/list">
     <input type="submit" value="一覧へ">
   </form>
