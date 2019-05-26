@@ -34,7 +34,7 @@ class Model
   end
 
   def list(user_id)
-    q = 'SELECT id, subject FROM memos WHERE users_id=$1'
+    q = 'SELECT id, subject FROM memos WHERE users_id=$1 ORDER BY id'
     rslt = @conn.exec(q, [user_id])
 
     rows = []
@@ -44,10 +44,9 @@ class Model
     rows
   end
 
-  def detail(memo_id, user_id)
-    #q = 'SELECT id, subject, content FROM memos WHERE id=$1 AND users_id=$2'
-    
-    # メモ詳細画面にタグ情報を出力&メモ編集画面にタグ情報を渡すため.後日画面実装して確かめる
+  # タグは別個のSQLでidとnameを取得してrowに詰めて渡した方がいいかも
+  def detail(memo_id, user_id)  
+=begin
     q = <<~EOS
       SELECT DISTINCT 
         m.id AS id,
@@ -58,21 +57,50 @@ class Model
             t.name
           FROM tags t JOIN memo_tag mtg 
           ON t.id = mtg.tags_id
+          WHERE mtg.memos_id = $1
         ) AS tag_names 
+      FROM memos m JOIN memo_tag mt 
+      ON m.id = mt.memos_id WHERE m.id = $2 AND m.users_id = $3;
+    EOS
+=end
+
+    select_memo_query = <<~EOS
+      SELECT DISTINCT
+        m.id AS id,
+        m.subject AS subject,
+        m.content AS content
       FROM memos m JOIN memo_tag mt 
       ON m.id = mt.memos_id WHERE m.id = $1 AND m.users_id = $2;
     EOS
 
-    rslt = @conn.exec(q, [memo_id, user_id])
+    select_memo_rslt = @conn.exec(select_memo_query, [memo_id, user_id])
 
-    rows = []
-    rslt.each do |row|
-      rows.push(row)
+    memos = []
+    select_memo_rslt.each do |row|
+      memos.push(row)
     end
-    rows
+
+    select_tags_query = <<~EOS
+      SELECT t.id, t.name 
+      FROM tags t
+      JOIN memo_tag mt
+      ON t.id = mt.tags_id
+      WHERE mt.memos_id = $1
+    EOS
+
+    select_tags_rslt = @conn.exec(select_tags_query, [memo_id])
+
+    tags = []
+    select_tags_rslt.each do |row|
+      tags.push(row)
+    end
+
+    return memos, tags
   end
 
   # upsert..できないか？シーケンスがネック
+  # TODO: トランザクションはる
+  # TODO: 関数に分割する
   def update(args)
     rslt = ''
 
@@ -106,5 +134,17 @@ class Model
     end
 
     rslt[0]['id']
+  end
+
+  def fetch_all_tags_of_user(user_id)
+    q = 'SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id'
+
+    rslt = @conn.exec(q, [user_id])
+
+    rows = []
+    rslt.each do |row|
+      rows.push(row)
+    end
+    rows
   end
 end

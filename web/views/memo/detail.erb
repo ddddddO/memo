@@ -4,13 +4,21 @@
   <h3>メモ詳細</h3>
   <form method="post" action="/update_view">
     <!--memo_id type hidden-->
-    <input type=hidden name="memo_id" value=<%= @memo[0]['id'] %>>
-    <h4>タグ</h4>
-    <input readonly name="tag_names" value=<%= @memo[0]['tag_names'] %>><br>
+    <input type=hidden name="memo_id" value=<%= @memos[0]['id'] %>>
+
     <h4>タイトル</h4>
-    <input readonly name="subject" value=<%= @memo[0]['subject'] %>><br>
+    <input readonly name="subject" value=<%= @memos[0]['subject'] %>><br>
+
+    <h4>タグ</h4>
+    <% @tags.each_with_index do |tag, i| %>
+      <input type=hidden name="tag_id_<%= i %>" value=<%= tag['id'] %>>
+      <input readonly name="tag_name_<%= i %>" value=<%= tag['name'] %>>
+    <% end %>
+    <!--tags length-->
+    <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
+
     <h4>内容</h4>
-    <textarea readonly name="content" rows="10" cols="50"><%= @memo[0]['content'] %></textarea><br>
+    <textarea readonly name="content" rows="10" cols="50"><%= @memos[0]['content'] %></textarea><br>
     
     <input type="submit" value="編集">
   </form>

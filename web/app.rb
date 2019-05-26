@@ -43,7 +43,8 @@ get '/detail/:memo_id' do
     redirect to('/')
   end
 
-  @memo = settings.model.detail(params[:memo_id], session[:user_id])
+  @memos, @tags = settings.model.detail(params[:memo_id], session[:user_id])
+
   erb :'/memo/detail'
 end
 
@@ -59,8 +60,29 @@ post '/update_view' do
     # メモ新規作成用
     params[:memo_id] = ''
     params[:subject] = ''
+    params[:tags_length_of_memo] = 0
+    params[:tag_ids_of_memo] = []
+    params[:tag_names_of_memo] = []
     params[:content] = ''
   end
+
+  # タグ用
+  # TODO: いい方法あとで
+  if params[:tags_length_of_memo] != 0
+    tag_ids_of_memo = []
+    tag_names_of_memo = []
+    params[:tags_length_of_memo] = params[:tags_length_of_memo].to_i
+    params[:tags_length_of_memo].times do |i|
+      tag_ids_of_memo.push(params[:"tag_id_#{i}"])
+      tag_names_of_memo.push(params[:"tag_name_#{i}"])
+    end
+
+    params[:tag_ids_of_memo] = tag_ids_of_memo
+    params[:tag_names_of_memo] = tag_names_of_memo
+  end
+
+  # ユーザーがもつタグをすべて取得
+  params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
 
   erb :'memo/update'
 end
@@ -71,7 +93,35 @@ put '/update' do
   end
 
   params[:user_id] = session[:user_id]
-  memo_id = settings.model.update(params)
+    
+  # タグ(delete)用
+  delete_tag_ids = []
+  if params.key?('delete_tags_length')
+    params[:delete_tags_length].to_i.times do |i|
+      if !params.key?("delete_tag_id_#{i}")
+        next
+      end
+      delete_tag_ids.push(params[:"delete_tag_id_#{i}"])
+    end
+    params[:delete_tag_ids] = delete_tag_ids
+  end
+
+  # タグ(update)用
+  update_tag_ids = []
+  if params.key?('update_tags_length')
+    params[:update_tags_length].to_i.times do |i|
+      if !params.key?("update_tag_id_#{i}")
+        next
+      end
+      update_tag_ids.push(params[:"update_tag_id_#{i}"])
+    end
+    params[:update_tag_ids] = update_tag_ids
+  end
+
+  p 'paramsss'
+  p params
+
+  #memo_id = settings.model.update(params)
 
   # メモ詳細へ戻る
   redirect to("/detail/#{memo_id}")
