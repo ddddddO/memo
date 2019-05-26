@@ -1,6 +1,13 @@
 <!DOCTYPE html>
-<head></head>
+<html>
+<head>
+  <meta name="Content-Style-Type" content="text/css">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
 <body>
+  <form method="get" action="/list">
+    <input type="submit" value="一覧へ">
+  </form>
   <h3>メモ詳細</h3>
   <form method="post" action="/update_view">
     <!--memo_id type hidden-->
@@ -18,13 +25,9 @@
     <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
 
     <h4>内容</h4>
-    <textarea readonly name="content" rows="10" cols="50"><%= @memos[0]['content'] %></textarea><br>
-    
+    <textarea style="width:100%" rows="20" readonly name="content"><%= @memos[0]['content'] %></textarea><br>
+    <br>
     <input type="submit" value="編集">
-  </form>
-
-  <form method="get" action="/list">
-    <input type="submit" value="一覧へ">
   </form>
 </body>
 </html>

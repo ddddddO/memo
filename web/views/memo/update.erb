@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<head></head>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
 <body>
   <h3>メモ更新</h3>
   <form id="mef" method="post" action="/update">
@@ -29,13 +32,13 @@
       <input type="hidden" name="update_tags_length" value=<%= params['all_tags_of_user'].length %>>
     <% end %>
 
-    <!--・新規タグ登録用入力フォームを持たせ、登録できるようにする-->
     <h4>タグ新規作成</h4>
     <input type="text" name="new_tag">
 
     <h4>内容</h4>
     <textarea name="content" form="mef" rows="10" cols=50><%= params['content'] %></textarea><br>
     <input type="hidden" name="_method" value="PUT">
+    <br>
     <input type="submit" value="登録">
   </form>
 </body>
