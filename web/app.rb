@@ -82,7 +82,9 @@ post '/update_view' do
   end
 
   # ユーザーがもつタグをすべて取得
-  params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
+  # TODO: すでにメモに紐づいているタグを除外する/key名もそれっぽいのに変える
+  #params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
+  params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user_excluded_binded_tags(session[:user_id], params['memo_id'])
 
   erb :'memo/update'
 end
@@ -118,10 +120,7 @@ put '/update' do
     params[:update_tag_ids] = update_tag_ids
   end
 
-  p 'paramsss'
-  p params
-
-  #memo_id = settings.model.update(params)
+  memo_id = settings.model.update(params)
 
   # メモ詳細へ戻る
   redirect to("/detail/#{memo_id}")
