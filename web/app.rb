@@ -37,14 +37,14 @@ get '/list' do
   erb :'/memo/list'
 end
 
-# ディレクトリトラバーサルへは、sessionのuser_idを条件に含めSQL実行で回避
 # TODO: 不正なパスを入力された場合のハンドリング
 get '/detail/:memo_id' do
   if session[:user_id].nil?
     redirect to('/')
   end
 
-  @memo = settings.model.detail(params[:memo_id], session[:user_id])
+  @memos, @tags = settings.model.detail(params[:memo_id], session[:user_id])
+
   erb :'/memo/detail'
 end
 
@@ -60,8 +60,31 @@ post '/update_view' do
     # メモ新規作成用
     params[:memo_id] = ''
     params[:subject] = ''
+    params[:tags_length_of_memo] = 0
+    params[:tag_ids_of_memo] = []
+    params[:tag_names_of_memo] = []
     params[:content] = ''
   end
+
+  # タグ用
+  # TODO: いい方法あとで
+  if params[:tags_length_of_memo] != 0
+    tag_ids_of_memo = []
+    tag_names_of_memo = []
+    params[:tags_length_of_memo] = params[:tags_length_of_memo].to_i
+    params[:tags_length_of_memo].times do |i|
+      tag_ids_of_memo.push(params[:"tag_id_#{i}"])
+      tag_names_of_memo.push(params[:"tag_name_#{i}"])
+    end
+
+    params[:tag_ids_of_memo] = tag_ids_of_memo
+    params[:tag_names_of_memo] = tag_names_of_memo
+  end
+
+  # ユーザーがもつタグをすべて取得
+  # TODO: すでにメモに紐づいているタグを除外する/key名もそれっぽいのに変える
+  #params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
+  params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user_excluded_binded_tags(session[:user_id], params['memo_id'])
 
   erb :'memo/update'
 end
@@ -71,13 +94,38 @@ put '/update' do
     redirect to('/')
   end
 
-  # メモ新規・編集処理はupsertで対応。一旦、DBのid連番対応するまでupdateのみの実装
   params[:user_id] = session[:user_id]
+    
+  # タグ(delete)用
+  delete_tag_ids = []
+  if params.key?('delete_tags_length')
+    params[:delete_tags_length].to_i.times do |i|
+      if !params.key?("delete_tag_id_#{i}")
+        next
+      end
+      delete_tag_ids.push(params[:"delete_tag_id_#{i}"])
+    end
+    params[:delete_tag_ids] = delete_tag_ids
+  end
+
+  # タグ(update)用
+  update_tag_ids = []
+  if params.key?('update_tags_length')
+    params[:update_tags_length].to_i.times do |i|
+      if !params.key?("update_tag_id_#{i}")
+        next
+      end
+      update_tag_ids.push(params[:"update_tag_id_#{i}"])
+    end
+    params[:update_tag_ids] = update_tag_ids
+  end
+
   memo_id = settings.model.update(params)
 
   # メモ詳細へ戻る
   redirect to("/detail/#{memo_id}")
 end
+
 
 # client error
 error 400..499 do
