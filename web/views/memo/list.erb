@@ -9,9 +9,36 @@
     <input type="submit" value="新規メモ">
   </form><br>
 
-  <% @memos.each do |memo| %>
-    <% path = "/detail/#{memo['id']}" %>
-    <a href=<%= path %>><%= memo['subject'] %><br><br>
+  <!--ページネーション対応-->
+  <% num = 10 %> <!--numで１ページ内の最大出力項目数を指定-->
+  <% length = @memos.length %>
+  <% x = length/num %>
+  <% y = length%num %>
+  <% page = params['page'].to_i %>
+
+  <% pages = x %>
+  <% if y != 0 %>
+    <% pages+=1 %>
   <% end %>
+
+  <!--ページ遷移先の出力範囲を設定-->
+  <% min = num*(page-1) %>
+  <% max = num*page-1 %>
+  <% if page == pages && y != 0 %> <!--選択されたページと最終ページが同じ時 かつ y != 0 の時-->
+    <% max = max-(num-y) %>
+  <% end %>
+  <% range = min..max %>
+
+  <!--出力項目-->
+  <% range.each do |i| %>
+    <% path = "detail/#{@memos[i]['id']}" %>
+    <a href=<%= path %>><%= @memos[i]['subject'] %><br><br>
+  <% end %>
+
+  <!--ページネーション-->
+  <% pages.times do |n| %>
+    <a href="/list?page=<%= n+1 %>"><%= n+1 %></a>&emsp;
+  <% end %>
+
 </body>
 </html>
