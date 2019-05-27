@@ -25,7 +25,7 @@ post '/login' do
   user_id = settings.model.login(params[:name], params[:passwd])
   session[:user_id] = user_id
 
-  redirect to('/list')
+  redirect to('/list?page=1')
 end
 
 get '/list' do
