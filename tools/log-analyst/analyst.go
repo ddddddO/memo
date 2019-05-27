@@ -37,6 +37,7 @@ func NewH2OLogAnalyst(data string) *H2OLogAnalyst {
 
 // 解析のメイン処理
 // 外枠作成
+// 各々並列処理でいけるかも
 func analyze(a Analyzer) error {
 	err := a.collectIPAddrs()
 	err = a.collectAccessDates()
