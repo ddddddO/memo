@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <% @tags.each do |tag| %>
+    <% tag_path = "/list?tag_id=#{tag['id']}" %>
+    <a href=<%= tag_path %>><%= tag['name'] %><br>
+  <% end %>
+</body>
+</html>

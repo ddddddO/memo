@@ -33,9 +33,15 @@ class Model
     return 'failed to login'
   end
 
-  def list(user_id)
-    q = 'SELECT id, subject FROM memos WHERE users_id=$1 ORDER BY id'
-    rslt = @conn.exec(q, [user_id])
+  def list(user_id, tag_id)
+    rslt = []
+    if tag_id.empty?
+      q = 'SELECT id, subject FROM memos WHERE users_id=$1 ORDER BY id'  
+      rslt = @conn.exec(q, [user_id])
+    else
+      q = 'SELECT id, subject FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id'
+      rslt = @conn.exec(q, [user_id, tag_id])
+    end
 
     rows = []
     rslt.each do |row|
@@ -45,25 +51,7 @@ class Model
   end
 
   # タグは別個のSQLでidとnameを取得してrowに詰めて渡した方がいいかも
-  def detail(memo_id, user_id)  
-=begin
-    q = <<~EOS
-      SELECT DISTINCT 
-        m.id AS id,
-        m.subject AS subject,
-        m.content AS content,
-        ARRAY(
-          SELECT 
-            t.name
-          FROM tags t JOIN memo_tag mtg 
-          ON t.id = mtg.tags_id
-          WHERE mtg.memos_id = $1
-        ) AS tag_names 
-      FROM memos m JOIN memo_tag mt 
-      ON m.id = mt.memos_id WHERE m.id = $2 AND m.users_id = $3;
-    EOS
-=end
-
+  def detail(memo_id, user_id)
     select_memo_query = <<~EOS
       SELECT DISTINCT
         m.id AS id,
@@ -236,6 +224,18 @@ class Model
 
     rslt = @conn.exec(q, [user_id, memo_id])
 
+    rows = []
+    rslt.each do |row|
+      rows.push(row)
+    end
+    rows
+  end
+
+  def tags(user_id)
+    q = 'SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id'
+  
+    rslt = @conn.exec(q, [user_id])
+    
     rows = []
     rslt.each do |row|
       rows.push(row)

@@ -33,11 +33,15 @@ get '/list' do
     redirect to('/')
   end
 
-  @memos = settings.model.list(session[:user_id])
+  # タグidがクエリパラメータとして送られた場合
+  tag_id = ''
+  if params.key?('tag_id')
+    tag_id = params[:tag_id]
+  end
+  @memos = settings.model.list(session[:user_id], tag_id) # TODO: rubyでオプション的なのあったからそれ使うようにすれば？
   erb :'/memo/list'
 end
 
-# TODO: 不正なパスを入力された場合のハンドリング
 get '/detail/:memo_id' do
   if session[:user_id].nil?
     redirect to('/')
@@ -82,7 +86,7 @@ post '/update_view' do
   end
 
   # ユーザーがもつタグをすべて取得
-  # TODO: すでにメモに紐づいているタグを除外する/key名もそれっぽいのに変える
+  # TODO: key名もそれっぽいのに変える
   #params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
   params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user_excluded_binded_tags(session[:user_id], params['memo_id'])
 
@@ -126,6 +130,21 @@ put '/update' do
   redirect to("/detail/#{memo_id}")
 end
 
+get '/tag_view' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+  
+  @tags = settings.model.tags(session[:user_id])
+
+  erb :'memo/tag'
+end
+
+=begin
+get '/tag/:tag_id' do
+  redirect to("/list?#{params[:tag_id]}")
+end
+=end
 
 # client error
 error 400..499 do

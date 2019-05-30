@@ -5,9 +5,16 @@
 </head>
 <body>
   <h3>メモ一覧</h3>
-  <form method="post" action="/update_view">
-    <input type="submit" value="新規メモ">
-  </form><br>
+  <div style="display:inline-flex">
+    <form method="post" action="/update_view">
+      <input type="submit" value="新規メモ">
+    </form>
+    &emsp;
+    <form method="get" action="/tag_view">
+      <input type="submit" value="タグ選択">
+    </form>
+  </div><br>
+  <br>
 
   <!--ページネーション対応-->
   <% num = 10 %> <!--numで１ページ内の最大出力項目数を指定-->
