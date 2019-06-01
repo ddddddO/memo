@@ -5,6 +5,7 @@ command="bundle exec ruby app.rb"
 
 if [ $hostname = "raspberrypi" ]; then
 	sleep 1080
+	cd /home/pi/tag-mng/web
 	command="bundle exec unicorn -c config/unicorn.rb"
 fi
 
