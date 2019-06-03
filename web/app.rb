@@ -3,6 +3,7 @@ require 'sinatra/base'
 require 'sinatra/reloader'
 
 require './models/model'
+require './lib/password'
 
 # ref:sinatra を要確認 
 
@@ -22,7 +23,8 @@ enable :sessions
 # set :sessions, secret: 'xxx'
 
 post '/login' do
-  user_id = settings.model.login(params[:name], params[:passwd])
+  secure_passwd = Password.gen_secure_password(params[:passwd], params[:name], 100000)
+  user_id = settings.model.login(params[:name], secure_passwd)
   session[:user_id] = user_id
 
   redirect to('/list?page=1')
