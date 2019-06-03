@@ -73,7 +73,7 @@ class Model
       FROM tags t
       JOIN memo_tag mt
       ON t.id = mt.tags_id
-      WHERE mt.memos_id = $1
+      WHERE mt.memos_id = $1 AND NOT mt.tags_id = 1
     EOS
 
     select_tags_rslt = @conn.exec(select_tags_query, [memo_id])
@@ -103,6 +103,15 @@ class Model
         args['user_id']
       ])
       inserted_memo_id = insert_memo_rslt[0]['id']
+
+      # 新規メモにdefaultのタグ(ALL)を紐づける
+      # TODO: memoの新規作成時にだけ実行(トリガー)するストアドプロシージャを作成して、memo_tagにdefault値(ALL)を登録させるようにする
+      insert_memo_tag_default = 'INSERT INTO memo_tag(memos_id, tags_id) VALUES($1, $2)'
+      @conn.exec(insert_memo_tag_default, [
+        inserted_memo_id,
+        1 # =ALL
+      ])
+
 
       # メモ新規・編集共通
       if args.key?('new_tag') && !args['new_tag'].empty? # メモに紐づく新規タグを登録する場合
@@ -217,7 +226,7 @@ class Model
       AND id NOT IN (
         SELECT tags_id 
         FROM memo_tag 
-        WHERE memos_id = $2
+        WHERE memos_id = $2 OR tags_id = 1
       )
       ORDER BY id
     EOS

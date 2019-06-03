@@ -89,7 +89,6 @@ post '/update_view' do
 
   # ユーザーがもつタグをすべて取得
   # TODO: key名もそれっぽいのに変える
-  #params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user(session[:user_id])
   params[:all_tags_of_user] = settings.model.fetch_all_tags_of_user_excluded_binded_tags(session[:user_id], params['memo_id'])
 
   erb :'memo/update'
