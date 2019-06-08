@@ -9,24 +9,39 @@
     <input type="submit" value="一覧へ">
   </form>
   <h3>メモ詳細</h3>
-  <form method="post" action="/update_view">
-    <!--memo_id type hidden-->
-    <input type=hidden name="memo_id" value=<%= @memos[0]['id'] %>>
-
     <h4>タイトル</h4>
-    <input readonly name="subject" value=<%= @memos[0]['subject'] %>><br>
+      <%= @memos[0]['subject'] %><br>
 
     <h4>タグ</h4>
-    <% @tags.each_with_index do |tag, i| %>
-      <input type=hidden name="tag_id_<%= i %>" value=<%= tag['id'] %>>
-      <input readonly name="tag_name_<%= i %>" value=<%= tag['name'] %>>
+    <% @tags.each do |tag| %>
+      <% tag_path = "/list?page=1&tag_id=#{tag['id']}" %>
+      #<a href=<%= tag_path %>><%= tag['name'] %></a>&emsp;
     <% end %>
-    <!--tags length-->
-    <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
 
     <h4>内容</h4>
-    <textarea style="width:100%" rows="20" readonly name="content"><%= @memos[0]['content'] %></textarea><br>
+      <!--preタグ：https://creive.me/archives/13350/
+                  https://lab.syncer.jp/Web/CSS/Snippet/11/-->
+      <pre style="white-space:pre-line;font-weight:bold;">
+        <%= @memos[0]['content'] %>
+      </pre>
     <br>
+  
+  <!--サーバ側へ送信用(ブラウザからは非表示)-->
+  <form method="post" action="/update_view">
+    <input type=hidden name="memo_id" value=<%= @memos[0]['id'] %>>
+
+    <!--タイトル-->
+    <input type=hidden name="subject" value=<%= @memos[0]['subject'] %>>
+
+    <!--タグ-->
+    <% @tags.each_with_index do |tag, i| %>
+      <input type=hidden name="tag_id_<%= i %>" value=<%= tag['id'] %>>
+      <input type=hidden name="tag_name_<%= i %>" value=<%= tag['name'] %>>
+    <% end %>
+    <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
+
+    <!--内容-->
+    <textarea style="width:100%;display:none;" rows="20" name="content"><%= @memos[0]['content'] %></textarea>
     <input type="submit" value="編集">
   </form>
 </body>

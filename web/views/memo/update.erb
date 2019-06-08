@@ -15,7 +15,7 @@
     １、メモ編集時
       ・メモ詳細から渡される、予めメモに紐づいているタグをチェックボックスで選択可能にし、削除できるようにする -->
     <% if params['tags_length_of_memo'] != 0 %>
-      <h4>タグ(チェックでメモに紐づくタグを削除)</h4>
+      <h4>削除タグ<small>(メモから関連タグを削除します)</small></h4>
       <% params['tags_length_of_memo'].times do |i| %>
         <input type="checkbox" name="delete_tag_id_<%= i %>" value=<%= params['tag_ids_of_memo'][i] %>><%= params['tag_names_of_memo'][i] %>
       <% end%>      
@@ -25,18 +25,18 @@
     <!--共通(１(新規)・２(編集))-->
     <!--・ユーザーに紐づくタグすべてをチェックボックスで選択可能にし、登録できるようにする-->
     <% if !params['all_tags_of_user'].empty? %>
-      <h4>タグ選択(チェックでメモにタグを紐づける)</h4>
+      <h4>関連タグ<small>(メモにタグを紐づけます)</small></h4>
       <% params['all_tags_of_user'].each_with_index do |tag_of_user, i| %>
         <input type="checkbox" name="update_tag_id_<%= i %>" value=<%= tag_of_user['id'] %>><%= tag_of_user['name'] %>
       <% end %>
       <input type="hidden" name="update_tags_length" value=<%= params['all_tags_of_user'].length %>>
     <% end %>
 
-    <h4>タグ新規作成</h4>
+    <h4>新規タグ<small>(タグを新規作成します)</small></h4>
     <input type="text" name="new_tag">
 
     <h4>内容</h4>
-    <textarea name="content" form="mef" rows="10" cols=50><%= params['content'] %></textarea><br>
+    <textarea style="width:100%;" rows="20" name="content" form="mef"><%= params['content'] %></textarea><br>
     <input type="hidden" name="_method" value="PUT">
     <br>
     <input type="submit" value="登録">
