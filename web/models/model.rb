@@ -242,7 +242,11 @@ class Model
 
   def tags(user_id)
     q = 'SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id'
-  
+    
+    if user_id != 1
+      q = 'SELECT id, name FROM tags WHERE id = 1 OR users_id = $1 ORDER BY id'
+    end
+
     rslt = @conn.exec(q, [user_id])
     
     rows = []

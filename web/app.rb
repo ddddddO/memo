@@ -41,6 +41,11 @@ get '/list' do
     tag_id = params[:tag_id]
   end
   @memos = settings.model.list(session[:user_id], tag_id) # TODO: rubyでオプション的なのあったからそれ使うようにすれば？
+  
+  if !params.key?('page')
+    params[:page] = '1'
+  end
+
   erb :'/memo/list'
 end
 

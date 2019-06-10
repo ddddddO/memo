@@ -34,12 +34,15 @@
   <% if page == pages && y != 0 %> <!--選択されたページと最終ページが同じ時 かつ y != 0 の時-->
     <% max = max-(num-y) %>
   <% end %>
+  
   <% range = min..max %>
 
   <!--出力項目-->
-  <% range.each do |i| %>
-    <% path = "detail/#{@memos[i]['id']}" %>
-    <a href=<%= path %>><%= @memos[i]['subject'] %><br><br>
+  <% if length != 0 %>
+    <% range.each do |i| %>
+      <% path = "detail/#{@memos[i]['id']}" %>
+      <a href=<%= path %>><%= @memos[i]['subject'] %><br><br>
+    <% end %>
   <% end %>
 
   <!--ページネーション-->
