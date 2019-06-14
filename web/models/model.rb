@@ -206,6 +206,15 @@ class Model
     end
   end
 
+  # TODO:トランザクション
+  def delete_memo(memo_id)
+    delete_memo_tag_query = 'DELETE FROM memo_tag WHERE memos_id = $1'
+    @conn.exec(delete_memo_tag_query, [memo_id])
+
+    delete_memos_query = 'DELETE FROM memos WHERE id = $1'
+    @conn.exec(delete_memos_query, [memo_id])
+  end
+
   def fetch_all_tags_of_user(user_id)
     q = 'SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id'
 
