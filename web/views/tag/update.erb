@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <form method="get" action="/list?page=1">
+    <input type="submit" value="一覧へ">
+  </form>
+  <h3>タグ更新</h3>
+  <h4>タグ名</h4>
+  <div style="display:inline-flex">
+    <form method="post" action="/tag_update">
+      <input type="hidden" name="tag_id" value=<%= @tag[0]['id'] %>>
+      <input type="text" name="tag_name" value=<%= @tag[0]['name'] %>>
+      <br><br>
+      <input type="submit" value="登録">
+    </form>
+    
+    <form method="post" action="/tag_delete">
+      <input type="hidden" name="tag_id" value=<%= @tag[0]['id'] %>>
+      <input type="hidden" name="_method" value="DELETE">
+      <br><br>
+      <input type="submit" value="削除">
+    </form>
+  </div>
+</body>
+</html>

@@ -255,4 +255,33 @@ class Model
     end
     rows
   end
+
+  def tag(tag_id)
+    q = 'SELECT id, name FROM tags WHERE id = $1'
+
+    rslt = @conn.exec(q, [tag_id])
+
+    rows = []
+    rslt.each do |row|
+      rows.push(row)
+    end
+    rows
+  end
+
+  def update_tag(args)
+    q = 'UPDATE tags SET name = $1 WHERE id = $2'
+    @conn.exec(q, [
+      args['tag_name'],
+      args['tag_id']
+    ])
+  end
+
+  # TODO:トランザクション
+  def delete_tag(tag_id)
+    delete_memo_tag_query = 'DELETE FROM memo_tag WHERE tags_id = $1'
+    @conn.exec(delete_memo_tag_query, [tag_id])
+
+    delete_tags_query = 'DELETE FROM tags WHERE id = $1'
+    @conn.exec(delete_tags_query, [tag_id])
+  end
 end

@@ -143,14 +143,47 @@ get '/tag_view' do
   
   @tags = settings.model.tags(session[:user_id])
 
-  erb :'memo/tag'
+  erb :'tag/tags'
 end
 
-=begin
-get '/tag/:tag_id' do
-  redirect to("/list?#{params[:tag_id]}")
+get '/tags_select_for_update' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
+  @tags = settings.model.tags(session[:user_id])
+  @tags = @tags[1, @tags.length] # 最初の要素ALLは含めない
+
+  erb :'tag/tags_select_for_update'
 end
-=end
+
+get '/tag_update_view' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
+  @tag = settings.model.tag(params[:tag_id])
+
+  erb :'tag/update'
+end
+
+post '/tag_update' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+  
+  settings.model.update_tag(params)
+  redirect to('/list')
+end
+
+delete '/tag_delete' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
+  settings.model.delete_tag(params[:tag_id])
+  redirect to('/list')
+end
 
 # client error
 error 400..499 do
