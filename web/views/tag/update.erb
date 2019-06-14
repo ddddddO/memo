@@ -17,12 +17,24 @@
       <input type="submit" value="登録">
     </form>
     
-    <form method="post" action="/tag_delete">
+    <form method="post" action="/tag_delete" onsubmit="return checkDelete()">
       <input type="hidden" name="tag_id" value=<%= @tag[0]['id'] %>>
       <input type="hidden" name="_method" value="DELETE">
       <br><br>
       <input type="submit" value="削除">
     </form>
   </div>
+
+  <script>
+    function checkDelete() {
+        var rslt = window.confirm('本当に削除しますか？');
+
+        if (rslt) {
+          return true
+        } else {
+          return false
+        }
+    }
+  </script>
 </body>
 </html>
