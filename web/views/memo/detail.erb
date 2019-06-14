@@ -27,22 +27,43 @@
     <br>
   
   <!--サーバ側へ送信用(ブラウザからは非表示)-->
-  <form method="post" action="/update_view">
-    <input type=hidden name="memo_id" value=<%= @memos[0]['id'] %>>
+  <div style="display:inline-flex">
+    <form method="post" action="/update_view">
+      <input type="hidden" name="memo_id" value=<%= @memos[0]['id'] %>>
 
-    <!--タイトル-->
-    <input type=hidden name="subject" value=<%= @memos[0]['subject'] %>>
+      <!--タイトル-->
+      <input type="hidden" name="subject" value=<%= @memos[0]['subject'] %>>
 
-    <!--タグ-->
-    <% @tags.each_with_index do |tag, i| %>
-      <input type=hidden name="tag_id_<%= i %>" value=<%= tag['id'] %>>
-      <input type=hidden name="tag_name_<%= i %>" value=<%= tag['name'] %>>
-    <% end %>
-    <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
+      <!--タグ-->
+      <% @tags.each_with_index do |tag, i| %>
+        <input type="hidden" name="tag_id_<%= i %>" value=<%= tag['id'] %>>
+        <input type="hidden" name="tag_name_<%= i %>" value=<%= tag['name'] %>>
+      <% end %>
+      <input type="hidden" name="tags_length_of_memo" value=<%= @tags.length %>>
 
-    <!--内容-->
-    <textarea style="width:100%;display:none;" rows="20" name="content"><%= @memos[0]['content'] %></textarea>
-    <input type="submit" value="編集">
-  </form>
+      <!--内容-->
+      <textarea style="width:100%;display:none;" rows="20" name="content"><%= @memos[0]['content'] %></textarea>
+      <input type="submit" value="編集">
+    </form>
+    &emsp;
+    <form name="delete_memo" method="post" action="/delete_memo" onsubmit="return checkDelete()">
+      <input type="hidden" name="memo_id" value=<%= @memos[0]['id'] %>>
+      <input type="hidden" name="_method" value="DELETE">
+      <input type="submit" name="btn" value="削除">
+    </form>
+  </div>
+
+  <!--ref: https://www.sejuku.net/blog/28720 -->
+  <script>
+    function checkDelete() {
+        var rslt = window.confirm('本当に削除しますか？');
+
+        if (rslt) {
+          return true
+        } else {
+          return false
+        }
+    }
+  </script>
 </body>
 </html>

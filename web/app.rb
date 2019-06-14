@@ -136,6 +136,17 @@ put '/update' do
   redirect to("/detail/#{memo_id}")
 end
 
+delete '/delete_memo' do
+  if session[:user_id].nil?
+    redirect to('/')
+  end
+
+  settings.model.delete_memo(params[:memo_id])
+
+  # メモ一覧へ戻る
+  redirect to('/list')
+end
+
 get '/tag_view' do
   if session[:user_id].nil?
     redirect to('/')
