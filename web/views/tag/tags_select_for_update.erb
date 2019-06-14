@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body>
+  <% @tags.each do |tag| %>
+    <% tag_path = "/tag_update_view?tag_id=#{tag['id']}" %>
+    #<a href=<%= tag_path %>><%= tag['name'] %></a>&emsp;
+  <% end %>
+</body>
+</html>
