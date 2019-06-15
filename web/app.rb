@@ -25,10 +25,17 @@ enable :sessions
 post '/login' do
   secure_passwd = Password.gen_secure_password(params[:passwd], params[:name], 100000)
   user_id = settings.model.login(params[:name], secure_passwd)
+  
+  # 認証チェック
+  if user_id.empty?
+    return 401
+  end
+
   session[:user_id] = user_id
 
   redirect to('/list?page=1')
 end
+
 
 get '/list' do
   if session[:user_id].nil?
@@ -41,9 +48,16 @@ get '/list' do
     tag_id = params[:tag_id]
   end
   @memos = settings.model.list(session[:user_id], tag_id) # TODO: rubyでオプション的なのあったからそれ使うようにすれば？
-  
+
   if !params.key?('page')
     params[:page] = '1'
+  end
+
+  max = 8 # 一覧表示の最大値
+  page = params[:page].to_i
+  # 一覧に出力する要素があるかチェック
+  if (@memos.length-((page-1)*max)) <= 0
+    return 404
   end
 
   erb :'/memo/list'
@@ -55,6 +69,11 @@ get '/detail/:memo_id' do
   end
 
   @memos, @tags = settings.model.detail(params[:memo_id], session[:user_id])
+
+  # 詳細ページに出力する要素があるかチェック
+  if @memos.empty?
+    return 404
+  end
 
   erb :'/memo/detail'
 end
@@ -174,6 +193,16 @@ get '/tag_update_view' do
   end
 
   @tag = settings.model.tag(params[:tag_id])
+  
+  # 更新対象のタグがあるかチェック
+  if @tag.empty?
+    return 404
+  end
+
+  # パスで更新対象タグにALLを指定された場合
+  if @tag[0]['id'] == '1'
+    return 403
+  end
 
   erb :'tag/update'
 end
@@ -196,15 +225,48 @@ delete '/tag_delete' do
   redirect to('/list')
 end
 
+# ref: ステータスコード：http://www5.plala.or.jp/vaio0630/mail/st_code.htm
 # client error
-error 400..499 do
+error 400 do
+  @e = "クライアントエラー: #{response.status}"
+  @msg = "Bad Request"
+  erb :error
+end
+
+error 401 do
+  @e = "クライアントエラー: #{response.status}"
+  @msg = "認証に失敗しました。"
+  erb :error
+end
+
+=begin
+error 402 do
+  @e = "クライアントエラー: #{response.status}"
+  @msg = ""
+  erb :error
+end
+=end
+
+error 403 do
+  @e = "クライアントエラー: #{response.status}"
+  @msg = "アクセス権がありません。"
+  erb :error
+end
+
+error 404 do
+  @e = "クライアントエラー: #{response.status}"
+  @msg = "ページが見つかりません。"
+  erb :error
+end
+
+error 405..417 do
   @e = "クライアントエラー: #{response.status}"
   @msg = "正しい操作をしてください。"
   erb :error
 end
 
 # server error
-error 500..599 do
+error 500..505 do
   @e = "サーバーエラー: #{response.status}"
   @msg = "管理者に連絡してください。"
   erb :error
