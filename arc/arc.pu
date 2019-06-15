@@ -17,7 +17,7 @@ node "raspberry pi" as pi {
 cloud "Internet" as internet {
 
 }
-cloud "Azure" as azure {
+cloud "GCP" as gcp {
 
 }
 
@@ -27,7 +27,7 @@ internet - h2o
 h2o - unicorn : :8777
 unicorn - tag_mng_app
 tag_mng_app -- postgres
-postgres - azure : backup/day
+postgres - gcp : backup/day
 
 
 @enduml
