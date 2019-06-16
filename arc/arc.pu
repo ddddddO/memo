@@ -27,7 +27,6 @@ internet - h2o
 h2o - unicorn : :8777
 unicorn - tag_mng_app
 tag_mng_app -- postgres
-postgres - gcp : backup/day
-
+postgres - gcp : backup/every6h
 
 @enduml
