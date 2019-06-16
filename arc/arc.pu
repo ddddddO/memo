@@ -24,7 +24,7 @@ cloud "GCP" as gcp {
 
 'RELATIONs
 internet - h2o
-h2o - unicorn : :8777
+h2o - unicorn
 unicorn - tag_mng_app
 tag_mng_app -- postgres
 postgres - gcp : backup/every6h
