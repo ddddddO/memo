@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	target = "https://ddddddo.work"
+	target = "http://ddddddo.work"
 	proxy  = "http://82.146.160.74:80" // ref: http://www.freeproxylists.net/ja/
 )
 
@@ -26,10 +26,4 @@ func main() {
 	}
 	
 	log.Fatal("!200")
-	/*
-	err = exec.Command("reboot").Run()
-	if err != nil {
-		log.Fatal("failed to reboot")
-	}
-	*/
 }
