@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	target = "http://ddddddo.work"
-	proxy  = "http://82.146.160.74:80" // ref: http://www.freeproxylists.net/ja/
+	target = "https://ddddddo.work"
+	proxy  = "http://173.82.173.110:8080" // ref: http://www.freeproxylists.net/ja/
 )
 
 func main() {
