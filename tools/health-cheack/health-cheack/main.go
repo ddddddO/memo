@@ -31,20 +31,39 @@ func main() {
 }
 
 func cheackTarget(pxs []*lib.Proxy, target string) error {
-	log.Print("max attack: ", len(pxs))
+	pxsLength := len(pxs)
+	rsltCh := make(chan bool, pxsLength)
+
+	log.Print("max attack: ", pxsLength)
+
 	for _, px := range pxs {
-		proxy := px.IP + ":" + px.Port
-		log.Print("proxy:", proxy)
+		go func(px *lib.Proxy) {
+			proxy := px.IP + ":" + px.Port
+			log.Print("proxy:", proxy)
 
-		cmd := exec.Command("curl", "-v", "-k", target, "-x", proxy)
-		outerr, err := cmd.CombinedOutput()
-		if err != nil {
-			continue
-		}
+			cmd := exec.Command("curl", "-v", "-k", target, "-x", proxy)
+			outerr, err := cmd.CombinedOutput()
+			if err != nil {
+				rsltCh <- false
+				return
+			}
 
-		dst := string(outerr)
-		if strings.Contains(dst, "HTTP/1.1 200 OK") {
-			return nil
+			dst := string(outerr)
+			if strings.Contains(dst, "HTTP/1.1 200 OK") {
+				rsltCh <- true
+				return
+			}
+
+			rsltCh <- false
+		}(px)
+	}
+
+	for i := 0; i < pxsLength; i++ {
+		select {
+		case rslt := <- rsltCh:
+			if rslt {
+				return nil
+			}
 		}
 	}
 
