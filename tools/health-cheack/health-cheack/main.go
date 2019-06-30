@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -20,7 +21,8 @@ func main() {
 
 	pxs, err := lib.FetchProxys(proxySrc, filePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		os.Exit(0)
 	}
 
 	if err := cheackTarget(pxs, target); err != nil {
@@ -60,7 +62,7 @@ func cheackTarget(pxs []*lib.Proxy, target string) error {
 
 	for i := 0; i < pxsLength; i++ {
 		select {
-		case rslt := <- rsltCh:
+		case rslt := <-rsltCh:
 			if rslt {
 				return nil
 			}
