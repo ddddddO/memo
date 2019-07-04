@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/ddddddO/tag-mng/tools/health-cheack/health-cheack/lib"
 )
@@ -38,8 +39,10 @@ func cheackTarget(pxs []*lib.Proxy, target string) error {
 
 	log.Print("max attack: ", pxsLength)
 
-	for _, px := range pxs {
-		go func(px *lib.Proxy) {
+	for i, px := range pxs {
+		go func(px *lib.Proxy, i int) {
+			time.Sleep(time.Duration(i*2) * time.Second)
+
 			proxy := px.IP + ":" + px.Port
 			log.Print("proxy:", proxy)
 
@@ -57,7 +60,7 @@ func cheackTarget(pxs []*lib.Proxy, target string) error {
 			}
 
 			rsltCh <- false
-		}(px)
+		}(px, i)
 	}
 
 	for i := 0; i < pxsLength; i++ {
