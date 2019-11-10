@@ -1,0 +1,3 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1573402713271,1512,GET tag-mng,200,OK,REQUEST TESTs 1-1,text,true,,1143,122,1,1,https://tag-mng.ddddddo.work/,1498,0,1262
+1573402714805,3803,POST tag-mng-login,200,OK,REQUEST TESTs 1-1,text,true,,1143,122,1,1,https://tag-mng.ddddddo.work/,3802,0,3466
