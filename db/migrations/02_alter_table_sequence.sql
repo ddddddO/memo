@@ -1,3 +1,4 @@
+-- +migrate Up
 -- ref: https://qiita.com/s0208_wataru/items/3f56bfea05f50d6e80f8
 
 -- シーケンスオブジェクト作成
@@ -17,3 +18,5 @@ ALTER TABLE tags ALTER id SET default nextval('tags_id_seq');
 SELECT setval('users_id_seq', 1, false);
 SELECT setval('memos_id_seq', 1, false);
 SELECT setval('tags_id_seq', 1, false);
+
+-- +migrate Down
