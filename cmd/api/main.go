@@ -16,6 +16,7 @@ func main() {
 	router.GET("/health", hs.HealthHandler)
 	// NOTE: tag-mng/web/app.rbから必要なAPIを列挙
 	// 認証API
+	router.POST("/auth", hs.AuthHandler)
 	// メモ一覧返却API
 	// メモ詳細返却API
 	// メモ新規作成API
