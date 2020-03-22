@@ -77,10 +77,10 @@ func AuthHandler(c *gin.Context) {
 
 func genSecuredPasswd(name, passwd string) string {
 	secStrPass := name + passwd
-	var secPass [32]byte
-	for i := 0; i < 100000; i++ {
-		secPass = sha256.Sum256([]byte(secStrPass))
+	secPass := sha256.Sum256([]byte(secStrPass))
+	for i := 0; i < 99999; i++ {
 		secStrPass = hex.EncodeToString(secPass[:])
+		secPass = sha256.Sum256([]byte(secStrPass))
 	}
 	return strings.ToLower(hex.EncodeToString(secPass[:]))
 }
