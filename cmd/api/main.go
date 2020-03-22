@@ -14,6 +14,15 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/health", hs.HealthHandler)
-
+	// NOTE: tag-mng/web/app.rbから必要なAPIを列挙
+	// 認証API
+	// メモ一覧返却API
+	// メモ詳細返却API
+	// メモ新規作成API
+	// メモ更新API
+	// メモ削除API
+	// タグ一覧返却API
+	// タグ更新API
+	// タグ削除API
 	router.Run(":8082")
 }
