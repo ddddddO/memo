@@ -18,6 +18,7 @@ func main() {
 	// 認証API
 	router.POST("/auth", hs.AuthHandler)
 	// メモ一覧返却API
+	router.GET("/memos", hs.MemoListHandler)
 	// メモ詳細返却API
 	// メモ新規作成API
 	// メモ更新API
