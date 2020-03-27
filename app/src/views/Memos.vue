@@ -1,6 +1,7 @@
 <template>
   <div class="memos">
     <h1>This is an memos page</h1>
+    <h3 v-for="memo in memoList" v-bind:key="memo">{{ memo }}</h3>
   </div>
 </template>
 
@@ -23,10 +24,13 @@ export default {
         return resp.json()
       })
       .then(function (json) {
-        return JSON.stringify(json)
+        const tmp = JSON.stringify(json)
+        // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
+        return tmp.replace(/\\"/g, '"').slice(1, -1)
       })
       .then(function (sJson) {
-        return JSON.parse(sJson)
+        const tmp = JSON.parse(sJson)
+        return tmp.memo_list
       })
       console.log('memoList')
       console.log(this.memoList)
