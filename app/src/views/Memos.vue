@@ -1,7 +1,9 @@
 <template>
   <div class="memos">
     <h1>This is an memos page</h1>
-    <h3 v-for="memo in memoList" v-bind:key="memo">{{ memo }}</h3>
+    <div v-for="memo in memoList" v-bind:key="memo">
+      <h3> {{ memo.id }} {{ memo.subject }}</h3>
+    </div>
   </div>
 </template>
 

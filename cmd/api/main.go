@@ -17,21 +17,21 @@ func main() {
 
 	// cors実装：https://qiita.com/MasashiFujiike/items/7844150ce75d71a417ad
 	router.Use(cors.New(cors.Config{
-        // 許可したいHTTPメソッドの一覧
-        AllowMethods: []string{
-            "GET",
-            "OPTIONS",
-        },
-        // 許可したいHTTPリクエストヘッダの一覧
-        AllowHeaders: []string{
-            "Accept",
-        },
-        // 許可したいアクセス元の一覧
-        AllowOrigins: []string{
-            "http://localhost:8080",
-        },
-        MaxAge: 30 * time.Second,
-    }))
+		// 許可したいHTTPメソッドの一覧
+		AllowMethods: []string{
+			"GET",
+			"OPTIONS",
+		},
+		// 許可したいHTTPリクエストヘッダの一覧
+		AllowHeaders: []string{
+			"Accept",
+		},
+		// 許可したいアクセス元の一覧
+		AllowOrigins: []string{
+			"http://localhost:8080",
+		},
+		MaxAge: 30 * time.Second,
+	}))
 
 	router.GET("/health", hs.HealthHandler)
 	// NOTE: tag-mng/web/app.rbから必要なAPIを列挙
@@ -40,6 +40,7 @@ func main() {
 	// メモ一覧返却API
 	router.GET("/memos", hs.MemoListHandler)
 	// メモ詳細返却API
+	router.GET("/memodetail", hs.MemoDetailHandler)
 	// メモ新規作成API
 	// メモ更新API
 	// メモ削除API
