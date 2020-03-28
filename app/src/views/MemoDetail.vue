@@ -1,6 +1,6 @@
 <template>
   <div class="memodetail">
-    <h1>This is an memo detail page</h1>
+    <h1>This is a memo detail page</h1>
     <h2>ID: {{ $route.params.memo_id }}</h2>
     <h2>Subject: {{ memoDetail.subject }}</h2>
     <div v-if="!activatedEdit">

@@ -1,6 +1,6 @@
 <template>
   <div class="memos">
-    <h1>This is an memos page</h1>
+    <h1>This is a memos page</h1>
     <div v-for="memo in memoList" v-bind:key="memo">
       <h2>
         <router-link :to="{ name:'memo-detail', params: { memo_id: memo.id }}">
