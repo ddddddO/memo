@@ -3,6 +3,7 @@
     <h1>This is an memos page</h1>
     <div v-for="memo in memoList" v-bind:key="memo">
       <h3> {{ memo.id }} {{ memo.subject }}</h3>
+      <router-link :to="{ name:'memo-detail', params: { memo_id: memo.id }}">メモ詳細へ</router-link>
     </div>
   </div>
 </template>
