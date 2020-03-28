@@ -110,3 +110,65 @@ func MemoDetailHandler(c *gin.Context) {
 
 	c.PureJSON(http.StatusOK, memoDetailJson.String())
 }
+
+type UpdatedMemo struct {
+	UserId      int    `json:"user_id"`
+	MemoId      int    `json:"memo_id"`
+	MemoSubject string `json:"memo_subject"`
+	MemoContent string `json:"memo_content"`
+}
+
+func MemoDetailUpdateHandler(c *gin.Context) {
+	log.Print("----MemoDetailUpdateHandler----")
+	var updatedMemo UpdatedMemo
+	if err := c.BindJSON(&updatedMemo); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to bind json",
+		})
+		return
+	}
+
+	log.Printf("%+v", updatedMemo)
+
+	// TODO: 共通化
+	DBDSN := os.Getenv("DBDSN")
+	if len(DBDSN) == 0 {
+		log.Println("set default DSN")
+		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	}
+
+	conn, err := sql.Open("postgres", DBDSN)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 1",
+		})
+		return
+	}
+
+	const updateMemoQuery = `
+UPDATE memos SET subject=$1, content=$2
+ WHERE id=$3 AND users_id=$4
+`
+	result, err := conn.Exec(updateMemoQuery,
+		updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 2",
+		})
+		return
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 3",
+		})
+		return
+	}
+	if n != 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to update memo",
+		})
+		return
+	}
+}

@@ -21,10 +21,12 @@ func main() {
 		AllowMethods: []string{
 			"GET",
 			"OPTIONS",
+			"PATCH",
 		},
 		// 許可したいHTTPリクエストヘッダの一覧
 		AllowHeaders: []string{
 			"Accept",
+			"Content-Type",
 		},
 		// 許可したいアクセス元の一覧
 		AllowOrigins: []string{
@@ -43,6 +45,7 @@ func main() {
 	router.GET("/memodetail", hs.MemoDetailHandler)
 	// メモ新規作成API
 	// メモ更新API
+	router.PATCH("/memodetail", hs.MemoDetailUpdateHandler)
 	// メモ削除API
 	// タグ一覧返却API
 	// タグ更新API
