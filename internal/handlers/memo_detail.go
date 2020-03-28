@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -100,13 +101,12 @@ func MemoDetailHandler(c *gin.Context) {
 		})
 		return
 	}
-	memoDetailJson, err := json.Marshal(memoDetail)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to xxx",
-		})
-		return
-	}
 
-	c.JSON(http.StatusOK, string(memoDetailJson))
+	//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
+	var memoDetailJson bytes.Buffer
+	encoder := json.NewEncoder(&memoDetailJson)
+	encoder.SetEscapeHTML(false)
+	encoder.Encode(memoDetail)
+
+	c.PureJSON(http.StatusOK, memoDetailJson.String())
 }
