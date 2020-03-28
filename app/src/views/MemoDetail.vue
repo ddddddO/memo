@@ -1,15 +1,18 @@
 <template>
   <div class="memodetail">
-    <h1>This is a memo detail page</h1>
-    <h2>ID: {{ $route.params.memo_id }}</h2>
     <h2>Subject: {{ memoDetail.subject }}</h2>
     <div v-if="!activatedEdit">
       <h3 v-html="memoDetail.content"></h3>
       <button v-on:click="activateEditMemo">Edit</button>
     </div>
     <div v-else>
-      <textarea name="content" style="width:100%;" rows="20" v-model="memoDetail.content">
+      <textarea name="content" style="width:100%;" rows="7" v-model="memoDetail.content">
       </textarea>
+      <button v-on:click="switchPreviewContent">Preview?</button>
+      <div v-if="activatePreviewContent">
+        <h2>↓Preview↓</h2>
+        <h3 style="white-space: pre-wrap;" v-html="memoDetail.content"></h3>
+      </div>
       <button v-on:click="deactivateEditMemo">Cancel</button>
       <button v-on:click="updateMemo(memoDetail.content)">Update</button>
     </div>
@@ -21,8 +24,8 @@ export default {
   name: 'memoDetail',
   data: () => ({
     memoDetail: null,
-    //contentForTextarea: null,
     activatedEdit: false,
+    activatePreviewContent: false,
     endpoint: 'http://localhost:8082/memodetail'
   }),
   async mounted () {
@@ -59,6 +62,9 @@ export default {
     },
     deactivateEditMemo: function () {
       this.activatedEdit = false
+    },
+    switchPreviewContent: function () {
+      this.activatePreviewContent = !this.activatePreviewContent
     },
     updateMemo: function (content) {
       // TODO: update後、メモ詳細ページへ遷移(更新済みの内容を出力)
