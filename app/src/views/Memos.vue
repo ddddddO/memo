@@ -1,15 +1,25 @@
 <template>
   <div class="memos">
     <h1>This is a memos page</h1>
-    <div v-for="memo in memoList" v-bind:key="memo">
-      <h2>
-        <router-link :to="{ name:'memo-detail', params: { memo_id: memo.id }}">
-          <a>{{ memo.subject }}</a>
-        </router-link>
-      </h2>
+    <div>
+      <b-card-group deck v-for="memo in memoList" v-bind:key="memo" >
+        <b-card bg-variant="secondary" text-variant="white" header="After 3 days" class="text-center">
+          <b-card-text>
+            <router-link :to="{ name:'memo-detail', params: { memo_id: memo.id }}">
+              <a>{{ memo.subject }}</a>
+            </router-link>
+          </b-card-text>
+        </b-card>
+      </b-card-group>
     </div>
   </div>
 </template>
+
+<style>
+div.card-deck {
+  margin : 0px 10px 0px 10px;
+}
+</style>
 
 <script>
 export default {
