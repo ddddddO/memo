@@ -31,6 +31,7 @@ func main() {
 		// 許可したいアクセス元の一覧
 		AllowOrigins: []string{
 			"http://localhost:8080",
+			"http://127.0.0.1:8887", // Web Server for Chrome
 		},
 		MaxAge: 30 * time.Second,
 	}))
