@@ -7,17 +7,19 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
 type MemoDetail struct {
-	Id       int    `json:"id"`
-	Subject  string `json:"subject"`
-	Content  string `json:"content"`
-	TagIds   string `json:"tag_ids"`
-	TagNames string `json:"tag_names"`
+	Id       int      `json:"id"`
+	Subject  string   `json:"subject"`
+	Content  string   `json:"content"`
+	TagIds   []int    `json:"tag_ids"`
+	TagNames []string `json:"tag_names"`
 }
 
 func MemoDetailHandler(c *gin.Context) {
@@ -53,32 +55,33 @@ func MemoDetailHandler(c *gin.Context) {
 	}
 
 	const memoDetailQuery = `
-	SELECT DISTINCT
+	SELECT
 	    m.id AS id,
 	    m.subject AS subject,
 		m.content AS content,
-		ARRAY(SELECT t.id
+		(SELECT jsonb_agg(t.id)
 		  FROM memos m 
 		  JOIN memo_tag mt 
 		  ON m.id = mt.memos_id
 		  JOIN tags t
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
-		)  AS tag_ids,
-		ARRAY(SELECT t.name
+		) AS tag_ids,
+		(SELECT jsonb_agg(t.name)
 		  FROM memos m 
 		  JOIN memo_tag mt 
 		  ON m.id = mt.memos_id
 		  JOIN tags t
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
-		)  AS tag_names
+		) AS tag_names
 		   FROM memos m 
 		   JOIN memo_tag mt 
 		   ON m.id = mt.memos_id
 		   JOIN tags t
 		   ON mt.tags_id = t.id
 		WHERE m.id = $1 AND m.users_id = $2
+		GROUP BY m.id
 	`
 
 	rows, err := conn.Query(memoDetailQuery, memoId, userId)
@@ -89,10 +92,15 @@ func MemoDetailHandler(c *gin.Context) {
 		return
 	}
 	rows.Next()
-	var memoDetail MemoDetail
+	var (
+		memoDetail MemoDetail
+		tagIds     string
+		tagNames   string
+	)
+	// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
 	err = rows.Scan(
 		&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content,
-		&memoDetail.TagIds, &memoDetail.TagNames,
+		&tagIds, &tagNames,
 	)
 	if err != nil {
 		log.Println(err)
@@ -101,6 +109,8 @@ func MemoDetailHandler(c *gin.Context) {
 		})
 		return
 	}
+	memoDetail.TagIds = strToIntSlice(tagIds)
+	memoDetail.TagNames = strToStrSlice(tagNames)
 
 	//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
 	var memoDetailJson bytes.Buffer
@@ -109,6 +119,32 @@ func MemoDetailHandler(c *gin.Context) {
 	encoder.Encode(memoDetail)
 
 	c.PureJSON(http.StatusOK, memoDetailJson.String())
+}
+
+func strToIntSlice(s string) []int {
+	if len(s) <= 2 {
+		return []int{}
+	}
+
+	ss := strings.Split(s[1:len(s)-1], ",")
+	var nums []int
+	for _, strNum := range ss {
+		strNum = strings.TrimSpace(strNum)
+		num, err := strconv.Atoi(strNum)
+		if err != nil {
+			panic(err)
+		}
+		nums = append(nums, num)
+	}
+	return nums
+}
+
+func strToStrSlice(s string) []string {
+	if len(s) <= 2 {
+		return []string{}
+	}
+
+	return strings.Split(s[1:len(s)-1], ",")
 }
 
 type UpdatedMemo struct {

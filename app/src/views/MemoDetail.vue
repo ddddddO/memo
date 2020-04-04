@@ -1,15 +1,21 @@
 <template>
   <div class="memodetail">
-    <h2>Subject: {{ memoDetail.subject }}</h2>
+    <div class="memodetail-tags">
+      <h3>Tags:</h3>
+      <h2>{{ memoDetail.tag_names }}</h2>
+    </div>
+    <div class="memodetail-subject">
+      <h3>Subject:</h3>
+      <h2>{{ memoDetail.subject }}</h2>
+    </div>
     <div v-if="!activatedEdit">
       <h3 v-html="memoDetail.content"></h3>
       <button v-on:click="activateEditMemo">Edit</button>
     </div>
     <div v-else>
-      <textarea name="content" style="width:100%;" rows="7" v-model="memoDetail.content">
-      </textarea>
+      <textarea name="content" style="width:100%;" rows="7" v-model="memoDetail.content"></textarea>
       <button v-on:click="switchPreviewContent">Preview?</button>
-      <div v-if="activatePreviewContent">
+      <div v-if="activatedPreviewContent">
         <h2>↓Preview↓</h2>
         <h3 style="white-space: pre-wrap;" v-html="memoDetail.content"></h3>
       </div>
@@ -25,10 +31,10 @@ export default {
   data: () => ({
     memoDetail: null,
     activatedEdit: false,
-    activatePreviewContent: false,
+    activatedPreviewContent: false,
     endpoint: 'http://localhost:8082/memodetail'
   }),
-  async mounted () {
+  async created () {
     const user_id = 1
     const memo_id = this.$route.params.memo_id
     try {
@@ -43,8 +49,9 @@ export default {
       })
       .then(function (json) {
         const tmp = JSON.stringify(json)
-        // NOTE: apiからのレスポンスに含まれるエスケープ文字をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリムし、かつ末尾の改行コード「\n」をトリム
-        return tmp.replace(/\\"/g, '"').slice(1, -3)
+        // NOTE: apiからのレスポンスに含まれるエスケープ文字をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリムし、かつ末尾の改行コード「\n」をトリム(と諸々、、)
+        const j = tmp.replace(/\\"/g, '"').slice(1, -3).replace(/\"\"/g, '"').replace(/,\" /g, ',').replace(/\\\\"/g, '"').replace(/\["/g, '[');
+        return j
       })
       .then(function (sJson) {
         const tmp = JSON.parse(sJson)
@@ -64,7 +71,7 @@ export default {
       this.activatedEdit = false
     },
     switchPreviewContent: function () {
-      this.activatePreviewContent = !this.activatePreviewContent
+      this.activatedPreviewContent = !this.activatedPreviewContent
     },
     updateMemo: function (content) {
       // TODO: update後、メモ詳細ページへ遷移(更新済みの内容を出力)
