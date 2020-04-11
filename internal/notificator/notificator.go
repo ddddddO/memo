@@ -19,6 +19,7 @@ func NewNotificator(to string) Notificator {
 			endpoint: "https://fcm.googleapis.com/fcm/send",
 			token:    os.Getenv("FCM_TOKEN"),
 			authKey:  os.Getenv("FCM_AUTH_KEY"),
+			dsn:      os.Getenv("DBDSN"),
 		}
 	default:
 		return DefaultNotificator{}

@@ -2,18 +2,22 @@ package notificator
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
+
+	_ "github.com/lib/pq"
 )
 
 type FCMNotificator struct {
 	endpoint string
 	token    string
 	authKey  string
+	dsn      string
 }
 
 type data struct {
@@ -28,10 +32,51 @@ type notification struct {
 }
 
 func (fcmn FCMNotificator) detect() error {
-	log.Println("DETECT")
+	afterXdaysQueries := []string{
+		`SELECT id from memos WHERE updated_at < NOW() - interval '1 days' AND notified_cnt = 0 ORDER BY id`,
+		`SELECT id from memos WHERE updated_at < NOW() - interval '4 days' AND notified_cnt = 1 ORDER BY id`,
+		`SELECT id from memos WHERE updated_at < NOW() - interval '7 days' AND notified_cnt = 2 ORDER BY id`,
+		`SELECT id from memos WHERE updated_at < NOW() - interval '11 days' AND notified_cnt = 3 ORDER BY id`,
+		`SELECT id from memos WHERE updated_at < NOW() - interval '15 days' AND notified_cnt = 4 ORDER BY id`,
+		`SELECT id from memos WHERE updated_at < NOW() - interval '20 days' AND notified_cnt = 5 ORDER BY id`,
+	}
+	for _, query := range afterXdaysQueries {
+		if err := fcmn.execQuery(query); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
+//var updateNotifiedCntQuery = "UPDATE memos SET notified_cnt = notified_cnt + 1 WHERE id IN (%s)"
+
+func (fcmn FCMNotificator) execQuery(query string) error {
+	conn, err := sql.Open("postgres", fcmn.dsn)
+	if err != nil {
+		return err
+	}
+	rows, err := conn.Query(query)
+	if err != nil {
+		return err
+	}
+
+	log.Println("selected ids")
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return err
+		}
+		log.Println(id)
+	}
+	// NOTE: afterXdaysQueryで取得したメモを通知して、そのメモを以下なクエリでnotified_cnt++する
+	// conn.Exec(fmt.Sprint(updateNotifiedCntQuery, query))
+	return nil
+}
+
+// NOTE: 通知は１メモにつき１通ずつ送りたい。
+// が、複数メモの更新日時がほとんど変わらない場合、一度にほぼ同時に連続で通知してしまう(のはいや)
+// なので、1通ごとにsleepして通知する
 func (fcmn FCMNotificator) send() error {
 	d := data{
 		To: fcmn.token,

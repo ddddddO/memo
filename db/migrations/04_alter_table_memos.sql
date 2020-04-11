@@ -1,7 +1,7 @@
 -- +migrate Up
 ALTER TABLE memos ADD COLUMN created_at TIMESTAMP;
 ALTER TABLE memos ADD COLUMN updated_at TIMESTAMP;
-ALTER TABLE memos ADD COLUMN notified_at TIMESTAMP;
+ALTER TABLE memos ADD COLUMN notified_cnt INTEGER DEFAULT 0;
 
 -- NOTE: メモ詳細の内容更新時のupdated_at更新
 -- ref: https://www.postgresql.jp/document/11/html/plpgsql-trigger.html
@@ -37,6 +37,6 @@ DROP TRIGGER IF EXISTS update_created_updated_at_trigger ON memos;
 DROP FUNCTION update_created_updated_at_function();
 DROP TRIGGER IF EXISTS update_updated_at_trigger ON memos;
 DROP FUNCTION update_updated_at_function();
-ALTER TABLE memos DROP COLUMN notified_at;
+ALTER TABLE memos DROP COLUMN notified_cnt;
 ALTER TABLE memos DROP COLUMN updated_at;
 ALTER TABLE memos DROP COLUMN created_at;
