@@ -6,6 +6,7 @@ import (
 )
 
 type Notificator interface {
+	detect() error
 	send() error
 }
 
@@ -16,7 +17,7 @@ func NewNotificator(to string) Notificator {
 	case "fcm":
 		return FCMNotificator{
 			endpoint: "https://fcm.googleapis.com/fcm/send",
-			to:       os.Getenv("FCM_TO"),
+			token:    os.Getenv("FCM_TOKEN"),
 			authKey:  os.Getenv("FCM_AUTH_KEY"),
 		}
 	default:
@@ -25,9 +26,18 @@ func NewNotificator(to string) Notificator {
 }
 
 func Run(n Notificator) {
+	if err := n.detect(); err != nil {
+		panic(err)
+	}
+
 	if err := n.send(); err != nil {
 		panic(err)
 	}
+}
+
+func (dn DefaultNotificator) detect() error {
+	fmt.Println("not implemented")
+	return nil
 }
 
 func (dn DefaultNotificator) send() error {

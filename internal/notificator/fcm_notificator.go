@@ -12,7 +12,7 @@ import (
 
 type FCMNotificator struct {
 	endpoint string
-	to       string
+	token    string
 	authKey  string
 }
 
@@ -27,9 +27,14 @@ type notification struct {
 	Icon  string `json:"icon"`
 }
 
+func (fcmn FCMNotificator) detect() error {
+	log.Println("DETECT")
+	return nil
+}
+
 func (fcmn FCMNotificator) send() error {
 	d := data{
-		To: fcmn.to,
+		To: fcmn.token,
 		Notification: notification{
 			Title: "FCM Message by go",
 			Body:  "This is an FCM Message",
