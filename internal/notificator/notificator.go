@@ -7,7 +7,7 @@ import (
 
 type Notificator interface {
 	detect() error
-	send() error
+	notify() error
 }
 
 type DefaultNotificator struct{}
@@ -31,7 +31,7 @@ func Run(n Notificator) {
 		panic(err)
 	}
 
-	if err := n.send(); err != nil {
+	if err := n.notify(); err != nil {
 		panic(err)
 	}
 }
@@ -41,7 +41,7 @@ func (dn DefaultNotificator) detect() error {
 	return nil
 }
 
-func (dn DefaultNotificator) send() error {
+func (dn DefaultNotificator) notify() error {
 	fmt.Println("not implemented")
 	return nil
 }
