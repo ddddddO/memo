@@ -41,7 +41,7 @@ type afterQuery struct {
 var afterXdaysQueries = []*afterQuery{
 	&afterQuery{
 		description: "After 1 day!",
-		query:       `SELECT subject from memos WHERE updated_at < NOW() - interval '1 days' AND notified_cnt = 0 ORDER BY id`,
+		query:       `SELECT subject from memos WHERE (updated_at < NOW() - interval '1 days' AND notified_cnt = 0) OR (created_at <> updated_at AND notified_cnt = 0) ORDER BY id`,
 	},
 	&afterQuery{
 		description: "After 4 days!",
@@ -108,8 +108,14 @@ func (fcmn FCMNotificator) notify() error {
 // が、複数メモの更新日時がほとんど変わらない場合、一度にほぼ同時に連続で通知してしまう(のはいや)
 // なので、1通ごとにsleepして通知する
 func (fcmn FCMNotificator) send(aq *afterQuery) error {
-	var d data
+	defer aq.rsltRows.Close()
+
+	var (
+		d   data
+		cnt int
+	)
 	for aq.rsltRows.Next() {
+		cnt++
 		var (
 			subject string
 		)
@@ -127,6 +133,9 @@ func (fcmn FCMNotificator) send(aq *afterQuery) error {
 				Icon:  "./img/icons/android-chrome-192x192.png",
 			},
 		}
+	}
+	if cnt == 0 {
+		return nil
 	}
 
 	b, err := json.Marshal(d)
