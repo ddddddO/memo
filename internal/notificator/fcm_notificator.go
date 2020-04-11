@@ -41,7 +41,7 @@ type afterQuery struct {
 var afterXdaysQueries = []*afterQuery{
 	&afterQuery{
 		description: "After 1 day!",
-		query:       `SELECT subject from memos WHERE (updated_at < NOW() - interval '1 days' AND notified_cnt = 0) OR (created_at <> updated_at AND notified_cnt = 0) ORDER BY id`,
+		query:       `SELECT subject from memos WHERE updated_at < NOW() - interval '1 days' AND notified_cnt = 0 ORDER BY id`,
 	},
 	&afterQuery{
 		description: "After 4 days!",
