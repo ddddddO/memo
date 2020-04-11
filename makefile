@@ -11,7 +11,8 @@ localpg:
 	sleep 5 && sql-migrate up -config=db/dbconfig.yml
 	# 初期化されたDBに対して、初期データを投入します
 	PGPASSWORD=postgres psql -h localhost -U postgres -d tag-mng -f _data/data_dump.sql 
-
+	# memosに対しては、created_at/updated_atを以下で初期化します
+	PGPASSWORD=postgres psql -h localhost -U postgres -d tag-mng -f _data/update_time.sql
 	#docker run -d --name local-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres postgres:12-alpine
 
 conlocalpg:
