@@ -20,14 +20,3 @@ conlocalpg:
 
 rmlocalpg:
 	docker ps -a --filter name=local-postgres -q | xargs docker rm -f
-
-# https://qiita.com/n11sh1/items/5d64c337ef927ac8d5d6  に、以下「key」と「to」の値についてある
-#pushnotice:
-	curl -X POST -H "Authorization: key=<SERVER KEY>" -H "Content-Type: application/json" -d '{
-	"to": "<GENERETED TOKEN>",
-	"notification": {
-	"title": "FCM Message",
-	"body": "This is an FCM Message",
-	"icon": "./img/icons/android-chrome-192x192.png"
-	}
-	}' https://fcm.googleapis.com/fcm/send
