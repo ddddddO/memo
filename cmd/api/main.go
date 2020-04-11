@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	hs "github.com/ddddddO/tag-mng/internal/handlers"
+	hs "github.com/ddddddO/tag-mng/internal/api/handlers"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
