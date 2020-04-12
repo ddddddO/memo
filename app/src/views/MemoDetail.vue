@@ -1,29 +1,39 @@
 <template>
   <div class="memodetail">
     <div class="memodetail-tags">
-      <h3>Tags:</h3>
-      <h2>{{ memoDetail.tag_names }}</h2>
+      <h3 style="text-align:start;font-size: medium;">Tags:</h3>
+      <h2 style="font-size: x-large;">{{ memoDetail.tag_names }}</h2>
     </div>
     <div class="memodetail-subject">
-      <h3>Subject:</h3>
-      <h2>{{ memoDetail.subject }}</h2>
+      <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+      <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
     </div>
+    <h3 style="text-align:start;font-size: medium;">Content:</h3>
     <div v-if="!activatedEdit">
-      <h3 v-html="memoDetail.content"></h3>
-      <button v-on:click="activateEditMemo">Edit</button>
+      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
+      <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
     </div>
     <div v-else>
-      <textarea name="content" style="width:100%;" rows="7" v-model="memoDetail.content"></textarea>
-      <button v-on:click="switchPreviewContent">Preview?</button>
+      <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
+      <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
       <div v-if="activatedPreviewContent">
-        <h2>↓Preview↓</h2>
-        <h3 style="white-space: pre-wrap;" v-html="memoDetail.content"></h3>
+        <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
+        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
       </div>
-      <button v-on:click="deactivateEditMemo">Cancel</button>
-      <button v-on:click="updateMemo(memoDetail.content)">Update</button>
+      <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
+      <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
     </div>
   </div>
 </template>
+
+<style>
+body {
+  margin : 0px 10px 0px 10px;
+}
+button {
+  margin : 3px;
+}
+</style>
 
 <script>
 export default {
