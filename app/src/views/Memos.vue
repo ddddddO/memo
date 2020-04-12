@@ -1,22 +1,36 @@
 <template>
   <div class="memos">
-    <h1>This is a memos page</h1>
-    <div>
-      <b-card-group deck v-for="memo in memoList" v-bind:key="memo" >
-        <b-card bg-variant="secondary" text-variant="white" header="After 3 days" class="text-center">
-          <b-card-text>
-            <router-link :to="{ name:'memo-detail', params: { memo_id: memo.id }}">
-              <a>{{ memo.subject }}</a>
-            </router-link>
-          </b-card-text>
-        </b-card>
-      </b-card-group>
+    <h1>memos</h1>
+    <div class="overflow-auto" v-if="loaded">
+      <b-pagination
+        pills
+        size="sm"
+        align="center"
+        v-model="currentPage"
+        :total-rows="rows"
+        :per-page="perPage"
+        aria-controls="memo-list-table"
+      ></b-pagination>
+      <b-table
+        id="memo-list-table"
+        :items="memoList"
+        :fields="fields"
+        :per-page="perPage"
+        :current-page="currentPage"
+        small
+      >
+        <template v-slot:cell(id)="data">
+          <router-link :to="{ name:'memo-detail', params: { memo_id: data.value }}">
+            <a>{{ data.value }}</a>
+          </router-link>
+        </template>
+      </b-table>
     </div>
   </div>
 </template>
 
 <style>
-div.card-deck {
+body {
   margin : 0px 10px 0px 10px;
 }
 </style>
@@ -26,12 +40,16 @@ export default {
   name: 'memos',
   data: () => ({
     loaded: false,
-    memoList: null
+    memoList: null,
+    perPage: 10,
+    currentPage: 1,
+    fields: ['id', 'subject']
   }),
   async mounted () {
     this.loaded = false
     try {
-      this.memoList = await fetch('http://localhost:8082' + '/memos' + '?userId=1',
+      this.memoList = await fetch(
+        'http://localhost:8082' + '/memos' + '?userId=1',
       {
         mode: 'cors',
         headers: {'Accept': 'application/json'}
@@ -48,10 +66,14 @@ export default {
         const tmp = JSON.parse(sJson)
         return tmp.memo_list
       })
-      console.log('memoList')
-      console.log(this.memoList)
     } catch (err) {
       console.error(err)
+    }
+    this.loaded = true
+  },
+  computed: {
+    rows () {
+      return this.memoList.length
     }
   }
 }
