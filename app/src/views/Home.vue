@@ -1,3 +1,4 @@
+<!--
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png">
@@ -13,6 +14,23 @@ export default {
   name: 'home',
   components: {
     HelloWorld
+  }
+}
+</script>
+-->
+<template>
+  <div class="home">
+    <LoginForm title="Welcom to Tag-Mng App"/>
+  </div>
+</template>
+
+<script>
+import LoginForm from '@/components/Login.vue'
+
+export default {
+  name: 'home',
+  components: {
+    LoginForm
   }
 }
 </script>
