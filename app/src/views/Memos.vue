@@ -50,22 +50,22 @@ export default {
     try {
       this.memoList = await fetch(
         'http://localhost:8082' + '/memos' + '?userId=1',
-      {
-        mode: 'cors',
-        headers: {'Accept': 'application/json'}
-      })
-      .then(function (resp) {
-        return resp.json()
-      })
-      .then(function (json) {
-        const tmp = JSON.stringify(json)
-        // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
-        return tmp.replace(/\\"/g, '"').slice(1, -1)
-      })
-      .then(function (sJson) {
-        const tmp = JSON.parse(sJson)
-        return tmp.memo_list
-      })
+        {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        })
+        .then(function (resp) {
+          return resp.json()
+        })
+        .then(function (json) {
+          const tmp = JSON.stringify(json)
+          // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
+          return tmp.replace(/\\"/g, '"').slice(1, -1)
+        })
+        .then(function (sJson) {
+          const tmp = JSON.parse(sJson)
+          return tmp.memo_list
+        })
     } catch (err) {
       console.error(err)
     }

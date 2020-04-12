@@ -45,28 +45,28 @@ export default {
     endpoint: 'http://localhost:8082/memodetail'
   }),
   async created () {
-    const user_id = 1
-    const memo_id = this.$route.params.memo_id
+    const userId = 1
+    const memoId = this.$route.params.memo_id
     try {
       this.memoDetail = await fetch(
-        this.endpoint + '?userId=' + user_id + '&' + 'memoId=' + memo_id,
-      {
-        mode: 'cors',
-        headers: {'Accept': 'application/json'}
-      })
-      .then(function (resp) {
-        return resp.json()
-      })
-      .then(function (json) {
-        const tmp = JSON.stringify(json)
-        // NOTE: apiからのレスポンスに含まれるエスケープ文字をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリムし、かつ末尾の改行コード「\n」をトリム(と諸々、、)
-        const j = tmp.replace(/\\"/g, '"').slice(1, -3).replace(/\"\"/g, '"').replace(/,\" /g, ',').replace(/\\\\"/g, '"').replace(/\["/g, '[');
-        return j
-      })
-      .then(function (sJson) {
-        const tmp = JSON.parse(sJson)
-        return tmp
-      })
+        this.endpoint + '?userId=' + userId + '&' + 'memoId=' + memoId,
+        {
+          mode: 'cors',
+          headers: { 'Accept': 'application/json' }
+        })
+        .then(function (resp) {
+          return resp.json()
+        })
+        .then(function (json) {
+          const tmp = JSON.stringify(json)
+          // NOTE: apiからのレスポンスに含まれるエスケープ文字をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリムし、かつ末尾の改行コード「\n」をトリム(と諸々、、)
+          const j = tmp.replace(/\\"/g, '"').slice(1, -3).replace(/""/g, '"').replace(/," /g, ',').replace(/\\\\"/g, '"').replace(/\["/g, '[')
+          return j
+        })
+        .then(function (sJson) {
+          const tmp = JSON.parse(sJson)
+          return tmp
+        })
     } catch (err) {
       console.error(err)
     }
@@ -85,8 +85,8 @@ export default {
     },
     updateMemo: function (content) {
       // TODO: update後、メモ詳細ページへ遷移(更新済みの内容を出力)
-      fetch(this.endpoint,{
-        headers: { "Content-Type": "application/json; charset=utf-8" },
+      fetch(this.endpoint, {
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'PATCH',
         body: JSON.stringify({
           user_id: 1,
