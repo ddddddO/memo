@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
@@ -69,6 +70,10 @@ func AuthHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	session := sessions.Default(c)
+	session.Set("RANDOM_AUTHED_STRING", "tmp_authed_token") // FIXME:
+	session.Save()
 
 	c.JSON(http.StatusOK, gin.H{
 		"user_id": userId,

@@ -52,6 +52,7 @@ export default {
         'http://localhost:8082' + '/memos' + '?userId=1',
         {
           mode: 'cors',
+          credentials: 'include',
           headers: { 'Accept': 'application/json' }
         })
         .then(function (resp) {

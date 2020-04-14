@@ -6,7 +6,7 @@
       <b-input v-model="userName" name="name" type="text" id="text-username"></b-input>
       <label for="text-password">Password</label>
       <b-input v-model="passWord" name="passwd" type="password" id="text-password"></b-input>
-      <b-button style="margin: 10px" v-on:click="postLoginForm" type="submit" size="sm" variant="primary">Login</b-button>
+      <b-button pill style="margin: 10px" v-on:click="postLoginForm" type="button" size="sm" variant="primary">Login</b-button>
     </b-form>
   </div>
 </template>
@@ -32,10 +32,16 @@ export default {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded'
             },
+            mode: 'cors',
+            credentials: 'include',
             body: 'name=' + this.userName + '&' + 'passwd=' + this.passWord
           })
           .then(function (resp) {
-            // console.log(resp)
+            if (!resp.ok) {
+              alert('retry login!')
+            } else {
+              // this.$router.push('/memos') TODO: 遷移させたい
+            }
           })
       } catch (err) {
         console.error(err)

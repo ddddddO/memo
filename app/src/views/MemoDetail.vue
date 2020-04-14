@@ -88,6 +88,8 @@ export default {
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'PATCH',
+        mode: 'cors',
+        credentials: 'include',
         body: JSON.stringify({
           user_id: 1,
           memo_id: this.$route.params.memo_id,
@@ -95,7 +97,6 @@ export default {
           memo_content: content
         })
       })
-      alert('Update!')
       this.$router.push('/memos')
     },
     convertRNtoBR: function (content) {
