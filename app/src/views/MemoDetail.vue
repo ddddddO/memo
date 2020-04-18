@@ -12,6 +12,7 @@
     <div v-if="!activatedEdit">
       <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
       <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
+      <b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>
     </div>
     <div v-else>
       <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
@@ -85,7 +86,6 @@ export default {
       this.activatedPreviewContent = !this.activatedPreviewContent
     },
     updateMemo: function (content) {
-      // TODO: update後、メモ詳細ページへ遷移(更新済みの内容を出力)
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'PATCH',
@@ -98,10 +98,28 @@ export default {
           memo_content: content
         })
       })
-      this.$router.push('/memos')
+      this.reloadMemos()
     },
     convertRNtoBR: function (content) {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+
+    },
+    deleteMemo: function () {
+      if (!window.confirm('Delete ?')) { return }
+
+      fetch(this.endpoint, {
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        method: 'DELETE',
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify({
+          user_id: 1,
+          memo_id: this.$route.params.memo_id
+        })
+      })
+      this.reloadMemos()
+    },
+    reloadMemos: function () {
+      this.$router.replace('/memos')
     }
   }
 }

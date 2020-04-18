@@ -32,6 +32,7 @@ func main() {
 			"OPTIONS",
 			"PATCH",
 			"POST",
+			"DELETE",
 		},
 		// 許可したいHTTPリクエストヘッダの一覧
 		AllowHeaders: []string{
@@ -61,6 +62,7 @@ func main() {
 	// メモ更新API
 	router.PATCH("/memodetail", hs.MemoDetailUpdateHandler)
 	// メモ削除API
+	router.DELETE("/memodetail", hs.MemoDetailDeleteHandler)
 	// タグ一覧返却API
 	// タグ更新API
 	// タグ削除API

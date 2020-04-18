@@ -270,3 +270,63 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES((SELECT id FROM inserted), 1);
 		return
 	}
 }
+
+type DeleteMemo struct {
+	UserId int `json:"user_id"`
+	MemoId int `json:"memo_id"`
+}
+
+func MemoDetailDeleteHandler(c *gin.Context) {
+	log.Print("----MemoDetailDeleteHandler----")
+	var deleteMemo DeleteMemo
+	if err := c.BindJSON(&deleteMemo); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to bind json",
+		})
+		return
+	}
+
+	log.Printf("%+v", deleteMemo)
+
+	// TODO: 共通化
+	DBDSN := os.Getenv("DBDSN")
+	if len(DBDSN) == 0 {
+		log.Println("set default DSN")
+		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	}
+
+	conn, err := sql.Open("postgres", DBDSN)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 1",
+		})
+		return
+	}
+
+	const deleteMemoQuery = `
+DELETE FROM memos WHERE users_id = $1 AND id = $2;
+`
+
+	result, err := conn.Exec(deleteMemoQuery,
+		deleteMemo.UserId, deleteMemo.MemoId,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 2",
+		})
+		return
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 3",
+		})
+		return
+	}
+	if n != 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to update memo",
+		})
+		return
+	}
+}
