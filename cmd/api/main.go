@@ -31,6 +31,7 @@ func main() {
 			"GET",
 			"OPTIONS",
 			"PATCH",
+			"POST",
 		},
 		// 許可したいHTTPリクエストヘッダの一覧
 		AllowHeaders: []string{
@@ -56,6 +57,7 @@ func main() {
 	// メモ詳細返却API
 	router.GET("/memodetail", hs.MemoDetailHandler)
 	// メモ新規作成API
+	router.POST("/memodetail", hs.MemoDetailCreateHandler)
 	// メモ更新API
 	router.PATCH("/memodetail", hs.MemoDetailUpdateHandler)
 	// メモ削除API
@@ -69,6 +71,11 @@ func main() {
 func checkSession() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		log.Println("in checkSession")
+		if c.Request.Method == "OPTIONS" {
+			c.Next()
+			return
+		}
+
 		path := c.FullPath()
 		if path == "/health" || path == "/auth" {
 			c.Next()

@@ -30,7 +30,11 @@ export default new Router({
       path: '/memodetail/:memo_id',
       name: 'memo-detail',
       component: () => import('./views/MemoDetail.vue')
+    },
+    {
+      path: '/new_memo',
+      name: 'new-memo',
+      component: () => import('./views/NewMemo.vue')
     }
-
   ]
 })

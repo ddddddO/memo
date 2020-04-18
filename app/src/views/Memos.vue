@@ -2,15 +2,7 @@
   <div class="memos">
     <h1>memos</h1>
     <div class="overflow-auto" v-if="loaded">
-      <b-pagination
-        pills
-        size="sm"
-        align="center"
-        v-model="currentPage"
-        :total-rows="rows"
-        :per-page="perPage"
-        aria-controls="memo-list-table"
-      ></b-pagination>
+      <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
       <b-table
         id="memo-list-table"
         :items="memoList"
@@ -25,6 +17,15 @@
           </router-link>
         </template>
       </b-table>
+      <b-pagination
+        pills
+        size="sm"
+        align="center"
+        v-model="currentPage"
+        :total-rows="rows"
+        :per-page="perPage"
+        aria-controls="memo-list-table"
+      ></b-pagination>
     </div>
   </div>
 </template>

@@ -52,6 +52,7 @@ export default {
         this.endpoint + '?userId=' + userId + '&' + 'memoId=' + memoId,
         {
           mode: 'cors',
+          credentials: 'include',
           headers: { 'Accept': 'application/json' }
         })
         .then(function (resp) {
