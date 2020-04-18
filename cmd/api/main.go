@@ -68,7 +68,7 @@ func main() {
 	// タグ詳細返却API
 	router.GET("/tagdetail", hs.TagDetailHandler)
 	// タグ更新API
-	router.POST("/tagdetail", hs.TagDetailUpdateHandler)
+	router.PATCH("/tagdetail", hs.TagDetailUpdateHandler)
 	// タグ削除API
 	router.DELETE("/tagdetail", hs.TagDetailDeleteHandler)
 
