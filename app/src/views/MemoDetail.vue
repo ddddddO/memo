@@ -2,7 +2,7 @@
   <div class="memodetail">
     <div class="memodetail-tags">
       <h3 style="text-align:start;font-size: medium;">Tags:</h3>
-      <h2 style="font-size: x-large;">{{ memoDetail.tag_names }}</h2>
+      <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
     </div>
     <div class="memodetail-subject">
       <h3 style="text-align:start;font-size: medium;">Subject:</h3>

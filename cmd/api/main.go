@@ -64,6 +64,9 @@ func main() {
 	// メモ削除API
 	router.DELETE("/memodetail", hs.MemoDetailDeleteHandler)
 	// タグ一覧返却API
+	router.GET("/tags", hs.TagListHandler)
+	// タグ詳細返却API
+	router.GET("/tagdetail", hs.TagDetailHandler)
 	// タグ更新API
 	// タグ削除API
 
