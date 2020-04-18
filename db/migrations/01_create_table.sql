@@ -23,7 +23,7 @@ CREATE TABLE tags(
 
 CREATE TABLE memo_tag(
     memos_id INTEGER REFERENCES memos(id) ON DELETE CASCADE,
-    tags_id  INTEGER REFERENCES tags(id)
+    tags_id  INTEGER REFERENCES tags(id) ON DELETE CASCADE
 );
 
 -- +migrate Down

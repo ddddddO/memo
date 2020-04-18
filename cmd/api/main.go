@@ -49,8 +49,8 @@ func main() {
 		MaxAge:           30 * time.Second,
 	}))
 
+	// health
 	router.GET("/health", hs.HealthHandler)
-	// NOTE: tag-mng/web/app.rbから必要なAPIを列挙
 	// 認証API
 	router.POST("/auth", hs.AuthHandler)
 	// メモ一覧返却API
@@ -70,6 +70,7 @@ func main() {
 	// タグ更新API
 	router.POST("/tagdetail", hs.TagDetailUpdateHandler)
 	// タグ削除API
+	router.DELETE("/tagdetail", hs.TagDetailDeleteHandler)
 
 	router.Run(":8082")
 }

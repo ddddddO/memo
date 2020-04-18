@@ -191,3 +191,61 @@ UPDATE tags SET name = $1 WHERE id = $2
 		return
 	}
 }
+
+type DeleteTag struct {
+	Id int `json:"tag_id"`
+}
+
+func TagDetailDeleteHandler(c *gin.Context) {
+	log.Print("----TagDetailDeleteHandler----")
+	var deleteTag DeleteTag
+	if err := c.BindJSON(&deleteTag); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to bind json",
+		})
+		return
+	}
+
+	log.Printf("%+v", deleteTag)
+
+	// TODO: 共通化
+	DBDSN := os.Getenv("DBDSN")
+	if len(DBDSN) == 0 {
+		log.Println("set default DSN")
+		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	}
+
+	conn, err := sql.Open("postgres", DBDSN)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 1",
+		})
+		return
+	}
+
+	const deleteTagQuery = `
+DELETE FROM tags WHERE id = $1
+`
+	result, err := conn.Exec(deleteTagQuery,
+		deleteTag.Id,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 2",
+		})
+		return
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 3",
+		})
+		return
+	}
+	if n != 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to update memo",
+		})
+		return
+	}
+}
