@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -211,6 +212,7 @@ UPDATE memos SET subject=$1, content=$2
 
 type CreatedMemo struct {
 	UserId      int    `json:"user_id"`
+	TagIds      []int  `json:"tag_ids"`
 	MemoSubject string `json:"memo_subject"`
 	MemoContent string `json:"memo_content"`
 }
@@ -224,8 +226,6 @@ func MemoDetailCreateHandler(c *gin.Context) {
 		})
 		return
 	}
-
-	log.Printf("%+v", createdMemo)
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -242,30 +242,25 @@ func MemoDetailCreateHandler(c *gin.Context) {
 		return
 	}
 
-	const createMemoQuery = `
+	var createMemoQuery = `
 WITH inserted AS (INSERT INTO memos(subject, content, users_id) VALUES($1, $2, $3) RETURNING id)
-INSERT INTO memo_tag(memos_id, tags_id) VALUES((SELECT id FROM inserted), 1);
+INSERT INTO memo_tag(memos_id, tags_id) VALUES
+	((SELECT id FROM inserted), 1)
+	%s;
 `
 
-	result, err := conn.Exec(createMemoQuery,
+	var valuesStr string
+	for _, tagId := range createdMemo.TagIds {
+		valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagId)
+	}
+	createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
+
+	_, err = conn.Exec(createMemoQuery,
 		createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "failed to connect db 2",
-		})
-		return
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to connect db 3",
-		})
-		return
-	}
-	if n != 1 {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to update memo",
 		})
 		return
 	}

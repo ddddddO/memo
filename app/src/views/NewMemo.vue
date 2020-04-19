@@ -83,6 +83,7 @@ export default {
         credentials: 'include',
         body: JSON.stringify({
           user_id: 1,
+          tag_ids: this.tagsSelected,
           memo_subject: this.subject,
           memo_content: this.content
         })
