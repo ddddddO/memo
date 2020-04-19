@@ -1,8 +1,16 @@
 <template>
   <div class="creatememo">
-    <div class="memodetail-tags">
-      <h3 style="text-align:start;font-size: medium;">Tags: FIXME: checkbox</h3>
-      <!--<h2 style="font-size: x-large;">{{ memoDetail.tag_names }}</h2>-->
+    <div class="memodetail-tags" v-if="loaded">
+      <!--<h3 style="text-align:start;font-size: medium;">Tags: FIXME: checkbox</h3>-->
+      <b-form-group label="Tags:" style="text-align:start;">
+      <b-form-checkbox-group
+        id="checkbox-group-1"
+        v-model="tagsSelected"
+        name="tags"
+      >
+        <b-form-checkbox v-for="tag in tags" :key=tag.name :value=tag.id>{{ tag.name }}</b-form-checkbox>
+      </b-form-checkbox-group>
+    </b-form-group>
     </div>
     <div class="memodetail-subject">
       <h3 style="text-align:start;font-size: medium;">Subject:</h3>
@@ -29,10 +37,43 @@ button {
 export default {
   name: 'createMemo',
   data: () => ({
+    loaded: false,
     subject: '',
     content: '',
-    endpoint: 'http://localhost:8082/memodetail'
+    tags: null,
+    tagsSelected: [],
+    endpoint: 'http://localhost:8082/memodetail',
+    tagEndpoint: 'http://localhost:8082/tags'
   }),
+  async mounted () {
+    this.loaded = false
+    try {
+      this.tags = await fetch(this.tagEndpoint + '?userId=1', {
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'include'
+      })
+        .then(function (resp) {
+          const tmp1 = resp.json()
+          return tmp1
+        })
+        .then(function (j) {
+          const tmp2 = JSON.stringify(j)
+          // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
+          return tmp2.replace(/\\"/g, '"').slice(1, -1)
+        })
+        .then(function (sj) {
+          const tmp3 = JSON.parse(sj)
+          const tagList = tmp3.tag_list
+          return tagList
+        })
+    } catch (err) {
+      console.error(err)
+    }
+    console.log(this.tags)
+    this.loaded = true
+  },
   methods: {
     createMemo: function () {
       fetch(this.endpoint, {

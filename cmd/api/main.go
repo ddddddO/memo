@@ -22,7 +22,7 @@ func main() {
 	sessionSec := "sessionsecret" // FIXME: Using os.Getenv or crypto/rand
 	store := cookie.NewStore([]byte(sessionSec))
 	router.Use(sessions.Sessions("tag-mng-session", store))
-	router.Use(checkSession())
+	//router.Use(checkSession())
 
 	// cors実装：https://qiita.com/MasashiFujiike/items/7844150ce75d71a417ad
 	router.Use(cors.New(cors.Config{
@@ -67,6 +67,8 @@ func main() {
 	router.GET("/tags", hs.TagListHandler)
 	// タグ詳細返却API
 	router.GET("/tagdetail", hs.TagDetailHandler)
+	// タグ新規作成API
+	router.POST("/tagdetail", hs.TagDetailCreateHandler)
 	// タグ更新API
 	router.PATCH("/tagdetail", hs.TagDetailUpdateHandler)
 	// タグ削除API

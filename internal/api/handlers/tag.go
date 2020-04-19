@@ -249,3 +249,63 @@ DELETE FROM tags WHERE id = $1
 		return
 	}
 }
+
+type CreateTag struct {
+	Id     int    `json:"tag_id"`
+	Name   string `json:"tag_name"`
+	UserId int    `json:"user_id"`
+}
+
+func TagDetailCreateHandler(c *gin.Context) {
+	log.Print("----TagDetailCreateHandler----")
+	var createTag CreateTag
+	if err := c.BindJSON(&createTag); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to bind json",
+		})
+		return
+	}
+
+	log.Printf("%+v", createTag)
+
+	// TODO: 共通化
+	DBDSN := os.Getenv("DBDSN")
+	if len(DBDSN) == 0 {
+		log.Println("set default DSN")
+		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	}
+
+	conn, err := sql.Open("postgres", DBDSN)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 1",
+		})
+		return
+	}
+
+	const createTagQuery = `
+INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
+`
+	result, err := conn.Exec(createTagQuery,
+		createTag.Name, createTag.UserId,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 2",
+		})
+		return
+	}
+	n, err := result.RowsAffected()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to connect db 3",
+		})
+		return
+	}
+	if n != 1 {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "failed to update memo",
+		})
+		return
+	}
+}

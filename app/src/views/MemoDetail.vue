@@ -4,9 +4,12 @@
       <h3 style="text-align:start;font-size: medium;">Tags:</h3>
       <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
     </div>
-    <div class="memodetail-subject">
-      <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+    <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+    <div v-if="!activatedEdit" class="memodetail-subject">
       <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
+    </div>
+    <div v-else>
+      <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
     </div>
     <h3 style="text-align:start;font-size: medium;">Content:</h3>
     <div v-if="!activatedEdit">
