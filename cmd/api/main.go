@@ -3,103 +3,105 @@ package main
 import (
 	"log"
 	"net/http"
-	"time"
 
 	hs "github.com/ddddddO/tag-mng/internal/api/handlers"
 
-	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-gonic/gin"
+	"github.com/go-chi/chi"
+	"github.com/gorilla/sessions"
+	"github.com/rs/cors"
 )
 
 func main() {
 	log.Println("launch api server")
 
-	router := gin.Default()
+	router := chi.NewRouter()
 
-	// session実装：https://re-engines.com/2020/03/02/go%E3%83%95%E3%83%AC%E3%83%BC%E3%83%A0%E3%83%AF%E3%83%BC%E3%82%AFgin%E3%81%A7%E3%83%9F%E3%83%89%E3%83%AB%E3%82%A6%E3%82%A7%E3%82%A2%E3%82%92%E4%BD%BF%E3%81%A3%E3%81%A6%E3%83%AD%E3%82%B0%E3%82%A4/
 	sessionSec := "sessionsecret" // FIXME: Using os.Getenv or crypto/rand
-	store := cookie.NewStore([]byte(sessionSec))
-	router.Use(sessions.Sessions("tag-mng-session", store))
-	//router.Use(checkSession())
+	store := sessions.NewCookieStore([]byte(sessionSec))
 
-	// cors実装：https://qiita.com/MasashiFujiike/items/7844150ce75d71a417ad
-	router.Use(cors.New(cors.Config{
-		// 許可したいHTTPメソッドの一覧
-		AllowMethods: []string{
+	router.Use(checkSession(store))
+
+	// cors: https://github.com/rs/cors#parameters
+	c := cors.New(cors.Options{
+		AllowedMethods: []string{
 			"GET",
 			"OPTIONS",
 			"PATCH",
 			"POST",
 			"DELETE",
 		},
-		// 許可したいHTTPリクエストヘッダの一覧
-		AllowHeaders: []string{
+		AllowedHeaders: []string{
 			"Accept",
 			"Content-Type",
 		},
-		// 許可したいアクセス元の一覧
-		AllowOrigins: []string{
+		AllowedOrigins: []string{
 			"http://localhost:8080",
 			"http://127.0.0.1:8887", // Web Server for Chrome
 		},
 		// ref: https://developer.mozilla.org/ja/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
 		AllowCredentials: true,
-		MaxAge:           30 * time.Second,
-	}))
+		//MaxAge:           30,
+		// Enable Debugging for testing, consider disabling in production
+		Debug: true,
+	})
+	// ref: chi use cors
+	//     https://github.com/rs/cors/blob/master/examples/chi/server.go
+	router.Use(c.Handler)
 
 	// health
-	router.GET("/health", hs.HealthHandler)
+	router.Get("/health", hs.HealthHandler)
 	// 認証API
-	router.POST("/auth", hs.AuthHandler)
+	router.Post("/auth", hs.AuthHandler(store).(http.HandlerFunc))
 	// メモ一覧返却API
-	router.GET("/memos", hs.MemoListHandler)
+	router.Get("/memos", hs.MemoListHandler)
 	// メモ詳細返却API
-	router.GET("/memodetail", hs.MemoDetailHandler)
-	// メモ新規作成API
-	router.POST("/memodetail", hs.MemoDetailCreateHandler)
-	// メモ更新API
-	router.PATCH("/memodetail", hs.MemoDetailUpdateHandler)
-	// メモ削除API
-	router.DELETE("/memodetail", hs.MemoDetailDeleteHandler)
-	// タグ一覧返却API
-	router.GET("/tags", hs.TagListHandler)
-	// タグ詳細返却API
-	router.GET("/tagdetail", hs.TagDetailHandler)
+	router.Get("/memodetail", hs.MemoDetailHandler)
 	// タグ新規作成API
-	router.POST("/tagdetail", hs.TagDetailCreateHandler)
+	router.Post("/tagdetail", hs.TagDetailCreateHandler)
+	// メモ更新API
+	router.Patch("/memodetail", hs.MemoDetailUpdateHandler)
+	// メモ削除API
+	router.Delete("/memodetail", hs.MemoDetailDeleteHandler)
+	// タグ一覧返却API
+	router.Get("/tags", hs.TagListHandler)
+	// タグ詳細返却API
+	router.Get("/tagdetail", hs.TagDetailHandler)
+	// タグ新規作成API
+	router.Post("/tagdetail", hs.TagDetailCreateHandler)
 	// タグ更新API
-	router.PATCH("/tagdetail", hs.TagDetailUpdateHandler)
+	router.Patch("/tagdetail", hs.TagDetailUpdateHandler)
 	// タグ削除API
-	router.DELETE("/tagdetail", hs.TagDetailDeleteHandler)
+	router.Delete("/tagdetail", hs.TagDetailDeleteHandler)
 
-	router.Run(":8082")
+	http.ListenAndServe(":8082", router)
 }
 
-func checkSession() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		log.Println("in checkSession")
-		if c.Request.Method == "OPTIONS" {
-			c.Next()
-			return
-		}
+// ref: chi middleware
+//      https://github.com/go-chi/chi#middleware-handlers
+func checkSession(store sessions.Store) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Println("in checkSession")
+			if r.Method == "OPTIONS" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-		path := c.FullPath()
-		if path == "/health" || path == "/auth" {
-			c.Next()
-			return
-		}
+			path := r.URL.EscapedPath()
+			log.Println(path)
+			if path == "/health" || path == "/auth" {
+				next.ServeHTTP(w, r)
+				return
+			}
 
-		session := sessions.Default(c)
-		if session.Get("RANDOM_AUTHED_STRING") != "tmp_authed_token" { // FIXME:
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "required to athenticate",
-			})
-			c.Abort()
-		}
+			session, _ := store.Get(r, "STORE")
+			val, ok := session.Values["authed"].(bool)
+			if !ok || !val {
+				log.Println("UnAuthenticated")
+				return
+			}
 
-		c.Next()
+			next.ServeHTTP(w, r)
+		})
 	}
 }

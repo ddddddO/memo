@@ -61,8 +61,7 @@ export default {
         })
         .then(function (json) {
           const tmp = JSON.stringify(json)
-          // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
-          return tmp.replace(/\\"/g, '"').slice(1, -1)
+          return tmp
         })
         .then(function (sJson) {
           const tmp = JSON.parse(sJson)

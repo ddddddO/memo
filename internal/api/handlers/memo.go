@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
@@ -20,15 +19,16 @@ type Memos struct {
 	MemoList []Memo `json:"memo_list"`
 }
 
-func MemoListHandler(c *gin.Context) {
-	userId := c.Query("userId")
+func MemoListHandler(w http.ResponseWriter, r *http.Request) {
+	params := r.URL.Query()
+	userId := params.Get("userId")
 	if len(userId) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "empty value 'userId'",
-		})
+		// c.JSON(http.StatusBadRequest, gin.H{
+		// 	"message": "empty value 'userId'",
+		// })
 		return
 	}
-	tagId := c.Query("tagId")
+	tagId := params.Get("tagId")
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -39,9 +39,9 @@ func MemoListHandler(c *gin.Context) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to connect db 1",
-		})
+		// c.JSON(http.StatusInternalServerError, gin.H{
+		// 	"message": "failed to connect db 1",
+		// })
 		return
 	}
 
@@ -52,9 +52,9 @@ func MemoListHandler(c *gin.Context) {
 		query := "SELECT id, subject FROM memos WHERE users_id=$1 ORDER BY id"
 		rows, err = conn.Query(query, userId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "failed to connect db 2",
-			})
+			// c.JSON(http.StatusInternalServerError, gin.H{
+			// 	"message": "failed to connect db 2",
+			// })
 			return
 		}
 	} else {
@@ -62,9 +62,9 @@ func MemoListHandler(c *gin.Context) {
 		query := "SELECT id, subject FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
 		rows, err = conn.Query(query, userId, tagId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "failed to connect db 3",
-			})
+			// c.JSON(http.StatusInternalServerError, gin.H{
+			// 	"message": "failed to connect db 3",
+			// })
 			return
 		}
 	}
@@ -73,9 +73,9 @@ func MemoListHandler(c *gin.Context) {
 		var memo Memo
 		if err := rows.Scan(&memo.Id, &memo.Subject); err != nil {
 			log.Println(err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "failed to connect db 4",
-			})
+			// c.JSON(http.StatusInternalServerError, gin.H{
+			// 	"message": "failed to connect db 4",
+			// })
 			return
 		}
 		memos.MemoList = append(memos.MemoList, memo)
@@ -83,11 +83,13 @@ func MemoListHandler(c *gin.Context) {
 
 	memosJson, err := json.Marshal(memos)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to xxx",
-		})
+		// c.JSON(http.StatusInternalServerError, gin.H{
+		// 	"message": "failed to xxx",
+		// })
 		return
 	}
 
-	c.JSON(http.StatusOK, string(memosJson))
+	//c.JSON(http.StatusOK, string(memosJson))
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(memosJson))
 }

@@ -2,15 +2,15 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
+	"log"
 	"net/http"
 	"os"
-	"log"
 
-	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 )
 
-func HealthHandler(c *gin.Context)  {
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
 	DBDSN := os.Getenv("DBDSN")
 	if len(DBDSN) == 0 {
 		log.Println("set default DSN")
@@ -19,21 +19,30 @@ func HealthHandler(c *gin.Context)  {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to connect db 1",
-		})
+		// c.JSON(http.StatusInternalServerError, gin.H{
+		// 	"message": "failed to connect db 1",
+		// })
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	_, err = conn.Query("SELECT 1")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "failed to connect db 2",
-		})
+		// c.JSON(http.StatusInternalServerError, gin.H{
+		// 	"message": "failed to connect db 2",
+		// })
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "health ok!",
-	})
+	type response struct {
+		Message string `json:"message"`
+	}
+	res := response{
+		Message: "health ok!",
+	}
+
+	resJson, err := json.Marshal(res)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(resJson))
 }
