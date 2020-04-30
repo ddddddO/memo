@@ -56,8 +56,8 @@ func main() {
 	router.Get("/memos", hs.MemoListHandler)
 	// メモ詳細返却API
 	router.Get("/memodetail", hs.MemoDetailHandler)
-	// タグ新規作成API
-	router.Post("/tagdetail", hs.TagDetailCreateHandler)
+	// メモ新規作成API
+	router.Post("/memodetail", hs.MemoDetailCreateHandler)
 	// メモ更新API
 	router.Patch("/memodetail", hs.MemoDetailUpdateHandler)
 	// メモ削除API
