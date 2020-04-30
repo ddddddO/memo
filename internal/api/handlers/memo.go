@@ -23,9 +23,7 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userId := params.Get("userId")
 	if len(userId) == 0 {
-		// c.JSON(http.StatusBadRequest, gin.H{
-		// 	"message": "empty value 'userId'",
-		// })
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 	tagId := params.Get("tagId")
@@ -39,9 +37,7 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -52,9 +48,7 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 		query := "SELECT id, subject FROM memos WHERE users_id=$1 ORDER BY id"
 		rows, err = conn.Query(query, userId)
 		if err != nil {
-			// c.JSON(http.StatusInternalServerError, gin.H{
-			// 	"message": "failed to connect db 2",
-			// })
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 			return
 		}
 	} else {
@@ -62,9 +56,7 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 		query := "SELECT id, subject FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
 		rows, err = conn.Query(query, userId, tagId)
 		if err != nil {
-			// c.JSON(http.StatusInternalServerError, gin.H{
-			// 	"message": "failed to connect db 3",
-			// })
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 			return
 		}
 	}
@@ -72,10 +64,7 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var memo Memo
 		if err := rows.Scan(&memo.Id, &memo.Subject); err != nil {
-			log.Println(err)
-			// c.JSON(http.StatusInternalServerError, gin.H{
-			// 	"message": "failed to connect db 4",
-			// })
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 4")
 			return
 		}
 		memos.MemoList = append(memos.MemoList, memo)
@@ -83,13 +72,10 @@ func MemoListHandler(w http.ResponseWriter, r *http.Request) {
 
 	memosJson, err := json.Marshal(memos)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to xxx",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
-	//c.JSON(http.StatusOK, string(memosJson))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(memosJson))
 }

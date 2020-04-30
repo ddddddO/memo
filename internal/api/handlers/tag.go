@@ -23,9 +23,7 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userId := params.Get("userId")
 	if len(userId) == 0 {
-		// c.JSON(http.StatusBadRequest, gin.H{
-		// 	"message": "empty value 'userId'",
-		// })
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 
@@ -38,9 +36,7 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -49,19 +45,14 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
 	rows, err = conn.Query(query, userId)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 
 	for rows.Next() {
 		var tag Tag
 		if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
-			log.Println(err)
-			// c.JSON(http.StatusInternalServerError, gin.H{
-			// 	"message": "failed to connect db 4",
-			// })
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 			return
 		}
 		tags.TagList = append(tags.TagList, tag)
@@ -69,13 +60,10 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 
 	tagsJson, err := json.Marshal(tags)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to xxx",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
-	//c.JSON(http.StatusOK, string(tagsJson))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(tagsJson))
 }
@@ -84,9 +72,7 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	tagId := params.Get("tagId")
 	if len(tagId) == 0 {
-		// c.JSON(http.StatusBadRequest, gin.H{
-		// 	"message": "empty value 'userId'",
-		// })
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 
@@ -99,9 +85,7 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -109,31 +93,23 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT id, name FROM tags WHERE id = $1"
 	rows, err = conn.Query(query, tagId)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 
 	rows.Next()
 	var tag Tag
 	if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
-		log.Println(err)
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 4",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 
 	tagJson, err := json.Marshal(tag)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to xxx",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
-	//c.JSON(http.StatusOK, string(tagJson))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(tagJson))
 }
@@ -149,20 +125,13 @@ func TagDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		panic(err)
-	}
-	if err := json.Unmarshal(buff, updatedTag); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
-	// if err := c.BindJSON(&updatedTag); err != nil {
-	// 	// c.JSON(http.StatusInternalServerError, gin.H{
-	// 	// 	"message": "failed to bind json",
-	// 	// })
-	// 	return
-	// }
-
-	log.Printf("%+v", updatedTag)
+	if err := json.Unmarshal(buff, updatedTag); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed")
+		return
+	}
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -173,9 +142,7 @@ func TagDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -186,22 +153,16 @@ UPDATE tags SET name = $1 WHERE id = $2
 		updatedTag.Name, updatedTag.Id,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 3",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	if n != 1 {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to update memo",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -216,21 +177,13 @@ func TagDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if err := json.Unmarshal(buff, &deleteTag); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
-	// if err := c.BindJSON(&deleteTag); err != nil {
-	// 	// c.JSON(http.StatusInternalServerError, gin.H{
-	// 	// 	"message": "failed to bind json",
-	// 	// })
-	// 	return
-	// }
-
-	log.Printf("%+v", deleteTag)
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -241,9 +194,7 @@ func TagDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -254,22 +205,16 @@ DELETE FROM tags WHERE id = $1
 		deleteTag.Id,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 3",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	if n != 1 {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to update memo",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -286,20 +231,12 @@ func TagDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if err := json.Unmarshal(buff, &createTag); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 	}
-	// if err := c.BindJSON(&createTag); err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"message": "failed to bind json",
-	// 	})
-	// 	return
-	// }
-
-	log.Printf("%+v", createTag)
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -310,9 +247,7 @@ func TagDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -323,22 +258,16 @@ INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 		createTag.Name, createTag.UserId,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 3",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	if n != 1 {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to update memo",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }

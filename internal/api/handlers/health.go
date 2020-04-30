@@ -19,19 +19,13 @@ func HealthHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
 	_, err = conn.Query("SELECT 1")
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 

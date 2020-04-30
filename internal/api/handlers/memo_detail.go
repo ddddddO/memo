@@ -26,17 +26,13 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	memoId := params.Get("memoId")
 	if len(memoId) == 0 {
-		// c.JSON(http.StatusBadRequest, gin.H{
-		// 	"message": "empty value 'memoId'",
-		// })
+		errResponse(w, http.StatusBadRequest, "empty value 'memoId'")
 		return
 	}
 
 	userId := params.Get("userId")
 	if len(userId) == 0 {
-		// c.JSON(http.StatusBadRequest, gin.H{
-		// 	"message": "empty value 'userId'",
-		// })
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 
@@ -49,9 +45,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -87,9 +81,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := conn.Query(memoDetailQuery, memoId, userId)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	rows.Next()
@@ -104,10 +96,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 		&tagIds, &tagNames,
 	)
 	if err != nil {
-		log.Println(err)
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 4",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	memoDetail.TagIds = strToIntSlice(tagIds)
@@ -166,20 +155,11 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.Unmarshal(buff, &updatedMemo); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json")
 		return
 	}
-	log.Print(updatedMemo)
-	// if err := c.BindJSON(&updatedMemo); err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{
-	// 		"message": "failed to bind json",
-	// 	})
-	// 	return
-	// }
 
-	// 	log.Printf("%+v", updatedMemo)
-
-	// 	// TODO: 共通化
+	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
 	if len(DBDSN) == 0 {
 		log.Println("set default DSN")
@@ -188,9 +168,7 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -202,22 +180,16 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 3",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	if n != 1 {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to update memo",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to update memo")
 		return
 	}
 }
@@ -235,11 +207,11 @@ func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if err := json.Unmarshal(buff, &createdMemo); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -252,9 +224,7 @@ func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -275,9 +245,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 }
@@ -293,21 +261,13 @@ func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	if err := json.Unmarshal(buff, &deleteMemo); err != nil {
-		panic(err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
-	// if err := c.BindJSON(&deleteMemo); err != nil {
-	// 	// c.JSON(http.StatusInternalServerError, gin.H{
-	// 	// 	"message": "failed to bind json",
-	// 	// })
-	// 	return
-	// }
-
-	log.Printf("%+v", deleteMemo)
 
 	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
@@ -318,9 +278,7 @@ func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 1",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
 		return
 	}
 
@@ -332,22 +290,16 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 		deleteMemo.UserId, deleteMemo.MemoId,
 	)
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 2",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to connect db 3",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
 		return
 	}
 	if n != 1 {
-		// c.JSON(http.StatusInternalServerError, gin.H{
-		// 	"message": "failed to update memo",
-		// })
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
