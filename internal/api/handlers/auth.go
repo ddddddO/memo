@@ -1,20 +1,30 @@
 package handlers
 
 import (
-	"crypto/sha256"
-	"database/sql"
-	"encoding/hex"
 	"encoding/json"
-	"log"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/internal/api/usecase"
 )
 
-func AuthHandler(store sessions.Store) http.Handler {
+type AuthHandler interface {
+	Login(store sessions.Store) http.Handler
+}
+
+type authHandler struct {
+	userUseCase usecase.UserUseCase
+}
+
+func NewAuthHandler(uu usecase.UserUseCase) AuthHandler {
+	return authHandler{
+		userUseCase: uu,
+	}
+}
+
+func (ah authHandler) Login(store sessions.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
@@ -28,34 +38,9 @@ func AuthHandler(store sessions.Store) http.Handler {
 			errResponse(w, http.StatusBadRequest, "empty key 'passwd'")
 		}
 
-		// TODO: 共通化
-		DBDSN := os.Getenv("DBDSN")
-		if len(DBDSN) == 0 {
-			log.Println("set default DSN")
-			DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-		}
-
-		conn, err := sql.Open("postgres", DBDSN)
+		userID, err := ah.userUseCase.FetchUserID(name, passwd)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
-			return
-		}
-
-		const query = "SELECT id FROM users WHERE name=$1 AND passwd=$2"
-		rows, err := conn.Query(query, name, genSecuredPasswd(passwd, name))
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
-			return
-		}
-
-		// TODO: ユーザー登録をしてもらう or 正しいname/passwdを指定してもらう
-		if !rows.Next() {
-			errResponse(w, http.StatusUnauthorized, "faild to authenticate")
-			return
-		}
-		var userId int
-		if err := rows.Scan(&userId); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+			errResponse(w, http.StatusInternalServerError, "failed")
 			return
 		}
 
@@ -70,21 +55,11 @@ func AuthHandler(store sessions.Store) http.Handler {
 			UserID int `json:"user_id"`
 		}
 		res := response{
-			UserID: userId,
+			UserID: userID,
 		}
 
 		resJson, err := json.Marshal(res)
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(resJson))
 	})
-}
-
-func genSecuredPasswd(name, passwd string) string {
-	secStrPass := name + passwd
-	secPass := sha256.Sum256([]byte(secStrPass))
-	for i := 0; i < 99999; i++ {
-		secStrPass = hex.EncodeToString(secPass[:])
-		secPass = sha256.Sum256([]byte(secStrPass))
-	}
-	return strings.ToLower(hex.EncodeToString(secPass[:]))
 }

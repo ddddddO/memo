@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	hs "github.com/ddddddO/tag-mng/internal/api/handlers"
+	in "github.com/ddddddO/tag-mng/internal/api/infra"
+	uc "github.com/ddddddO/tag-mng/internal/api/usecase"
 
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
@@ -48,10 +50,14 @@ func main() {
 	//     https://github.com/rs/cors/blob/master/examples/chi/server.go
 	router.Use(c.Handler)
 
+	user := in.NewUser()
+	userUseCase := uc.NewUserUseCase(user)
+	authHandler := hs.NewAuthHandler(userUseCase)
+
 	// health
 	router.Get("/health", hs.HealthHandler)
 	// 認証API
-	router.Post("/auth", hs.AuthHandler(store).(http.HandlerFunc))
+	router.Post("/auth", authHandler.Login(store).(http.HandlerFunc))
 	// メモ一覧返却API
 	router.Get("/memos", hs.MemoListHandler)
 	// メモ詳細返却API
