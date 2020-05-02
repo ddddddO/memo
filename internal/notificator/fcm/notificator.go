@@ -1,4 +1,4 @@
-package notificator
+package fcm
 
 import (
 	"bytes"

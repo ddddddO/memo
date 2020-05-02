@@ -3,6 +3,8 @@ package notificator
 import (
 	"fmt"
 	"os"
+
+	"github.com/ddddddO/tag-mng/internal/notificator/fcm"
 )
 
 type Notificator interface {
@@ -15,7 +17,7 @@ type DefaultNotificator struct{}
 func NewNotificator(to string) Notificator {
 	switch to {
 	case "fcm":
-		return FCMNotificator{
+		return fcm.FCMNotificator{
 			endpoint: "https://fcm.googleapis.com/fcm/send",
 			token:    os.Getenv("FCM_TOKEN"),
 			authKey:  os.Getenv("FCM_AUTH_KEY"),
