@@ -4,3 +4,7 @@ GNUmakefile
 node_modules
 cover.out
 cover.html
+.terraform
+terraform.tfstate
+terraform.tfstate.backup
+dbconfig.yml

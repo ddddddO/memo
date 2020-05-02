@@ -1,5 +1,0 @@
-development:
-    dialect: postgres
-    dir: db/migrations
-    datasource: host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable
-    table: migrations
