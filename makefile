@@ -20,3 +20,7 @@ conlocalpg:
 
 rmlocalpg:
 	docker ps -a --filter name=local-postgres -q | xargs docker rm -f
+
+test:
+	go test ./internal/... -cover -coverprofile cover.out
+	go tool cover -html=cover.out -o ./cover.html

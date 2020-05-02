@@ -36,6 +36,7 @@ func (ah authHandler) Login(store sessions.Store) http.Handler {
 		passwd := r.PostFormValue("passwd")
 		if len(passwd) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty key 'passwd'")
+			return
 		}
 
 		userID, err := ah.userUseCase.FetchUserID(name, passwd)

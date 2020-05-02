@@ -2,3 +2,5 @@ health-cheack
 _data
 GNUmakefile
 node_modules
+cover.out
+cover.html
