@@ -8,3 +8,5 @@ cover.html
 terraform.tfstate
 terraform.tfstate.backup
 dbconfig.yml
+terraform.tfvars
+*.zip

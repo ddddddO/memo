@@ -1,10 +1,10 @@
-package main
+package p
 
 import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"log"
+	"net/http"
 	"net/smtp"
 	"os"
 	"strconv"
@@ -62,22 +62,20 @@ func init() {
 	conn, _ = sql.Open("postgres", DBDSN)
 }
 
-// exec: MAIL_PASSWORD=XXXXX DBDSN=YYYYY go run main.go
-func main() {
-	if err := Run(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func Run() error {
+// XXX
+func Run(w http.ResponseWriter, r *http.Request) {
+	defer conn.Close()
 	if err := detect(); err != nil {
-		return err
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
 	}
 
 	if err := notify(); err != nil {
-		return err
+		w.WriteHeader(500)
+		w.Write([]byte(err.Error()))
+		return
 	}
-	return nil
 }
 
 func detect() error {
@@ -125,39 +123,6 @@ func execQuery(aq *afterQuery) error {
 	}
 	return nil
 }
-
-/*
-func send(aq *afterQuery) error {
-	var (
-		// hostname = "smtp.gmail.com"
-		// from     = "lbfdeatq@gmail.com"
-		// to       = "lbfdeatq@gmail.com"
-		hostname = "smtp.mail.yahoo.co.jp"
-		username = "lbfdeatq_0922"
-		from     = "lbfdeatq_0922@yahoo.co.jp"
-		to       = "lbfdeatq_0922@yahoo.co.jp"
-		subject  = subject(aq.description)
-		body     = body(aq.memos)
-		mail     = []byte(
-			"To: " + to + "\r\n" +
-				"Subject: " + subject + "\r\n\r\n" +
-				body,
-		)
-		recipients = []string{to}
-		password   = os.Getenv("MAIL_PASSWORD")
-	)
-
-	//auth := smtp.PlainAuth("", from, password, hostname)
-	//err := smtp.SendMail(hostname+":587", auth, from, recipients, mail)
-	auth := smtp.PlainAuth("", username, password, hostname)
-	err := smtp.SendMail(hostname+":465", auth, from, recipients, mail)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-*/
 
 func send(aq *afterQuery) error {
 	var (
