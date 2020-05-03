@@ -1,11 +1,12 @@
 package p
 
 import (
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"net/http"
 	"net/smtp"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -62,20 +63,25 @@ func init() {
 	conn, _ = sql.Open("postgres", DBDSN)
 }
 
+// PubSubMessage is the payload of a Pub/Sub event. Please refer to the docs for
+// additional information regarding Pub/Sub events.
+type PubSubMessage struct {
+	Data []byte `json:"data"`
+}
+
 // XXX
-func Run(w http.ResponseWriter, r *http.Request) {
+func Run(ctx context.Context, m PubSubMessage) error {
 	defer conn.Close()
 	if err := detect(); err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
-		return
+		return err
 	}
 
 	if err := notify(); err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
-		return
+		return err
 	}
+
+	log.Println(string(m.Data))
+	return nil
 }
 
 func detect() error {

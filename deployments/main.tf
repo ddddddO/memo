@@ -37,6 +37,25 @@ output "db_appuser_passwd" {
   value = "${random_password.db_password.result}"
 }
 
+# Cloud PubSub topic for mail-notificator
+resource "google_pubsub_topic" "topic" {
+  name   = "mail-notificator-topic"
+}
+
+# Cloud Scheduler for mail-notificator
+resource "google_cloud_scheduler_job" "job" {
+  name        = "mail-notificator-scheduler-job"
+  region       = "us-central1"
+  description = "mail-notificator scheduler job"
+  schedule    = "30 9 * * *"
+  time_zone   = "Asia/Tokyo"
+  pubsub_target {
+    # topic.id is the topic's full resource name.
+    topic_name = google_pubsub_topic.topic.id
+    data       = base64encode("mail-notificator-publish!!")
+  }
+}
+
 # Cloud Functions for mail-notificator
 ## Archive multiple files.
 data "archive_file" "mail_notificator" {
@@ -62,6 +81,7 @@ variable "mail_password" {
 
 resource "google_cloudfunctions_function" "function" {
   name        = "mail-notificator-function"
+  region      = "asia-northeast1"
   description = ""
   runtime     = "go113"
   depends_on  = [google_storage_bucket_object.archive]
@@ -69,13 +89,12 @@ resource "google_cloudfunctions_function" "function" {
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.archive.name
-  trigger_http          = true
-  # pubsub作った後で
-  #   event_trigger {
-  #     #event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
-  #     event_type = "google.pubsub.topic.publish"
-  #     resource = # pubsub作らないとダメ
-  #   }
+  #trigger_http          = true
+  event_trigger {
+    #event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
+    event_type = "google.pubsub.topic.publish"
+    resource   = google_pubsub_topic.topic.id
+  }
   timeout     = 300
   entry_point = "Run"
   labels = {
