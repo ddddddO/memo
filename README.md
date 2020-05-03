@@ -1,12 +1,18 @@
 # tag-mng  
 
-## 使い方  
-launch.shをたたく  
+## Go レイヤードアーキテクチャ  
+https://yyh-gl.github.io/tech-blog/blog/go_web_api/  
 
-## 参考  
-・sinatra  
-http://sinatrarb.com/intro-ja.html  
+## http test  
+https://kaneshin.hateblo.jp/entry/2016/12/02/200108  
 
-・クッキーとセッションID  
-https://qiita.com/hththt/items/07136ad74127999df271  
-https://qiita.com/weed/items/7c83a795e37bdf52cfef (New!)  
+## Go test チート  
+https://qiita.com/nirasan/items/b357f0ad9172ab9fa19b  
+
+# 構成  
+- app: GAE  
+- api: GAE  
+- db: Cloud SQL  
+一時的に。形になったら、ラズパイへ切り替える  
+- 通知: Cloud Scheduler -> Cloud Pub/Sub -> Cloud Function  
+一旦。自分のメアドに対して、メモのリンク集を送る形  
