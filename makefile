@@ -33,3 +33,11 @@ cloudpg:
 	sleep 5 && sql-migrate up -config=db/dbconfig.yml -env=production
 	PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/data_dump.sql
 	PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/update_time.sql
+
+buildapi:
+	docker build -t gcr.io/tag-mng-243823/api -f deployments/dockerfile/api/Dockerfile .
+	docker push gcr.io/tag-mng-243823/api
+
+# after 'npm run build'
+deployapp:
+	cd app && gcloud app deploy

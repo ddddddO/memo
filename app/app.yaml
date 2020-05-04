@@ -1,0 +1,21 @@
+runtime: php55
+service: app
+threadsafe: true
+ 
+handlers:
+- url: /
+  static_files: dist/index.html
+  upload: dist/index.html
+ 
+- url: /(.*)
+  static_files: dist/\1
+  upload: dist/(.*)
+
+skip_files:
+- node_modules/
+- public/
+- src/
+- .gitignore
+- babel.config.js
+- pakage.json
+- README.md

@@ -44,13 +44,15 @@ export default {
     memoList: null,
     perPage: 10,
     currentPage: 1,
-    fields: ['id', 'subject']
+    fields: ['id', 'subject'],
+    endpoint: ''
   }),
   async mounted () {
     this.loaded = false
+    this.buildEndpoint()
     try {
       this.memoList = await fetch(
-        'http://localhost:8082' + '/memos' + '?userId=1',
+        this.endpoint,
         {
           mode: 'cors',
           credentials: 'include',
@@ -75,6 +77,15 @@ export default {
   computed: {
     rows () {
       return this.memoList.length
+    }
+  },
+  methods: {
+    buildEndpoint: function () {
+      if (process.env.NODE_ENV === 'production') {
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos' + '?userId=1'
+      } else {
+        this.endpoint = 'http://localhost:8082' + '/memos' + '?userId=1'
+      }
     }
   }
 }

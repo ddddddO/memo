@@ -42,11 +42,12 @@ export default {
     content: '',
     tags: null,
     tagsSelected: [],
-    endpoint: 'http://localhost:8082/memodetail',
-    tagEndpoint: 'http://localhost:8082/tags'
+    endpoint: '',
+    tagEndpoint: ''
   }),
   async mounted () {
     this.loaded = false
+    this.buildEndpoint()
     try {
       this.tags = await fetch(this.tagEndpoint + '?userId=1', {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -89,6 +90,15 @@ export default {
         })
       })
       this.$router.push('/memos')
+    },
+    buildEndpoint: function () {
+      if (process.env.NODE_ENV === 'production') {
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+        this.tagEndpoint = process.env.VUE_APP_API_ENDPOINT + '/tags'
+      } else {
+        this.endpoint = 'http://localhost:8082/memodetail'
+        this.tagEndpoint = 'http://localhost:8082/tags'
+      }
     }
   }
 }

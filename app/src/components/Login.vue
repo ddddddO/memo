@@ -20,8 +20,11 @@ export default {
   data: () => ({
     userName: '',
     passWord: '',
-    endpoint: 'http://localhost:8082/auth'
+    endpoint: ''
   }),
+  mounted () {
+    this.buildEndpoint()
+  },
   methods: {
     postLoginForm: function () {
       try {
@@ -45,6 +48,13 @@ export default {
           })
       } catch (err) {
         console.error(err)
+      }
+    },
+    buildEndpoint: function () {
+      if (process.env.NODE_ENV === 'production') {
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/auth'
+      } else {
+        this.endpoint = 'http://localhost:8082/auth'
       }
     }
   }

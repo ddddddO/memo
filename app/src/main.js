@@ -14,6 +14,7 @@ Vue.use(IconsPlugin)
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
+/*
 import * as firebase from 'firebase'
 if (process.env.NODE_ENV === 'production') {
   // Your web app's Firebase configuration
@@ -49,6 +50,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log('Unable to get permission to notify.', err)
   })
 }
+*/
 
 new Vue({
   router,
