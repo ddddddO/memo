@@ -6,7 +6,16 @@ provider "google" {
   zone    = "asia-northeast1-c"
 }
 
-# DB
+provider "google-beta" {
+  credentials = "${file("~/.config/gcloud/legacy_credentials/lbfdeatq@gmail.com/adc.json")}"
+
+  project = "tag-mng-243823"
+  region  = "asia-northeast1"
+  zone    = "asia-northeast1-c"
+}
+
+
+# Cloud SQL
 resource "google_sql_database" "database" {
   name     = "tag-mng"
   project  = "tag-mng-243823"
@@ -37,15 +46,20 @@ output "db_appuser_passwd" {
   value = "${random_password.db_password.result}"
 }
 
+# bucket
+resource "google_storage_bucket" "bucket" {
+  name = "tag-mng"
+}
+
 # Cloud PubSub topic for mail-notificator
 resource "google_pubsub_topic" "topic" {
-  name   = "mail-notificator-topic"
+  name = "mail-notificator-topic"
 }
 
 # Cloud Scheduler for mail-notificator
 resource "google_cloud_scheduler_job" "job" {
   name        = "mail-notificator-scheduler-job"
-  region       = "us-central1"
+  region      = "us-central1"
   description = "mail-notificator scheduler job"
   schedule    = "30 9 * * *"
   time_zone   = "Asia/Tokyo"
@@ -63,10 +77,6 @@ data "archive_file" "mail_notificator" {
   # source_dir配下に、goのファイル持ってこないと無理っぽい
   source_dir  = "${path.module}/files/mail-notificator"
   output_path = "${path.module}/files/mail-notificator.zip"
-}
-
-resource "google_storage_bucket" "bucket" {
-  name = "tag-mng"
 }
 
 resource "google_storage_bucket_object" "archive" {
@@ -89,9 +99,7 @@ resource "google_cloudfunctions_function" "function" {
   available_memory_mb   = 128
   source_archive_bucket = google_storage_bucket.bucket.name
   source_archive_object = google_storage_bucket_object.archive.name
-  #trigger_http          = true
   event_trigger {
-    #event_type = "providers/cloud.pubsub/eventTypes/topic.publish"
     event_type = "google.pubsub.topic.publish"
     resource   = google_pubsub_topic.topic.id
   }
@@ -105,4 +113,105 @@ resource "google_cloudfunctions_function" "function" {
     DBDSN         = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
     MAIL_PASSWORD = var.mail_password
   }
+}
+
+/* terraform からGAEへvueをデプロイ出来なかった。なので、makeコマンドでGAEへデプロイする。
+# GAE for app
+## vueをGAEへデプロイする参考：https://cloudpack.media/45462
+data "archive_file" "app" {
+  type        = "zip"
+  source_dir  = "${path.module}/files/app/dist"
+  output_path = "${path.module}/files/app/dist.zip"
+}
+
+resource "google_storage_bucket_object" "app" {
+  name   = "dist.zip"
+  bucket = google_storage_bucket.bucket.name
+  source = "${path.module}/files/app/dist.zip"
+}
+
+resource "google_app_engine_standard_app_version" "app" {
+  version_id = "v1"
+  service    = "default"
+  runtime    = "php55"
+  #threadsafe = true
+
+  deployment {
+    zip {
+      source_url = "https://storage.googleapis.com/${google_storage_bucket.bucket.name}/${google_storage_bucket_object.app.name}"
+    }
+  }
+
+  // 書き方参考：https://github.com/terraform-providers/terraform-provider-google/issues/5716#issuecomment-590886082
+  handlers {
+    url_regex = "/"
+    static_files {
+      path              = "/index.html"
+      upload_path_regex = "/index.html"
+    }
+  }
+  handlers {
+    url_regex = "/(.*)"
+    static_files {
+      path              = "/"
+      upload_path_regex = "/(.*)"
+    }
+  }
+}
+*/
+
+# Cloud Run for api
+resource "google_cloud_run_service" "api" {
+  provider = google-beta
+  name     = "tag-mng-api"
+  location = "asia-northeast1"
+
+  template {
+    spec {
+      containers {
+        image = "gcr.io/tag-mng-243823/api"
+        env {
+          name  = "DBDSN"
+          value = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
+        }
+      }
+    }
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/maxScale" = "1000"
+        # NOTE: Cloud Run -> Cloud SQLへ接続するために必要
+        "run.googleapis.com/cloudsql-instances" = "tag-mng-243823:asia-northeast1:${google_sql_database_instance.instance.name}"
+      }
+    }
+  }
+
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
+
+  autogenerate_revision_name = true
+}
+
+## FIXME: 以下、一時的に
+data "google_iam_policy" "noauth" {
+  binding {
+    role = "roles/run.invoker"
+    members = [
+      "allUsers",
+    ]
+  }
+}
+
+resource "google_cloud_run_service_iam_policy" "noauth" {
+  provider = google-beta
+  location = google_cloud_run_service.api.location
+  project  = google_cloud_run_service.api.project
+  service  = google_cloud_run_service.api.name
+
+  policy_data = data.google_iam_policy.noauth.policy_data
+}
+
+output "api_status" {
+  value = "${google_cloud_run_service.api.status}"
 }

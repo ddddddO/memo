@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"database/sql"
 	"fmt"
-	"net/smtp"
 	"log"
+	"net/smtp"
 	"os"
 	"strconv"
 	"strings"
@@ -52,15 +52,48 @@ var afterXdaysQueries = []*afterQuery{
 	},
 }
 
-var conn *sql.DB
+var (
+	Conn       *sql.DB
+	TlsConn    *tls.Conn
+	MailClient *smtp.Client
+)
+
+var (
+	hostname = "smtp.mail.yahoo.co.jp"
+	username = "lbfdeatq_0922"
+	from     = "lbfdeatq_0922@yahoo.co.jp"
+	to       = "lbfdeatq_0922@yahoo.co.jp"
+	password = os.Getenv("MAIL_PASSWORD")
+)
 
 func init() {
+	// DB初期化
 	DBDSN := os.Getenv("DBDSN")
 	if len(DBDSN) == 0 {
 		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
 	}
+	var err error
+	Conn, err = sql.Open("postgres", DBDSN)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	conn, _ = sql.Open("postgres", DBDSN)
+	// mail client初期化
+	TlsConn, err = tls.Dial("tcp", hostname+":465", &tls.Config{
+		InsecureSkipVerify: true,
+		ServerName:         hostname,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	MailClient, err = smtp.NewClient(TlsConn, hostname)
+	if err != nil {
+		log.Fatal(err)
+	}
+	auth := smtp.PlainAuth("", username, password, hostname)
+	if err := MailClient.Auth(auth); err != nil {
+		log.Fatal(err)
+	}
 }
 
 // PubSubMessage is the payload of a Pub/Sub event. Please refer to the docs for
@@ -71,7 +104,20 @@ type PubSubMessage struct {
 
 // XXX
 func Run(ctx context.Context, m PubSubMessage) error {
-	defer conn.Close()
+	defer func() {
+		if Conn != nil {
+			Conn.Close()
+		}
+		if TlsConn != nil {
+			TlsConn.Close()
+		}
+		if MailClient != nil {
+			MailClient.Quit()
+			MailClient.Close()
+		}
+	}()
+
+	log.Println("start mail notice")
 	if err := detect(); err != nil {
 		return err
 	}
@@ -79,7 +125,7 @@ func Run(ctx context.Context, m PubSubMessage) error {
 	if err := notify(); err != nil {
 		return err
 	}
-
+	log.Println("success mail notice")
 	log.Println(string(m.Data))
 	return nil
 }
@@ -109,7 +155,7 @@ func notify() error {
 var updateNotifiedCntQuery = "UPDATE memos SET notified_cnt = notified_cnt + 1 WHERE subject IN (%s)"
 
 func execQuery(aq *afterQuery) error {
-	rows, err := conn.Query(aq.query)
+	rows, err := Conn.Query(aq.query)
 	if err != nil {
 		return err
 	}
@@ -123,7 +169,8 @@ func execQuery(aq *afterQuery) error {
 	}
 
 	// NOTE: 通知対象のメモのnotified_cntを+1する
-	_, err = conn.Exec(fmt.Sprintf(updateNotifiedCntQuery, strings.Replace(aq.query, " id,", "", 1)))
+	// FIXME: メール出来たメモのみ更新するようにすべき
+	_, err = Conn.Exec(fmt.Sprintf(updateNotifiedCntQuery, strings.Replace(aq.query, " id,", "", 1)))
 	if err != nil {
 		return err
 	}
@@ -131,56 +178,31 @@ func execQuery(aq *afterQuery) error {
 }
 
 func send(aq *afterQuery) error {
+	if MailClient == nil {
+		return nil
+	}
+
 	var (
-		hostname = "smtp.mail.yahoo.co.jp"
-		username = "lbfdeatq_0922"
-		from     = "lbfdeatq_0922@yahoo.co.jp"
-		to       = "lbfdeatq_0922@yahoo.co.jp"
-		subject  = subject(aq.description)
-		body     = body(aq.memos)
-		mail     = "From: " + from + "\r\n" + "To: " + to + "\r\n" + "Subject: " + subject + "\r\n\r\n" + body
-		password = os.Getenv("MAIL_PASSWORD")
+		subject = subject(aq.description)
+		body    = body(aq.memos)
+		mail    = "From: " + from + "\r\n" + "To: " + to + "\r\n" + "Subject: " + subject + "\r\n\r\n" + body
 	)
 
-	tlsConn, err := tls.Dial("tcp", hostname+":465", &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         hostname,
-	})
+	if err := MailClient.Mail(from); err != nil {
+		return err
+	}
+	if err := MailClient.Rcpt(to); err != nil {
+		return err
+	}
+	wc, err := MailClient.Data()
 	if err != nil {
 		return err
 	}
-
-	client, err := smtp.NewClient(tlsConn, hostname)
-	if err != nil {
-		return err
-	}
-
-	auth := smtp.PlainAuth("", username, password, hostname)
-	if err := client.Auth(auth); err != nil {
-		return err
-	}
-
-	if err := client.Mail(from); err != nil {
-		return err
-	}
-	if err := client.Rcpt(to); err != nil {
-		return err
-	}
-
-	wc, err := client.Data()
-	if err != nil {
-		return err
-	}
-
 	_, err = fmt.Fprint(wc, mail)
 	if err != nil {
 		return err
 	}
 	if err := wc.Close(); err != nil {
-		return err
-	}
-
-	if err := client.Quit(); err != nil {
 		return err
 	}
 
@@ -192,11 +214,11 @@ func subject(description string) string {
 }
 
 func body(memos []memo) string {
-	msg := "After Login, Confirm Memo List!\r\n" + "https://XXXXXX/" + "\r\n\r\n"
+	msg := "After Login, Confirm Memo List!\r\n" + "https://app-dot-tag-mng-243823.appspot.com/" + "\r\n\r\n"
 	for _, memo := range memos {
 		msg = msg +
 			memo.Subject + "\r\n" +
-			"https://XXXXXX/memodetail/" + strconv.Itoa(memo.ID) + "\r\n\r\n"
+			"https://app-dot-tag-mng-243823.appspot.com/memodetail/" + strconv.Itoa(memo.ID) + "\r\n\r\n"
 	}
 	return msg
 }

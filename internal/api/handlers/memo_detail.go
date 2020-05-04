@@ -192,6 +192,7 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed to update memo")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 type CreatedMemo struct {
@@ -248,6 +249,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 type DeleteMemo struct {
@@ -302,4 +304,5 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }

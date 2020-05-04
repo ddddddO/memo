@@ -46,9 +46,10 @@ export default {
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
-    endpoint: 'http://localhost:8082/memodetail'
+    endpoint: ''
   }),
   async created () {
+    this.buildEndpoint()
     const userId = 1
     const memoId = this.$route.params.memo_id
     try {
@@ -121,6 +122,13 @@ export default {
     },
     reloadMemos: function () {
       this.$router.replace('/memos')
+    },
+    buildEndpoint: function () {
+      if (process.env.NODE_ENV === 'production') {
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+      } else {
+        this.endpoint = 'http://localhost:8082/memodetail'
+      }
     }
   }
 }

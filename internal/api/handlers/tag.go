@@ -165,6 +165,7 @@ UPDATE tags SET name = $1 WHERE id = $2
 		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 type DeleteTag struct {
@@ -217,6 +218,7 @@ DELETE FROM tags WHERE id = $1
 		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 type CreateTag struct {
@@ -270,4 +272,5 @@ INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -11,7 +11,7 @@ https://qiita.com/nirasan/items/b357f0ad9172ab9fa19b
 
 # 構成  
 - app: GAE  
-- api: GAE  
+- api: Cloud Run  
 - db: Cloud SQL  
 一時的に。形になったら、ラズパイへ切り替える  
 - 通知: Cloud Scheduler -> Cloud Pub/Sub -> Cloud Function  
