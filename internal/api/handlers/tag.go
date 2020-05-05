@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -124,7 +125,7 @@ func TagDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedTag UpdatedTag
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -177,7 +178,7 @@ func TagDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	var deleteTag DeleteTag
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -232,7 +233,7 @@ func TagDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var createTag CreateTag
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
