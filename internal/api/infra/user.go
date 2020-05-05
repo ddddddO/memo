@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"log"
-	"os"
 
 	_ "github.com/lib/pq"
 
@@ -12,27 +11,19 @@ import (
 	"github.com/ddddddO/tag-mng/internal/api/domain/model"
 )
 
-type user struct{}
+type user struct {
+	DB *sql.DB
+}
 
-func NewUser() domain.User {
-	return user{}
+func NewUser(db *sql.DB) domain.User {
+	return user{
+		DB: db,
+	}
 }
 
 func (u user) FetchUser(name, passwd string) (*model.User, error) {
-	// TODO: 共通化
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	conn, err := sql.Open("postgres", DBDSN)
-	if err != nil {
-		return nil, err
-	}
-
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
-	rows, err := conn.Query(query, name, passwd)
+	rows, err := u.DB.Query(query, name, passwd)
 	if err != nil {
 		return nil, err
 	}
@@ -50,4 +41,3 @@ func (u user) FetchUser(name, passwd string) (*model.User, error) {
 
 	return &us, nil
 }
-

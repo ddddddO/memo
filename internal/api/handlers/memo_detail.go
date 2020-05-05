@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -23,34 +22,22 @@ type MemoDetail struct {
 	TagNames []string `json:"tag_names"`
 }
 
-func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
-	params := r.URL.Query()
-	memoId := params.Get("memoId")
-	if len(memoId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
-		return
-	}
+func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+		memoId := params.Get("memoId")
+		if len(memoId) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
 
-	userId := params.Get("userId")
-	if len(userId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
-		return
-	}
+		userId := params.Get("userId")
+		if len(userId) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+			return
+		}
 
-	// TODO: 共通化
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	conn, err := sql.Open("postgres", DBDSN)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
-		return
-	}
-
-	const memoDetailQuery = `
+		const memoDetailQuery = `
 	SELECT
 	    m.id AS id,
 	    m.subject AS subject,
@@ -80,37 +67,38 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 		GROUP BY m.id
 	`
 
-	rows, err := conn.Query(memoDetailQuery, memoId, userId)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
-		return
-	}
-	rows.Next()
-	var (
-		memoDetail MemoDetail
-		tagIds     string
-		tagNames   string
-	)
-	// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
-	err = rows.Scan(
-		&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content,
-		&tagIds, &tagNames,
-	)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-		return
-	}
-	memoDetail.TagIds = strToIntSlice(tagIds)
-	memoDetail.TagNames = strToStrSlice(tagNames)
+		rows, err := DB.Query(memoDetailQuery, memoId, userId)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			return
+		}
+		rows.Next()
+		var (
+			memoDetail MemoDetail
+			tagIds     string
+			tagNames   string
+		)
+		// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
+		err = rows.Scan(
+			&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content,
+			&tagIds, &tagNames,
+		)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+			return
+		}
+		memoDetail.TagIds = strToIntSlice(tagIds)
+		memoDetail.TagNames = strToStrSlice(tagNames)
 
-	//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
-	var memoDetailJson bytes.Buffer
-	encoder := json.NewEncoder(&memoDetailJson)
-	encoder.SetEscapeHTML(false)
-	encoder.Encode(memoDetail)
+		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
+		var memoDetailJson bytes.Buffer
+		encoder := json.NewEncoder(&memoDetailJson)
+		encoder.SetEscapeHTML(false)
+		encoder.Encode(memoDetail)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(memoDetailJson.Bytes())
+		w.WriteHeader(http.StatusOK)
+		w.Write(memoDetailJson.Bytes())
+	}
 }
 
 func strToIntSlice(s string) []int {
@@ -146,54 +134,43 @@ type UpdatedMemo struct {
 	MemoContent string `json:"memo_content"`
 }
 
-func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("----MemoDetailUpdateHandler----")
-	var updatedMemo UpdatedMemo
-	buff := make([]byte, r.ContentLength)
-	_, err := r.Body.Read(buff)
-	if err != nil && err != io.EOF {
-		panic(err)
-		return
-	}
-	if err := json.Unmarshal(buff, &updatedMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
-		return
-	}
+func MemoDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Print("----MemoDetailUpdateHandler----")
+		var updatedMemo UpdatedMemo
+		buff := make([]byte, r.ContentLength)
+		_, err := r.Body.Read(buff)
+		if err != nil && err != io.EOF {
+			panic(err)
+			return
+		}
+		if err := json.Unmarshal(buff, &updatedMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
+			return
+		}
 
-	// TODO: 共通化
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	conn, err := sql.Open("postgres", DBDSN)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
-		return
-	}
-
-	const updateMemoQuery = `
+		const updateMemoQuery = `
 	UPDATE memos SET subject=$1, content=$2
 	 WHERE id=$3 AND users_id=$4
 	`
-	result, err := conn.Exec(updateMemoQuery,
-		updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
-	)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
-		return
+		result, err := DB.Exec(updateMemoQuery,
+			updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
+		)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			return
+		}
+		n, err := result.RowsAffected()
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+			return
+		}
+		if n != 1 {
+			errResponse(w, http.StatusInternalServerError, "failed to update memo", nil)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-		return
-	}
-	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed to update memo", nil)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 }
 
 type CreatedMemo struct {
@@ -203,54 +180,43 @@ type CreatedMemo struct {
 	MemoContent string `json:"memo_content"`
 }
 
-func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("----MemoDetailCreateHandler----")
-	var createdMemo CreatedMemo
-	buff := make([]byte, r.ContentLength)
-	_, err := r.Body.Read(buff)
-	if err != nil && err != io.EOF {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
-	if err := json.Unmarshal(buff, &createdMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
+func MemoDetailCreateHandler(DB *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Print("----MemoDetailCreateHandler----")
+		var createdMemo CreatedMemo
+		buff := make([]byte, r.ContentLength)
+		_, err := r.Body.Read(buff)
+		if err != nil && err != io.EOF {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+		if err := json.Unmarshal(buff, &createdMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
 
-	// TODO: 共通化
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	conn, err := sql.Open("postgres", DBDSN)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
-		return
-	}
-
-	var createMemoQuery = `
+		var createMemoQuery = `
 WITH inserted AS (INSERT INTO memos(subject, content, users_id) VALUES($1, $2, $3) RETURNING id)
 INSERT INTO memo_tag(memos_id, tags_id) VALUES
 	((SELECT id FROM inserted), 1)
 	%s;
 `
 
-	var valuesStr string
-	for _, tagId := range createdMemo.TagIds {
-		valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagId)
-	}
-	createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
+		var valuesStr string
+		for _, tagId := range createdMemo.TagIds {
+			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagId)
+		}
+		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
-	_, err = conn.Exec(createMemoQuery,
-		createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
-	)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
-		return
+		_, err = DB.Exec(createMemoQuery,
+			createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
+		)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 type DeleteMemo struct {
@@ -258,52 +224,41 @@ type DeleteMemo struct {
 	MemoId int `json:"memo_id"`
 }
 
-func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	log.Print("----MemoDetailDeleteHandler----")
-	var deleteMemo DeleteMemo
-	buff := make([]byte, r.ContentLength)
-	_, err := r.Body.Read(buff)
-	if err != nil && err != io.EOF {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
-	if err := json.Unmarshal(buff, &deleteMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
+func MemoDetailDeleteHandler(DB *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Print("----MemoDetailDeleteHandler----")
+		var deleteMemo DeleteMemo
+		buff := make([]byte, r.ContentLength)
+		_, err := r.Body.Read(buff)
+		if err != nil && err != io.EOF {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+		if err := json.Unmarshal(buff, &deleteMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
 
-	// TODO: 共通化
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	conn, err := sql.Open("postgres", DBDSN)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
-		return
-	}
-
-	const deleteMemoQuery = `
+		const deleteMemoQuery = `
 DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `
 
-	result, err := conn.Exec(deleteMemoQuery,
-		deleteMemo.UserId, deleteMemo.MemoId,
-	)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
-		return
+		result, err := DB.Exec(deleteMemoQuery,
+			deleteMemo.UserId, deleteMemo.MemoId,
+		)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			return
+		}
+		n, err := result.RowsAffected()
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+			return
+		}
+		if n != 1 {
+			errResponse(w, http.StatusInternalServerError, "failed", nil)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
 	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-		return
-	}
-	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed", nil)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 }
