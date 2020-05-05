@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -150,7 +151,7 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	var updatedMemo UpdatedMemo
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		panic(err)
 		return
 	}
@@ -207,7 +208,7 @@ func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	var createdMemo CreatedMemo
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -262,7 +263,7 @@ func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	var deleteMemo DeleteMemo
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
