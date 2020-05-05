@@ -35,6 +35,7 @@ func main() {
 		AllowedHeaders: []string{
 			"Accept",
 			"Content-Type",
+			"Origin",
 		},
 		AllowedOrigins: []string{
 			"http://localhost:8080",
