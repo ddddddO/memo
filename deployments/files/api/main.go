@@ -37,6 +37,7 @@ func main() {
 		AllowedHeaders: []string{
 			"Accept",
 			"Content-Type",
+			"Origin",
 		},
 		AllowedOrigins: []string{
 			"https://app-dot-tag-mng-243823.appspot.com",

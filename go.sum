@@ -2,6 +2,16 @@ github.com/PuerkitoBio/goquery v1.5.1 h1:PSPBGne8NIUWw+/7vFBV+kG2J/5MOjbzc7154Oa
 github.com/PuerkitoBio/goquery v1.5.1/go.mod h1:GsLWisAFVj4WgDibEWF4pvYnkVQBpKBKeU+7zCJoLcc=
 github.com/andybalholm/cascadia v1.1.0 h1:BuuO6sSfQNFRu1LppgbD25Hr2vLYW25JvxHs5zzsLTo=
 github.com/andybalholm/cascadia v1.1.0/go.mod h1:GsXiBklL0woXo1j/WYWtSYYC4ouU9PqHO0sqidkEA4Y=
+github.com/ddddddO/tag-mng/internal/api/domain v0.0.0-20200505043242-77001cd8f7ea h1:3fffVlpKZmpUQB8Rv9gn0CDjsyBSnVAGcCZHemCZ8Is=
+github.com/ddddddO/tag-mng/internal/api/domain v0.0.0-20200505043242-77001cd8f7ea/go.mod h1:W1ZY+Pd9yvBaCOeFz1yoRp8XL9Xdlz1JsfWu7picSsM=
+github.com/ddddddO/tag-mng/internal/api/domain/model v0.0.0-20200505043242-77001cd8f7ea h1:T6YxbfWGhYa1obNAj4V6kjUheprpNB1V1tYWg1XJpUA=
+github.com/ddddddO/tag-mng/internal/api/domain/model v0.0.0-20200505043242-77001cd8f7ea/go.mod h1:p9/aCjUadLj1W6bPts7F4BBOqyrzVM08VC5ur/JPMBY=
+github.com/ddddddO/tag-mng/internal/api/handlers v0.0.0-20200505043242-77001cd8f7ea h1:TSoh+SpDCNGvFvW5Ua/xNS+RZw772nWl/UpKUdHvbVA=
+github.com/ddddddO/tag-mng/internal/api/handlers v0.0.0-20200505043242-77001cd8f7ea/go.mod h1:gx3N8Wm2watryJrTWPCk7PMEkU/226fDPEuHCncvYiA=
+github.com/ddddddO/tag-mng/internal/api/infra v0.0.0-20200505043242-77001cd8f7ea h1:JXMLPRjLm/AZXswH7GQJAou7dnfST2z95biTXeZS/5o=
+github.com/ddddddO/tag-mng/internal/api/infra v0.0.0-20200505043242-77001cd8f7ea/go.mod h1:e2COEMdW/Fanmq35Xb3w4VcmZaUf+L9lqppZ5SAALhk=
+github.com/ddddddO/tag-mng/internal/api/usecase v0.0.0-20200505043242-77001cd8f7ea h1:eSTzTAsyqRZRm7XCTsoqRc7qZodSYhoqqepKgpm0V54=
+github.com/ddddddO/tag-mng/internal/api/usecase v0.0.0-20200505043242-77001cd8f7ea/go.mod h1:cGvcWxA2aSZZspVeT+u7cQ0QLFiWNpRtc6HmDYiJr60=
 github.com/go-chi/chi v4.1.1+incompatible h1:MmTgB0R8Bt/jccxp+t6S/1VGIKdJw5J74CK/c9tTfA4=
 github.com/go-chi/chi v4.1.1+incompatible/go.mod h1:eB3wogJHnLi3x/kFX2A+IbTBlXxmMeXJVKy9tTv1XzQ=
 github.com/gorilla/securecookie v1.1.1 h1:miw7JPhV+b/lAHSXz4qd/nN9jRiAFV5FwjeKyCS8BvQ=
