@@ -56,7 +56,6 @@ func main() {
 	//     https://github.com/rs/cors/blob/master/examples/chi/server.go
 	router.Use(c.Handler)
 
-	// TODO: 共通化
 	DBDSN := os.Getenv("DBDSN")
 	if len(DBDSN) == 0 {
 		log.Println("set default DSN")
@@ -67,6 +66,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	defer DB.Close()
 
 	user := in.NewUser(DB)
 	userUseCase := uc.NewUserUseCase(user)
