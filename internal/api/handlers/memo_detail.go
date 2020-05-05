@@ -26,13 +26,13 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	memoId := params.Get("memoId")
 	if len(memoId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'memoId'")
+		errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
 		return
 	}
 
 	userId := params.Get("userId")
 	if len(userId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 		return
 	}
 
@@ -45,7 +45,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -81,7 +81,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := conn.Query(memoDetailQuery, memoId, userId)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	rows.Next()
@@ -96,7 +96,7 @@ func MemoDetailHandler(w http.ResponseWriter, r *http.Request) {
 		&tagIds, &tagNames,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	memoDetail.TagIds = strToIntSlice(tagIds)
@@ -155,7 +155,7 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := json.Unmarshal(buff, &updatedMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json")
+		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -180,16 +180,16 @@ func MemoDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed to update memo")
+		errResponse(w, http.StatusInternalServerError, "failed to update memo", nil)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -208,11 +208,11 @@ func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 	if err := json.Unmarshal(buff, &createdMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -225,7 +225,7 @@ func MemoDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -246,7 +246,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -263,11 +263,11 @@ func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 	if err := json.Unmarshal(buff, &deleteMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -280,7 +280,7 @@ func MemoDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -292,16 +292,16 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 		deleteMemo.UserId, deleteMemo.MemoId,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", nil)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

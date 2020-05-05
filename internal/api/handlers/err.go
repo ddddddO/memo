@@ -2,13 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
+
 type response struct {
 	Message string `json:"message"`
 }
 
-func errResponse(w http.ResponseWriter, status int, message string) {
+func errResponse(w http.ResponseWriter, status int, message string, err error) {
+	log.Println(err)
+
 	res := response{
 		Message: message,
 	}

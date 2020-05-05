@@ -29,26 +29,26 @@ func (ah authHandler) Login(store sessions.Store) http.Handler {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
 		if len(name) == 0 {
-			errResponse(w, http.StatusBadRequest, "empty key 'name'")
+			errResponse(w, http.StatusBadRequest, "empty key 'name'", nil)
 			return
 		}
 
 		passwd := r.PostFormValue("passwd")
 		if len(passwd) == 0 {
-			errResponse(w, http.StatusBadRequest, "empty key 'passwd'")
+			errResponse(w, http.StatusBadRequest, "empty key 'passwd'", nil)
 			return
 		}
 
 		userID, err := ah.userUseCase.FetchUserID(name, passwd)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed")
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
 		session, _ := store.New(r, "STORE")
 		session.Values["authed"] = true
 		if err := session.Save(r, w); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed")
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
