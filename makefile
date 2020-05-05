@@ -35,7 +35,8 @@ cloudpg:
 	PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/update_time.sql
 
 buildapi:
-	docker build -t gcr.io/tag-mng-243823/api -f deployments/dockerfile/api/Dockerfile .
+	cd deployments/files/api && go get -u
+	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f deployments/dockerfile/api/Dockerfile .
 	docker push gcr.io/tag-mng-243823/api
 
 # after 'npm run build'

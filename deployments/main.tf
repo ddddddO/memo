@@ -161,6 +161,7 @@ resource "google_app_engine_standard_app_version" "app" {
 */
 
 # Cloud Run for api
+## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 resource "google_cloud_run_service" "api" {
   provider = google-beta
   name     = "tag-mng-api"

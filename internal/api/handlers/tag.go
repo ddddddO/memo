@@ -23,7 +23,7 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userId := params.Get("userId")
 	if len(userId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 		return
 	}
 
@@ -36,7 +36,7 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -45,14 +45,14 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
 	rows, err = conn.Query(query, userId)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 
 	for rows.Next() {
 		var tag Tag
 		if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 			return
 		}
 		tags.TagList = append(tags.TagList, tag)
@@ -60,7 +60,7 @@ func TagListHandler(w http.ResponseWriter, r *http.Request) {
 
 	tagsJson, err := json.Marshal(tags)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	tagId := params.Get("tagId")
 	if len(tagId) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 		return
 	}
 
@@ -85,7 +85,7 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -93,20 +93,20 @@ func TagDetailHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT id, name FROM tags WHERE id = $1"
 	rows, err = conn.Query(query, tagId)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 
 	rows.Next()
 	var tag Tag
 	if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 
 	tagJson, err := json.Marshal(tag)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -125,11 +125,11 @@ func TagDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 	if err := json.Unmarshal(buff, updatedTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -142,7 +142,7 @@ func TagDetailUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -153,16 +153,16 @@ UPDATE tags SET name = $1 WHERE id = $2
 		updatedTag.Name, updatedTag.Id,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", nil)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -178,11 +178,11 @@ func TagDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 	if err := json.Unmarshal(buff, &deleteTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func TagDetailDeleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -206,16 +206,16 @@ DELETE FROM tags WHERE id = $1
 		deleteTag.Id,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", nil)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -233,11 +233,12 @@ func TagDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 	buff := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(buff)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 	if err := json.Unmarshal(buff, &createTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
 	}
 
 	// TODO: 共通化
@@ -249,7 +250,7 @@ func TagDetailCreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := sql.Open("postgres", DBDSN)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
 
@@ -260,16 +261,16 @@ INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 		createTag.Name, createTag.UserId,
 	)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 2")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 		return
 	}
 	n, err := result.RowsAffected()
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 3")
+		errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 		return
 	}
 	if n != 1 {
-		errResponse(w, http.StatusInternalServerError, "failed")
+		errResponse(w, http.StatusInternalServerError, "failed", nil)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
