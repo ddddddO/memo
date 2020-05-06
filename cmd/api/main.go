@@ -22,8 +22,11 @@ func main() {
 
 	router := chi.NewRouter()
 
-	sessionSec := "sessionsecret" // FIXME: Using os.Getenv or crypto/rand
-	store := sessions.NewCookieStore([]byte(sessionSec))
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+	store := sessions.NewCookieStore([]byte(sessionKey))
 
 	router.Use(checkSession(store))
 

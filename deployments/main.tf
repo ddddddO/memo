@@ -161,6 +161,11 @@ resource "google_app_engine_standard_app_version" "app" {
 */
 
 # Cloud Run for api
+resource "random_string" "session_key" {
+  length  = 32
+  special = false
+}
+
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 resource "google_cloud_run_service" "api" {
   provider = google-beta
@@ -171,6 +176,10 @@ resource "google_cloud_run_service" "api" {
     spec {
       containers {
         image = "gcr.io/tag-mng-243823/api"
+        env {
+          name  = "SESSION_KEY"
+          value = "${random_string.session_key.result}"
+        }
         env {
           name  = "DBDSN"
           value = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
