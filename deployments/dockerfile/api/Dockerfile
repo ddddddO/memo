@@ -10,4 +10,5 @@ FROM alpine
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/src/api/api /api
 
+ENV PORT="8080"
 CMD ["/api"]
