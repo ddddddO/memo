@@ -10,6 +10,4 @@ FROM alpine
 RUN apk add --no-cache ca-certificates
 COPY --from=builder /go/src/api/api /api
 
-ENV DBDSN="XXX"
-ENV PORT=8080
 CMD ["/api"]

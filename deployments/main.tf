@@ -184,6 +184,10 @@ resource "google_cloud_run_service" "api" {
           name  = "DBDSN"
           value = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
         }
+        env {
+          name  = "PORT"
+          value = "8080"
+        }
       }
     }
     metadata {

@@ -22,12 +22,7 @@ func main() {
 
 	router := chi.NewRouter()
 
-	sessionKey := os.Getenv("SESSION_KEY")
-	if sessionKey == "" {
-		sessionKey = "sessionsecret"
-	}
-	store := sessions.NewCookieStore([]byte(sessionKey))
-
+	store := genStore()
 	router.Use(checkSession(store))
 
 	// cors: https://github.com/rs/cors#parameters
@@ -59,52 +54,67 @@ func main() {
 	//     https://github.com/rs/cors/blob/master/examples/chi/server.go
 	router.Use(c.Handler)
 
-	DBDSN := os.Getenv("DBDSN")
-	if len(DBDSN) == 0 {
-		log.Println("set default DSN")
-		DBDSN = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	}
-
-	DB, err := sql.Open("postgres", DBDSN)
+	db, err := genDB()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
-	defer DB.Close()
+	defer db.Close()
 
-	user := in.NewUser(DB)
+	user := in.NewUser(db)
 	userUseCase := uc.NewUserUseCase(user)
 	authHandler := hs.NewAuthHandler(userUseCase)
 
 	// health
-	router.Get("/health", hs.HealthHandler(DB))
+	router.Get("/health", hs.HealthHandler(db))
 	// 認証API
 	router.Post("/auth", authHandler.Login(store).(http.HandlerFunc))
 	// メモ一覧返却API
-	router.Get("/memos", hs.MemoListHandler(DB))
+	router.Get("/memos", hs.MemoListHandler(db))
 	// メモ詳細返却API
-	router.Get("/memodetail", hs.MemoDetailHandler(DB))
+	router.Get("/memodetail", hs.MemoDetailHandler(db))
 	// メモ新規作成API
-	router.Post("/memodetail", hs.MemoDetailCreateHandler(DB))
+	router.Post("/memodetail", hs.MemoDetailCreateHandler(db))
 	// メモ更新API
-	router.Patch("/memodetail", hs.MemoDetailUpdateHandler(DB))
+	router.Patch("/memodetail", hs.MemoDetailUpdateHandler(db))
 	// メモ削除API
-	router.Delete("/memodetail", hs.MemoDetailDeleteHandler(DB))
+	router.Delete("/memodetail", hs.MemoDetailDeleteHandler(db))
 	// タグ一覧返却API
-	router.Get("/tags", hs.TagListHandler(DB))
+	router.Get("/tags", hs.TagListHandler(db))
 	// タグ詳細返却API
-	router.Get("/tagdetail", hs.TagDetailHandler(DB))
+	router.Get("/tagdetail", hs.TagDetailHandler(db))
 	// タグ新規作成API
-	router.Post("/tagdetail", hs.TagDetailCreateHandler(DB))
+	router.Post("/tagdetail", hs.TagDetailCreateHandler(db))
 	// タグ更新API
-	router.Patch("/tagdetail", hs.TagDetailUpdateHandler(DB))
+	router.Patch("/tagdetail", hs.TagDetailUpdateHandler(db))
 	// タグ削除API
-	router.Delete("/tagdetail", hs.TagDetailDeleteHandler(DB))
+	router.Delete("/tagdetail", hs.TagDetailDeleteHandler(db))
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8082"
 	}
 	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
+}
+
+func genStore() sessions.Store {
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+	return sessions.NewCookieStore([]byte(sessionKey))
+}
+
+func genDB() (*sql.DB, error) {
+	dsn := os.Getenv("DBDSN")
+	if len(dsn) == 0 {
+		log.Println("set default DSN")
+		dsn = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	}
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	return db, nil
 }
 
 // ref: chi middleware

@@ -10,3 +10,4 @@ terraform.tfstate.backup
 dbconfig.yml
 terraform.tfvars
 *.zip
+deployments/files/api/main.go
