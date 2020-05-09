@@ -13,7 +13,7 @@
     </div>
     <h3 style="text-align:start;font-size: medium;">Content:</h3>
     <div v-if="!activatedEdit">
-      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
+      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
       <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
       <b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>
     </div>
@@ -22,7 +22,7 @@
       <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
       <div v-if="activatedPreviewContent">
         <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
-        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
+        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
       </div>
       <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
       <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
@@ -40,6 +40,8 @@ button {
 </style>
 
 <script>
+import marked from 'marked'
+
 export default {
   name: 'memoDetail',
   data: () => ({
@@ -129,6 +131,11 @@ export default {
       } else {
         this.endpoint = 'http://localhost:8082/memodetail'
       }
+    }
+  },
+  computed: {
+    compiledMarkdownContent: function () {
+      return marked(this.memoDetail.content)
     }
   }
 }
