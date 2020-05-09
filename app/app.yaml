@@ -6,10 +6,26 @@ handlers:
 - url: /
   static_files: dist/index.html
   upload: dist/index.html
- 
-- url: /(.*)
-  static_files: dist/\1
-  upload: dist/(.*)
+
+- url: /favicon.ico
+  static_files: dist/favicon.ico
+  upload: dist/favicon.ico
+
+- url: /manifest.json
+  static_files: dist/manifest.json
+  upload: dist/manifest.json
+
+- url: /js/(.*)
+  static_files: dist/js\1
+  upload: dist/js/(.*)
+
+- url: /css/(.*)
+  static_files: dist/css\1
+  upload: dist/css/(.*)
+
+- url: /img/(.*)
+  static_files: dist/img\1
+  upload: dist/img/(.*)
 
 skip_files:
 - node_modules/
