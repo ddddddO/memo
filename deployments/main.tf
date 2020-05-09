@@ -51,46 +51,42 @@ resource "google_storage_bucket" "bucket" {
   name = "tag-mng"
 }
 
-# Cloud PubSub topic for mail-notificator
+# Cloud PubSub topic for notified-cnt-incrementer
 resource "google_pubsub_topic" "topic" {
-  name = "mail-notificator-topic"
+  name = "notified-cnt-incrementer-topic"
 }
 
-# Cloud Scheduler for mail-notificator
+# Cloud Scheduler for notified-cnt-incrementer
 resource "google_cloud_scheduler_job" "job" {
-  name        = "mail-notificator-scheduler-job"
+  name        = "notified-cnt-incrementer-scheduler-job"
   region      = "us-central1"
-  description = "mail-notificator scheduler job"
-  schedule    = "30 9 * * *"
+  description = "notified-cnt-incrementer scheduler job"
+  schedule    = "40 15 * * *"
   time_zone   = "Asia/Tokyo"
   pubsub_target {
     # topic.id is the topic's full resource name.
     topic_name = google_pubsub_topic.topic.id
-    data       = base64encode("mail-notificator-publish!!")
+    data       = base64encode("notified-cnt-incrementer-publish!!")
   }
 }
 
-# Cloud Functions for mail-notificator
+# Cloud Functions for notified-cnt-incrementer
 ## Archive multiple files.
-data "archive_file" "mail_notificator" {
+data "archive_file" "notified-cnt-incrementer" {
   type = "zip"
   # source_dir配下に、goのファイル持ってこないと無理っぽい
-  source_dir  = "${path.module}/files/mail-notificator"
-  output_path = "${path.module}/files/mail-notificator.zip"
+  source_dir  = "${path.module}/files/notified-cnt-incrementer"
+  output_path = "${path.module}/files/notified-cnt-incrementer.zip"
 }
 
 resource "google_storage_bucket_object" "archive" {
-  name   = "mail-notificator.zip"
+  name   = "notified-cnt-incrementer.zip"
   bucket = google_storage_bucket.bucket.name
-  source = "${path.module}/files/mail-notificator.zip"
-}
-
-variable "mail_password" {
-  type = string
+  source = "${path.module}/files/notified-cnt-incrementer.zip"
 }
 
 resource "google_cloudfunctions_function" "function" {
-  name        = "mail-notificator-function"
+  name        = "notified-cnt-incrementer-function"
   region      = "asia-northeast1"
   description = ""
   runtime     = "go113"
@@ -106,12 +102,11 @@ resource "google_cloudfunctions_function" "function" {
   timeout     = 300
   entry_point = "Run"
   labels = {
-    my-label = "mail-label"
+    my-label = "notified-label"
   }
 
   environment_variables = {
     DBDSN         = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
-    MAIL_PASSWORD = var.mail_password
   }
 }
 
