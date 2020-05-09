@@ -101,7 +101,11 @@ func genStore() sessions.Store {
 	if sessionKey == "" {
 		sessionKey = "sessionsecret"
 	}
-	return sessions.NewCookieStore([]byte(sessionKey))
+	cookieStore := sessions.NewCookieStore([]byte(sessionKey))
+	cookieStore.Options = &sessions.Options{
+		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
+	}
+	return cookieStore
 }
 
 func genDB() (*sql.DB, error) {
