@@ -61,7 +61,7 @@ resource "google_cloud_scheduler_job" "job" {
   name        = "notified-cnt-incrementer-scheduler-job"
   region      = "us-central1"
   description = "notified-cnt-incrementer scheduler job"
-  schedule    = "40 15 * * *"
+  schedule    = "00 00 * * *"
   time_zone   = "Asia/Tokyo"
   pubsub_target {
     # topic.id is the topic's full resource name.
