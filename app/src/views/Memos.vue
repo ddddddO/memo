@@ -1,7 +1,10 @@
 <template>
   <div class="memos">
     <h1>memos</h1>
-    <div class="overflow-auto" v-if="loaded">
+    <div v-if="loading">
+      Loading...
+    </div>
+    <div v-if="memoList" class="overflow-auto">
       <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
       <b-table
         id="memo-list-table"
@@ -40,39 +43,15 @@ body {
 export default {
   name: 'memos',
   data: () => ({
-    loaded: false,
+    loading: false,
     memoList: null,
     perPage: 10,
     currentPage: 1,
     fields: ['id', 'subject'],
     endpoint: ''
   }),
-  async mounted () {
-    this.loaded = false
-    this.buildEndpoint()
-    try {
-      this.memoList = await fetch(
-        this.endpoint,
-        {
-          mode: 'cors',
-          credentials: 'include',
-          headers: { 'Accept': 'application/json' }
-        })
-        .then(function (resp) {
-          return resp.json()
-        })
-        .then(function (json) {
-          const tmp = JSON.stringify(json)
-          return tmp
-        })
-        .then(function (sJson) {
-          const tmp = JSON.parse(sJson)
-          return tmp.memo_list
-        })
-    } catch (err) {
-      console.error(err)
-    }
-    this.loaded = true
+  created () {
+    this.fetchData()
   },
   computed: {
     rows () {
@@ -86,7 +65,43 @@ export default {
       } else {
         this.endpoint = 'http://localhost:8082' + '/memos' + '?userId=1'
       }
+    },
+    fetchData: function () {
+      this.loading = true
+      this.memoList = null
+      this.buildEndpoint()
+      let data = null
+      const fetchFunc = async () => {
+        try {
+          data = await fetch(
+            this.endpoint,
+            {
+              mode: 'cors',
+              credentials: 'include',
+              headers: { 'Accept': 'application/json' }
+            })
+            .then(function (resp) {
+              return resp.json()
+            })
+            .then(function (json) {
+              const tmp = JSON.stringify(json)
+              return tmp
+            })
+            .then(function (sJson) {
+              const tmp = JSON.parse(sJson)
+              return tmp.memo_list
+            })
+        } catch (err) {
+          console.error(err)
+        }
+        this.memoList = data
+        this.loading = false
+      }
+      fetchFunc()
     }
+  },
+  watch: {
+    '$route': 'fetchData'
   }
 }
 </script>
