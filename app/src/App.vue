@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <div id="nav">
-      <header>
+      <header id="app-header">
         <router-link to="/">Home</router-link> |
         <router-link to="/about">About</router-link> |
         <router-link to="/memos">Memos</router-link>
@@ -32,7 +32,7 @@
   color: #42b983;
 }
 
-header {
+#app-header {
   position: fixed;
 }
 

@@ -15,7 +15,8 @@
     <div v-if="!activatedEdit">
       <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
       <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
-      <b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>
+      <!--<b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>-->
+      <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
     </div>
     <div v-else>
       <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
@@ -27,6 +28,12 @@
       <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
       <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
     </div>
+    <b-modal id="confirm-delete" hide-footer title="Delete ?">
+      <div class="d-block text-center">
+        <h3>{{ memoDetail.subject }}</h3>
+      </div>
+      <b-button block variant="outline-danger" @click="deleteMemo">OK!</b-button>
+    </b-modal>
   </div>
 </template>
 
@@ -108,8 +115,6 @@ export default {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+
     },
     deleteMemo: function () {
-      if (!window.confirm('Delete ?')) { return }
-
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'DELETE',
@@ -120,10 +125,7 @@ export default {
           memo_id: this.$route.params.memo_id
         })
       })
-      this.reloadMemos()
-    },
-    reloadMemos: function () {
-      this.$router.replace('/memos')
+      setTimeout(() => { this.$router.push('/memos') }, '500')
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {

@@ -8,6 +8,11 @@
       <b-input v-model="passWord" name="passwd" type="password" id="text-password"></b-input>
       <b-button pill style="margin: 10px" v-on:click="postLoginForm" type="button" size="sm" variant="primary">Login</b-button>
     </b-form>
+    <b-modal ref="failed-login" ok-only title="Retry Login!">
+      <div class="d-block text-center">
+        <h3>Wrong UserName or Password.</h3>
+      </div>
+    </b-modal>
   </div>
 </template>
 
@@ -29,6 +34,7 @@ export default {
   },
   methods: {
     postLoginForm: function () {
+      let own = this
       try {
         fetch(
           this.endpoint,
@@ -43,7 +49,7 @@ export default {
           })
           .then(function (resp) {
             if (!resp.ok) {
-              alert('retry login!')
+              own.$refs['failed-login'].show()
             } else {
               router.push('/memos')
             }
