@@ -12,6 +12,8 @@
 </template>
 
 <script>
+import router from '../router'
+
 export default {
   name: 'LoginForm',
   props: {
@@ -43,7 +45,7 @@ export default {
             if (!resp.ok) {
               alert('retry login!')
             } else {
-              // this.$router.push('/memos') TODO: 遷移させたい
+              router.push('/memos')
             }
           })
       } catch (err) {
