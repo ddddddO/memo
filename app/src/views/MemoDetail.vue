@@ -27,7 +27,10 @@
     </div>
     <div class="right" v-if="activatedPreviewContent">
       <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
-      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
+      <b-card>
+        <b-card-text style="white-space: pre-wrap;font-size: x-small;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
+        </b-card-text>
+      </b-card>
     </div>
     <b-modal id="confirm-delete" hide-footer title="Delete ?">
       <div class="d-block text-center">
