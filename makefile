@@ -41,4 +41,4 @@ buildapi:
 	docker push gcr.io/tag-mng-243823/api
 
 deployapp:
-	cd app && npm run build && gcloud app deploy
+	cd app && npm run build && gcloud app deploy -q
