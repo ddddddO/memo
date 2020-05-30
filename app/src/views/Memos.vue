@@ -6,20 +6,22 @@
     </div>
     <div v-if="memoList" class="overflow-auto">
       <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
-      <b-table
-        id="memo-list-table"
-        :items="memoList"
-        :fields="fields"
-        :per-page="perPage"
-        :current-page="currentPage"
-        small
-      >
-        <template v-slot:cell(id)="data">
-          <router-link :to="{ name:'memo-detail', params: { memo_id: data.value }}">
-            <a>{{ data.value }}</a>
-          </router-link>
-        </template>
-      </b-table>
+      <div class="list">
+        <b-table
+          id="memo-list-table"
+          :items="memoList"
+          :fields="fields"
+          :per-page="perPage"
+          :current-page="currentPage"
+          small
+        >
+          <template v-slot:cell(id)="data">
+            <router-link :to="{ name:'memo-detail', params: { memo_id: data.value }}">
+              <a>{{ data.value }}</a>
+            </router-link>
+          </template>
+        </b-table>
+      </div>
       <b-pagination
         pills
         size="sm"
@@ -36,6 +38,14 @@
 <style>
 body {
   margin : 0px 10px 0px 10px;
+}
+
+/* PC */
+@media only screen and (min-width : 1024px){
+  .list {
+    width: 50%;
+    margin: auto;
+  }
 }
 </style>
 

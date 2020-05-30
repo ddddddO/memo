@@ -2,11 +2,13 @@
   <div class="login">
     <h1>{{ title }}</h1>
     <b-form>
-      <label for="text-username">User Name</label>
-      <b-input v-model="userName" name="name" type="text" id="text-username"></b-input>
-      <label for="text-password">Password</label>
-      <b-input v-model="passWord" name="passwd" type="password" id="text-password"></b-input>
-      <b-button pill style="margin: 10px" v-on:click="postLoginForm" type="button" size="sm" variant="primary">Login</b-button>
+      <div class="form">
+        <label for="text-username">User Name</label>
+        <b-input v-model="userName" name="name" type="text" id="text-username"></b-input>
+        <label for="text-password">Password</label>
+        <b-input v-model="passWord" name="passwd" type="password" id="text-password"></b-input>
+        <b-button pill style="margin: 10px" v-on:click="postLoginForm" type="button" size="sm" variant="primary">Login</b-button>
+      </div>
     </b-form>
     <b-modal ref="failed-login" ok-only title="Retry Login!">
       <div class="d-block text-center">
@@ -73,5 +75,17 @@ export default {
 <style scoped>
 .login {
   margin : 0px 10px 0px 10px;
+}
+
+/* PC */
+@media only screen and (min-width : 1024px){
+  .form {
+    width: 33%;
+    top: 33%;
+    left: 0;
+    right: 0;
+    position:absolute;
+    margin: auto;
+  }
 }
 </style>
