@@ -40,6 +40,5 @@ buildapi:
 	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f deployments/dockerfile/api/Dockerfile .
 	docker push gcr.io/tag-mng-243823/api
 
-# after 'npm run build'
 deployapp:
-	cd app && gcloud app deploy
+	cd app && npm run build && gcloud app deploy
