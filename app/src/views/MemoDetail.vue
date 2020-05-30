@@ -20,14 +20,14 @@
       </div>
       <div v-else>
         <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
-        <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
+        <b-button pill size="sm" v-on:click="switchPreviewContent">Preview</b-button>
+        <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
       </div>
     </div>
     <div class="right" v-if="activatedPreviewContent">
       <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
       <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
-      <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
-      <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
     </div>
     <b-modal id="confirm-delete" hide-footer title="Delete ?">
       <div class="d-block text-center">
@@ -108,6 +108,7 @@ export default {
     },
     deactivateEditMemo: function () {
       this.activatedEdit = false
+      this.activatedPreviewContent = false
     },
     switchPreviewContent: function () {
       this.activatedPreviewContent = !this.activatedPreviewContent
