@@ -1,30 +1,31 @@
 <template>
   <div class="memodetail">
-    <div class="memodetail-tags">
-      <h3 style="text-align:start;font-size: medium;">Tags:</h3>
-      <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
-    </div>
-    <h3 style="text-align:start;font-size: medium;">Subject:</h3>
-    <div v-if="!activatedEdit" class="memodetail-subject">
-      <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
-    </div>
-    <div v-else>
-      <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
-    </div>
-    <h3 style="text-align:start;font-size: medium;">Content:</h3>
-    <div v-if="!activatedEdit">
-      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
-      <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
-      <!--<b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>-->
-      <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
-    </div>
-    <div v-else>
-      <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
-      <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
-      <div v-if="activatedPreviewContent">
-        <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
-        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
+    <div class="left">
+      <div class="memodetail-tags">
+        <h3 style="text-align:start;font-size: medium;">Tags:</h3>
+        <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
       </div>
+      <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+      <div v-if="!activatedEdit" class="memodetail-subject">
+        <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
+      </div>
+      <div v-else>
+        <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
+      </div>
+      <h3 style="text-align:start;font-size: medium;">Content:</h3>
+      <div v-if="!activatedEdit">
+        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
+        <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
+      </div>
+      <div v-else>
+        <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
+        <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
+      </div>
+    </div>
+    <div class="right" v-if="activatedPreviewContent">
+      <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
+      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
       <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
       <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
     </div>
@@ -43,6 +44,21 @@ body {
 }
 button {
   margin : 3px;
+}
+
+/* PC */
+@media only screen and (min-width : 1024px){
+  .memodetail {
+    overflow: auto;
+  }
+  .left {
+    float: left;
+    width:50%;
+  }
+  .right {
+    overflow: auto;
+    width:50%;
+  }
 }
 </style>
 
