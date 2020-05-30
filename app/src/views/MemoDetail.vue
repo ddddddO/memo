@@ -53,11 +53,12 @@ button {
   }
   .left {
     float: left;
-    width:50%;
+    width: 49%;
+    margin-right: 2%;
   }
   .right {
     overflow: auto;
-    width:50%;
+    width: 49%;
   }
 }
 </style>
