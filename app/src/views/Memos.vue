@@ -5,7 +5,7 @@
       Loading...
     </div>
     <div v-if="memoList" class="overflow-auto">
-      <b-card sub-title="ALL">
+      <b-card title="ALL">
         <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
         <div class="list"> <!--TODO: このb-table近辺をコンポーネント化して以下で使いまわすようにする-->
           <b-table
@@ -34,7 +34,7 @@
           aria-controls="memo-list-table"
         ></b-pagination>
       </b-card>
-      <b-card sub-title="After 20 days!">
+      <b-card title="After 20 days!">
         <div class="list-after-20">
           <b-table
             id="memo-list-table-after-20"
@@ -51,7 +51,7 @@
           </b-table>
         </div>
       </b-card>
-      <b-card sub-title="After 15 days!">
+      <b-card title="After 15 days!">
         <div class="list-after-15">
           <b-table
             id="memo-list-table-after-15"
@@ -68,7 +68,7 @@
           </b-table>
         </div>
       </b-card>
-      <b-card sub-title="After 11 days!">
+      <b-card title="After 11 days!">
         <div class="list-after-11">
           <b-table
             id="memo-list-table-after-11"
@@ -85,7 +85,7 @@
           </b-table>
         </div>
       </b-card>
-      <b-card sub-title="After 7 days!">
+      <b-card title="After 7 days!">
         <div class="list-after-7">
           <b-table
             id="memo-list-table-after-7"
@@ -102,7 +102,7 @@
           </b-table>
         </div>
       </b-card>
-      <b-card sub-title="After 4 days!">
+      <b-card title="After 4 days!">
         <div class="list-after-4">
           <b-table
             id="memo-list-table-after-4"
@@ -119,7 +119,7 @@
           </b-table>
         </div>
       </b-card>
-      <b-card sub-title="After 1 day!">
+      <b-card title="After 1 day!">
         <div class="list-after-1">
           <b-table
             id="memo-list-table-after-1"
