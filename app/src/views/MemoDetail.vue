@@ -1,5 +1,8 @@
 <template>
   <div class="memodetail">
+    <div v-if="loading">
+      Loading...
+    </div>
     <div class="left">
       <div class="memodetail-tags">
         <h3 style="text-align:start;font-size: medium;">Tags:</h3>
@@ -14,7 +17,7 @@
       </div>
       <h3 style="text-align:start;font-size: medium;">Content:</h3>
       <div v-if="!activatedEdit">
-        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
+        <h3 style="font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
         <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
         <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
       </div>
@@ -28,7 +31,7 @@
     <div class="right" v-if="activatedPreviewContent">
       <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
       <b-card>
-        <b-card-text style="white-space: pre-wrap;font-size: x-small;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
+        <b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
         </b-card-text>
       </b-card>
     </div>
@@ -72,12 +75,14 @@ import marked from 'marked'
 export default {
   name: 'memoDetail',
   data: () => ({
+    loading: false,
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
     endpoint: ''
   }),
   async created () {
+    this.loading = true
     this.buildEndpoint()
     const userId = 1
     const memoId = this.$route.params.memo_id
@@ -105,6 +110,7 @@ export default {
     }
 
     this.memoDetail.content = this.convertRNtoBR(this.memoDetail.content)
+    this.loading = false
   },
   methods: {
     activateEditMemo: function () {
