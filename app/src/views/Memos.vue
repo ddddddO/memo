@@ -14,6 +14,7 @@
           :per-page="perPage"
           :current-page="currentPage"
           small
+          sticky-header
         >
           <template v-slot:cell(id)="data">
             <router-link :to="{ name:'memo-detail', params: { memo_id: data.value }}">
@@ -55,7 +56,7 @@ export default {
   data: () => ({
     loading: false,
     memoList: null,
-    perPage: 10,
+    perPage: 50,
     currentPage: 1,
     fields: ['id', 'subject'],
     endpoint: ''
