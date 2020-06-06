@@ -4,13 +4,14 @@
     <div v-if="loading">
       Loading...
     </div>
-    <div v-if="memoList" class="overflow-auto">
+    <div v-if="!loading" class="overflow-auto">
       <b-card title="ALL">
+        <b-form-input v-model="keyword" placeholder="Enter serch word" size="sm"></b-form-input>
         <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
         <div class="list"> <!--TODO: このb-table近辺をコンポーネント化して以下で使いまわすようにする-->
           <b-table
             id="memo-list-table"
-            :items="memoList"
+            :items="serchedMemoList"
             :fields="fields"
             :per-page="perPage"
             :current-page="currentPage"
@@ -189,6 +190,7 @@ body {
 export default {
   name: 'memos',
   data: () => ({
+    keyword: '',
     loading: false,
     memoList: null,
     perPage: 50,
@@ -208,6 +210,22 @@ export default {
   computed: {
     rows () {
       return this.memoList.length
+    },
+    // メモのタイトルで検索
+    serchedMemoList () {
+      let serchKey = this.keyword
+      if (serchKey === '') {
+        return this.memoList
+      }
+
+      let list = []
+      this.memoList.forEach(function (memo) {
+        // NOTE: indexOfの引数に直接this.keywordだとundefined。謎
+        if (memo.subject.toLowerCase().indexOf(serchKey) !== -1) {
+          list.push(memo)
+        }
+      })
+      return list
     }
   },
   methods: {
