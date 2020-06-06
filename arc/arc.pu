@@ -1,32 +1,40 @@
 @startuml
 'MODULEs
-node "raspberry pi" as pi {
 
-  () "h2o(WEBserver)" as h2o
+actor "browser"
+actor "PWA"
 
-  node "Unicorn(APserver)" as unicorn {
-    component "tag-mng App" as tag_mng_app
+cloud "internet"
+
+package "GCP" {
+  node "API(Go)\nusing Cloud Run" as api {
   }
 
-  database "postgresql" as postgres {
-    
+  node "APP(Vue)\nusing GAE" as app {
   }
 
+  database "Postgres\nusing Cloud SQL" as db {
+  }
+
+  package "Batch" {
+    node "Cloud Scheduler\nexecute am 00:00" as scheduler {
+    }
+    node "Cloud PubSub" as pubsub {
+    }
+    node "Cloud Functions" as function {
+    }
+  }
 }
-
-cloud "Internet" as internet {
-
-}
-cloud "GCP" as gcp {
-
-}
-
 
 'RELATIONs
-internet - h2o
-h2o - unicorn
-unicorn - tag_mng_app
-tag_mng_app -- postgres
-postgres - gcp : backup/every6h
+PWA -left-> internet
+browser -right-> internet
 
+internet --> app: Login & View memo list!
+app -> api
+api -> db
+
+scheduler -> pubsub
+pubsub -> function
+function -up-> db : increase notified_cnt
 @enduml
