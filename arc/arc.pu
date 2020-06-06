@@ -1,6 +1,9 @@
 @startuml
-'MODULEs
 
+'Skin
+!include ./skin.pu
+
+'MODULEs
 actor "browser"
 actor "PWA"
 

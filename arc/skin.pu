@@ -1,0 +1,13 @@
+@startuml
+' ref: https://qiita.com/uhooi/items/56b9eafb78d83f77a0fe
+
+' モノクロにする
+skinparam monochrome true
+
+' 影をなくす
+skinparam shadowing false
+
+' 手描き風にする
+skinparam handwritten true
+
+@enduml
