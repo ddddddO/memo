@@ -11,12 +11,3 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/cors v1.7.0
 )
-
-// // リモートではなく、ローカルのリポジトリを見に行くための措置
-// replace (
-// 	github.com/ddddddO/tag-mng/internal/api/domain => ./internal/api/domain
-// 	github.com/ddddddO/tag-mng/internal/api/domain/model => ./internal/api/domain/model
-// 	github.com/ddddddO/tag-mng/internal/api/handlers => ./internal/api/handlers
-// 	github.com/ddddddO/tag-mng/internal/api/infra => ./internal/api/infra
-// 	github.com/ddddddO/tag-mng/internal/api/usecase => ./internal/api/usecase
-// )

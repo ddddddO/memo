@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ddddddO/tag-mng/internal/notificator/fcm"
+	"github.com/ddddddO/tag-mng/notificator/fcm"
 )
 
 type Notificator interface {
