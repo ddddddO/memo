@@ -10,4 +10,5 @@ require (
 	github.com/lib/pq v1.4.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/cors v1.7.0
+	github.com/stretchr/testify v1.6.1
 )

@@ -60,6 +60,11 @@ func (ah authHandler) Login(store sessions.Store) http.Handler {
 		}
 
 		resJson, err := json.Marshal(res)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(resJson))
 	})
