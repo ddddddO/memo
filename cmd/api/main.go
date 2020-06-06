@@ -73,6 +73,9 @@ func main() {
 	router.Get("/health", hs.HealthHandler(db))
 	// 認証API
 	router.Post("/auth", authHandler.Login(store).(http.HandlerFunc))
+
+	// TODO: /memos
+	//        /memos/{id} な形にする
 	// メモ一覧返却API
 	router.Get("/memos", hs.MemoListHandler(db))
 	// メモ詳細返却API
@@ -83,6 +86,9 @@ func main() {
 	router.Patch("/memodetail", hs.MemoDetailUpdateHandler(db))
 	// メモ削除API
 	router.Delete("/memodetail", hs.MemoDetailDeleteHandler(db))
+
+	// TODO: /tags
+	//        /tags/{id} な形にする
 	// タグ一覧返却API
 	router.Get("/tags", hs.TagListHandler(db))
 	// タグ詳細返却API
