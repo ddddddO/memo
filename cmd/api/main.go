@@ -11,6 +11,7 @@ import (
 	in "github.com/ddddddO/tag-mng/internal/api/infra"
 	uc "github.com/ddddddO/tag-mng/internal/api/usecase"
 
+	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
@@ -21,9 +22,6 @@ func main() {
 	log.Println("launch api server")
 
 	router := chi.NewRouter()
-
-	store := genStore()
-	router.Use(checkSession(store))
 
 	// cors: https://github.com/rs/cors#parameters
 	c := cors.New(cors.Options{
@@ -59,6 +57,13 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	store, err := genPostgresStore(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router.Use(checkSession(store))
 
 	user := in.NewUser(db)
 	userUseCase := uc.NewUserUseCase(user)
@@ -96,18 +101,6 @@ func main() {
 	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
 }
 
-func genStore() sessions.Store {
-	sessionKey := os.Getenv("SESSION_KEY")
-	if sessionKey == "" {
-		sessionKey = "sessionsecret"
-	}
-	cookieStore := sessions.NewCookieStore([]byte(sessionKey))
-	cookieStore.Options = &sessions.Options{
-		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
-	}
-	return cookieStore
-}
-
 func genDB() (*sql.DB, error) {
 	dsn := os.Getenv("DBDSN")
 	if len(dsn) == 0 {
@@ -119,6 +112,37 @@ func genDB() (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// old session impl
+func genCookieStore() sessions.Store {
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+	cookieStore := sessions.NewCookieStore([]byte(sessionKey))
+	cookieStore.Options = &sessions.Options{
+		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
+	}
+	return cookieStore
+}
+
+// new session impl
+func genPostgresStore(db *sql.DB) (sessions.Store, error) {
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+
+	pgStore, err := pgstore.NewPGStoreFromPool(db, []byte(sessionKey))
+	if err != nil {
+		return nil, err
+	}
+
+	pgStore.Options = &sessions.Options{
+		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
+	}
+	return pgStore, nil
 }
 
 // ref: chi middleware

@@ -27,13 +27,14 @@ test:
 
 # Cloud SQLへマイグレーション
 ## NOTE: terraform apply後、DBのappuserのpasswordをdb/dbconfig.ymlに設定すること
-DB_PASSWD=$(error please input appuser db passwd)
+#DB_PASSWD=$(error please input appuser db passwd)
 cloudpg:
 	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
 	sleep 5 && sql-migrate up -config=db/dbconfig.yml -env=production
-	PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/data_dump.sql
-	PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/update_time.sql
+	#PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/data_dump.sql
+	#PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/update_time.sql
 
+## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 buildapi:
 	rsync cmd/api/main.go deployments/files/api/main.go -v
 	cd deployments/files/api && go get -u
