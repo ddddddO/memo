@@ -1,14 +1,15 @@
 FROM golang:1.13-alpine as builder
- 
-WORKDIR /go/src/api
-COPY deployments/files/api .
 
-RUN go build -o api main.go
+WORKDIR /go/src/github.com/ddddddO/tag-mng
+COPY cmd/api/main.go go.* ./
+COPY api/ api/
+
+RUN go build -o go-api main.go
 
 FROM alpine
 
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /go/src/api/api /api
+COPY --from=builder /go/src/github.com/ddddddO/tag-mng/go-api /api
 
 ENV PORT="8080"
 CMD ["/api"]

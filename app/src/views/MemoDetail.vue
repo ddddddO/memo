@@ -1,32 +1,46 @@
 <template>
   <div class="memodetail">
-    <div class="memodetail-tags">
-      <h3 style="text-align:start;font-size: medium;">Tags:</h3>
-      <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
+    <div v-if="loading">
+      Loading...
     </div>
-    <h3 style="text-align:start;font-size: medium;">Subject:</h3>
-    <div v-if="!activatedEdit" class="memodetail-subject">
-      <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
-    </div>
-    <div v-else>
-      <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
-    </div>
-    <h3 style="text-align:start;font-size: medium;">Content:</h3>
-    <div v-if="!activatedEdit">
-      <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
-      <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
-      <b-button pill size="sm" variant="danger" v-on:click="deleteMemo">Delete</b-button>
-    </div>
-    <div v-else>
-      <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
-      <b-button pill size="sm" v-on:click="switchPreviewContent">Preview?</b-button>
-      <div v-if="activatedPreviewContent">
-        <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
-        <h3 style="white-space: pre-wrap;font-size: large;text-align:start;" v-html="memoDetail.content"></h3>
+    <div class="left">
+      <div class="memodetail-tags">
+        <h3 style="text-align:start;font-size: medium;">Tags:</h3>
+        <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
       </div>
-      <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
-      <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
+      <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+      <div v-if="!activatedEdit" class="memodetail-subject">
+        <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
+      </div>
+      <div v-else>
+        <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
+      </div>
+      <h3 style="text-align:start;font-size: medium;">Content:</h3>
+      <div v-if="!activatedEdit">
+        <h3 style="font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
+        <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
+      </div>
+      <div v-else>
+        <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
+        <b-button pill size="sm" v-on:click="switchPreviewContent">Preview</b-button>
+        <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
+      </div>
     </div>
+    <div class="right" v-if="activatedPreviewContent">
+      <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
+      <b-card>
+        <b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
+        </b-card-text>
+      </b-card>
+    </div>
+    <b-modal id="confirm-delete" hide-footer title="Delete ?">
+      <div class="d-block text-center">
+        <h3>{{ memoDetail.subject }}</h3>
+      </div>
+      <b-button block variant="outline-danger" @click="deleteMemo">OK!</b-button>
+    </b-modal>
   </div>
 </template>
 
@@ -37,18 +51,38 @@ body {
 button {
   margin : 3px;
 }
+
+/* PC */
+@media only screen and (min-width : 1024px){
+  .memodetail {
+    overflow: auto;
+  }
+  .left {
+    float: left;
+    width: 49%;
+    margin-right: 2%;
+  }
+  .right {
+    overflow: auto;
+    width: 49%;
+  }
+}
 </style>
 
 <script>
+import marked from 'marked'
+
 export default {
   name: 'memoDetail',
   data: () => ({
+    loading: false,
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
     endpoint: ''
   }),
   async created () {
+    this.loading = true
     this.buildEndpoint()
     const userId = 1
     const memoId = this.$route.params.memo_id
@@ -76,6 +110,7 @@ export default {
     }
 
     this.memoDetail.content = this.convertRNtoBR(this.memoDetail.content)
+    this.loading = false
   },
   methods: {
     activateEditMemo: function () {
@@ -83,6 +118,7 @@ export default {
     },
     deactivateEditMemo: function () {
       this.activatedEdit = false
+      this.activatedPreviewContent = false
     },
     switchPreviewContent: function () {
       this.activatedPreviewContent = !this.activatedPreviewContent
@@ -106,8 +142,6 @@ export default {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+
     },
     deleteMemo: function () {
-      if (!window.confirm('Delete ?')) { return }
-
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'DELETE',
@@ -118,10 +152,7 @@ export default {
           memo_id: this.$route.params.memo_id
         })
       })
-      this.reloadMemos()
-    },
-    reloadMemos: function () {
-      this.$router.replace('/memos')
+      setTimeout(() => { this.$router.push('/memos') }, '500')
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
@@ -129,6 +160,11 @@ export default {
       } else {
         this.endpoint = 'http://localhost:8082/memodetail'
       }
+    }
+  },
+  computed: {
+    compiledMarkdownContent: function () {
+      return marked(this.memoDetail.content)
     }
   }
 }

@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"os"
 
-	hs "github.com/ddddddO/tag-mng/internal/api/handlers"
-	in "github.com/ddddddO/tag-mng/internal/api/infra"
-	uc "github.com/ddddddO/tag-mng/internal/api/usecase"
+	hs "github.com/ddddddO/tag-mng/api/handlers"
+	in "github.com/ddddddO/tag-mng/api/infra"
+	uc "github.com/ddddddO/tag-mng/api/usecase"
 
+	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
@@ -21,9 +22,6 @@ func main() {
 	log.Println("launch api server")
 
 	router := chi.NewRouter()
-
-	store := genStore()
-	router.Use(checkSession(store))
 
 	// cors: https://github.com/rs/cors#parameters
 	c := cors.New(cors.Options{
@@ -60,6 +58,13 @@ func main() {
 	}
 	defer db.Close()
 
+	store, err := genPostgresStore(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	router.Use(checkSession(store))
+
 	user := in.NewUser(db)
 	userUseCase := uc.NewUserUseCase(user)
 	authHandler := hs.NewAuthHandler(userUseCase)
@@ -93,19 +98,10 @@ func main() {
 	if port == "" {
 		port = "8082"
 	}
-	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
-}
 
-func genStore() sessions.Store {
-	sessionKey := os.Getenv("SESSION_KEY")
-	if sessionKey == "" {
-		sessionKey = "sessionsecret"
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), router); err != nil {
+		log.Fatal(err)
 	}
-	cookieStore := sessions.NewCookieStore([]byte(sessionKey))
-	cookieStore.Options = &sessions.Options{
-		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
-	}
-	return cookieStore
 }
 
 func genDB() (*sql.DB, error) {
@@ -119,6 +115,37 @@ func genDB() (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
+}
+
+// old session impl
+func genCookieStore() sessions.Store {
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+	cookieStore := sessions.NewCookieStore([]byte(sessionKey))
+	cookieStore.Options = &sessions.Options{
+		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
+	}
+	return cookieStore
+}
+
+// new session impl
+func genPostgresStore(db *sql.DB) (sessions.Store, error) {
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "sessionsecret"
+	}
+
+	pgStore, err := pgstore.NewPGStoreFromPool(db, []byte(sessionKey))
+	if err != nil {
+		return nil, err
+	}
+
+	pgStore.Options = &sessions.Options{
+		MaxAge: 60 * 60 * 6, // Cookieの有効期限。一旦6時間
+	}
+	return pgStore, nil
 }
 
 // ref: chi middleware

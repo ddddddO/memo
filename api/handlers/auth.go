@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/tag-mng/internal/api/usecase"
+	"github.com/ddddddO/tag-mng/api/usecase"
 )
 
 type AuthHandler interface {

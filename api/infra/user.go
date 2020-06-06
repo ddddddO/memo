@@ -7,8 +7,8 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/tag-mng/internal/api/domain"
-	"github.com/ddddddO/tag-mng/internal/api/domain/model"
+	"github.com/ddddddO/tag-mng/api/domain"
+	"github.com/ddddddO/tag-mng/api/domain/model"
 )
 
 type user struct {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ddddddO/tag-mng/internal/notificator"
+	"github.com/ddddddO/tag-mng/notificator"
 )
 
 func main() {
