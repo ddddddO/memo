@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"os"
 
-	hs "github.com/ddddddO/tag-mng/internal/api/handlers"
-	in "github.com/ddddddO/tag-mng/internal/api/infra"
-	uc "github.com/ddddddO/tag-mng/internal/api/usecase"
+	hs "github.com/ddddddO/tag-mng/api/handlers"
+	in "github.com/ddddddO/tag-mng/api/infra"
+	uc "github.com/ddddddO/tag-mng/api/usecase"
 
 	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
@@ -98,7 +98,10 @@ func main() {
 	if port == "" {
 		port = "8082"
 	}
-	http.ListenAndServe(fmt.Sprintf(":%s", port), router)
+
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), router); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func genDB() (*sql.DB, error) {

@@ -36,10 +36,9 @@ cloudpg:
 
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 buildapi:
-	rsync cmd/api/main.go deployments/files/api/main.go -v
-	cd deployments/files/api && go get -u
 	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f deployments/dockerfile/api/Dockerfile .
 	docker push gcr.io/tag-mng-243823/api
+
 
 deployapp:
 	cd app && npm run build && gcloud app deploy -q

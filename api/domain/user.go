@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/ddddddO/tag-mng/internal/api/domain/model"
+	"github.com/ddddddO/tag-mng/api/domain/model"
 )
 
 type User interface {

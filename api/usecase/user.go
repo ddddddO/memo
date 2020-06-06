@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/ddddddO/tag-mng/internal/api/domain"
+	"github.com/ddddddO/tag-mng/api/domain"
 )
 
 type UserUseCase interface {
