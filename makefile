@@ -22,7 +22,7 @@ rmlocalpg:
 	docker ps -a --filter name=local-postgres -q | xargs docker rm -f
 
 test:
-	go test ./api/... -cover -coverprofile cover.out
+	go test -v ./api/... -cover -coverprofile cover.out
 	go tool cover -html=cover.out -o ./cover.html
 
 # Cloud SQLへマイグレーション
