@@ -63,7 +63,7 @@ button {
     margin-right: 2%;
   }
   .right {
-    overflow: auto;
+    float: right;
     width: 49%;
   }
 }
