@@ -31,7 +31,8 @@
     <div class="right" v-if="activatedPreviewContent">
       <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
       <b-card>
-        <b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
+        <!--<b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">-->
+        <b-card-text style="text-align:start; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
         </b-card-text>
       </b-card>
     </div>
@@ -63,8 +64,13 @@ button {
     margin-right: 2%;
   }
   .right {
-    float: right;
-    width: 49%;
+    margin-left: 50%;
+  }
+  .card {
+    width: 570px;
+  }
+  .card-text {
+    width: 550px;
   }
 }
 </style>
