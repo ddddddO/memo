@@ -20,6 +20,9 @@ localcloudpg:
 	docker run -d --name local-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -v /mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/db/create_db:/docker-entrypoint-initdb.d/ postgres:11-alpine
 	# 初期化されたDBに対して、初期データを投入します
 	sleep 5 && PGPASSWORD=postgres psql -h localhost -U postgres -d tag-mng -f _data/cloud_sql_dump.sql
+	# 起動したlocalのpostgresコンテナのtag-mngデータベースに対してマイグレートアップします
+	sleep 5 && sql-migrate up -config=db/dbconfig.yml
+
 
 conlocalpg:
 	PGPASSWORD=postgres psql -h localhost -U postgres -d tag-mng
