@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -22,7 +23,7 @@ func Run(dsn string) error {
 		return errors.Wrap(err, "db error")
 	}
 
-	if err := genMD(memos); err != nil {
+	if err := genMDs(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
 
@@ -77,9 +78,19 @@ func fetchMemos(db *sql.DB) ([]Memo, error) {
 	return memos, nil
 }
 
-func genMD(memos []Memo) error {
-	// TODO: linuxのファイル名で使用できない文字チェック
-	fileName := fmt.Sprintf("%s.md", memos[0].subject)
+func genMDs(memos []Memo) error {
+	for _, memo := range memos {
+		// TODO: ここを並列処理でいけないか
+		if err := genMD(memo); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	return nil
+}
+
+func genMD(memo Memo) error {
+	subject := cnvFileName(memo.subject)
+	fileName := fmt.Sprintf("%s.md", subject)
 
 	dir, err := os.Getwd()
 	if err != nil {
@@ -107,7 +118,7 @@ func genMD(memos []Memo) error {
 	}
 	defer f.Close()
 	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	title := `title: "` + memos[0].subject + `"`
+	title := `title: "` + memo.subject + `"`
 	_, err = f.WriteAt([]byte(title), 4)
 	if err != nil {
 		return errors.WithStack(err)
@@ -117,7 +128,7 @@ func genMD(memos []Memo) error {
 		return errors.WithStack(err)
 	}
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(memos[0].content), inf.Size())
+	_, err = f.WriteAt([]byte(memo.content), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -128,6 +139,25 @@ func genMD(memos []Memo) error {
 func exists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return err == nil
+}
+
+const (
+	invalidChars = "/"
+	cnvChar      = "_"
+)
+
+func cnvFileName(fileName string) string {
+	if !strings.ContainsAny(fileName, invalidChars) {
+		return fileName
+	}
+
+	cnvFileName := fileName
+	i := strings.IndexAny(cnvFileName, invalidChars)
+	for i != -1 {
+		cnvFileName = cnvFileName[:i] + cnvChar + cnvFileName[i+1:]
+		i = strings.IndexAny(cnvFileName, invalidChars)
+	}
+	return cnvFileName
 }
 
 func genSite() error {
