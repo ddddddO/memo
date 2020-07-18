@@ -28,6 +28,7 @@ type Memo struct {
 }
 
 func fetchMemos(db *sql.DB) ([]Memo, error) {
+	// TODO: where句
 	const sql = `select subject, content from memos where id = 45`
 
 	rows, err := db.Query(sql)
