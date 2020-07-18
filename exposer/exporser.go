@@ -30,9 +30,9 @@ func Run(dsn string) error {
 		return errors.Wrap(err, "generate html error")
 	}
 
-	if err := uploadSite(); err != nil {
-		return errors.Wrap(err, "upload site error")
-	}
+	// if err := uploadSite(); err != nil {
+	// 	return errors.Wrap(err, "upload site error")
+	// }
 
 	log.Println("succeeded")
 	return nil
@@ -81,18 +81,27 @@ func genMD(memos []Memo) error {
 	// TODO: linuxのファイル名で使用できない文字チェック
 	fileName := fmt.Sprintf("%s.md", memos[0].subject)
 
-	// hugo new site hogehoge で生成したhogehogeディレクトリ内でhugo new fuga.md　しないと失敗する。
-	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。
-	err := exec.Command("hugo", "new", fmt.Sprintf("posts/%s", fileName)).Run()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	f, err := os.OpenFile(fmt.Sprintf("%s/content/posts/%s", dir, fileName), os.O_RDWR, 0644)
+	absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
+
+	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
+	if exists(absFilePath) {
+		err := exec.Command("rm", absFilePath).Run()
+		if err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	// hugo new site hogehoge で生成したhogehogeディレクトリ内でhugo new fuga.md　しないと失敗する。
+	err = exec.Command("hugo", "new", fmt.Sprintf("posts/%s", fileName)).Run()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	f, err := os.OpenFile(absFilePath, os.O_RDWR, 0644)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -114,6 +123,11 @@ func genMD(memos []Memo) error {
 	}
 
 	return nil
+}
+
+func exists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return err == nil
 }
 
 func genSite() error {
