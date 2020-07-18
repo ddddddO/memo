@@ -10,13 +10,13 @@ import (
 
 var (
 	dsn      = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
-	interval time.Duration
+	interval = 5 * time.Minute
 )
 
 // hugo new site hogehoge で生成したhogehogeディレクトリ内でこのプログラムを実行する前提
 func main() {
 	flag.StringVar(&dsn, "dsn", dsn, "connection DB data source name")
-	flag.DurationVar(&interval, "interval", 5*time.Minute, "pooling interval(ex: --interval=5m)")
+	flag.DurationVar(&interval, "interval", interval, "pooling interval(ex: --interval=5m)")
 	flag.Parse()
 
 	conf := exposer.Config{
