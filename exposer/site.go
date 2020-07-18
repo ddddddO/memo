@@ -1,9 +1,7 @@
 package exposer
 
 import (
-	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,72 +9,6 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
-
-func Run(dsn string) error {
-	db, err := genDB(dsn)
-	if err != nil {
-		return errors.Wrap(err, "generate db connection error")
-	}
-
-	memos, err := fetchMemos(db)
-	if err != nil {
-		return errors.Wrap(err, "db error")
-	}
-
-	if err := genMDs(memos); err != nil {
-		return errors.Wrap(err, "generate md file error")
-	}
-
-	if err := genSite(); err != nil {
-		return errors.Wrap(err, "generate html error")
-	}
-
-	// if err := uploadSite(); err != nil {
-	// 	return errors.Wrap(err, "upload site error")
-	// }
-
-	log.Println("succeeded")
-	return nil
-}
-
-func genDB(dsn string) (*sql.DB, error) {
-	if dsn == "" {
-		return nil, errors.New("undefined dsn")
-	}
-
-	log.Println("using dsn:", dsn)
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return db, nil
-}
-
-type Memo struct {
-	subject string
-	content string
-}
-
-func fetchMemos(db *sql.DB) ([]Memo, error) {
-	const sql = `select subject, content from memos where id = 45`
-
-	rows, err := db.Query(sql)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-
-	var memos []Memo
-	for rows.Next() {
-		var memo Memo
-		if err := rows.Scan(&memo.subject, &memo.content); err != nil {
-			return nil, errors.WithStack(err)
-		}
-		memos = append(memos, memo)
-	}
-
-	return memos, nil
-}
 
 func genMDs(memos []Memo) error {
 	for _, memo := range memos {
