@@ -128,7 +128,6 @@ func genSite() error {
 	return nil
 }
 
-// TODO: 以下関数のVM上の動作確認はまだ
 func uploadSite() error {
 	err := exec.Command("gsutil", "rsync", "-R", "public", "gs://www.dododo.site").Run()
 	if err != nil {
