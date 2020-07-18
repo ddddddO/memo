@@ -12,13 +12,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Run(dsn string) error {
-	db, err := genDB(dsn)
+type Config struct {
+	Dsn      string
+	Interval time.Duration
+}
+
+func Run(conf Config) error {
+	db, err := genDB(conf.Dsn)
 	if err != nil {
 		return errors.Wrap(err, "generate db connection error")
 	}
 
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(conf.Interval)
 	defer ticker.Stop()
 
 	// シグナルについて(とコンテキストについて)も

@@ -3,20 +3,28 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"github.com/ddddddO/tag-mng/exposer"
 )
 
 var (
-	dsn = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	dsn      = "host=localhost dbname=tag-mng user=postgres password=postgres sslmode=disable"
+	interval time.Duration
 )
 
 // hugo new site hogehoge で生成したhogehogeディレクトリ内でこのプログラムを実行する前提
 func main() {
 	flag.StringVar(&dsn, "dsn", dsn, "connection DB data source name")
+	flag.DurationVar(&interval, "interval", 5*time.Minute, "pooling interval(ex: --interval=5m)")
 	flag.Parse()
 
-	err := exposer.Run(dsn)
+	conf := exposer.Config{
+		Dsn:      dsn,
+		Interval: interval,
+	}
+
+	err := exposer.Run(conf)
 	if err != nil {
 		log.Fatalf("failed to expose memo\n%+v", err)
 	}
