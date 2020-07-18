@@ -4,8 +4,6 @@ import (
 	"flag"
 	"log"
 
-	_ "github.com/lib/pq"
-
 	"github.com/ddddddO/tag-mng/exposer"
 )
 

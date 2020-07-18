@@ -1,8 +1,14 @@
 package exposer
 
 import (
+	"database/sql"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
@@ -12,6 +18,39 @@ func Run(dsn string) error {
 		return errors.Wrap(err, "generate db connection error")
 	}
 
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
+	// シグナルについて(とコンテキストについて)も
+	// https://text.baldanders.info/golang/ticker/
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+	)
+	defer signal.Stop(sig)
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := run(db); err != nil {
+				return errors.WithStack(err)
+			}
+		case s := <-sig:
+			switch s {
+			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+				log.Printf("received signal: %s", s.String())
+				return nil
+			}
+		}
+	}
+
+	return nil
+}
+
+func run(db *sql.DB) error {
 	memos, err := fetchMemos(db)
 	if err != nil {
 		return errors.Wrap(err, "db error")
