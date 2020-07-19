@@ -43,6 +43,7 @@ func Run(conf Config) error {
 			if err := run(db); err != nil {
 				return errors.WithStack(err)
 			}
+			log.Println("succeeded")
 		case s := <-sig:
 			switch s {
 			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
@@ -61,6 +62,10 @@ func run(db *sql.DB) error {
 		return errors.Wrap(err, "db error")
 	}
 
+	if len(memos) == 0 {
+		return nil
+	}
+
 	if err := genMDs(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
@@ -73,6 +78,9 @@ func run(db *sql.DB) error {
 	// 	return errors.Wrap(err, "upload site error")
 	// }
 
-	log.Println("succeeded")
+	if err := updateMemosExposedAt(db, memos); err != nil {
+		return errors.Wrap(err, "db error")
+	}
+
 	return nil
 }
