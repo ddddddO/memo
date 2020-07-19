@@ -3,7 +3,6 @@ module github.com/ddddddO/tag-mng
 go 1.13
 
 require (
-	github.com/PuerkitoBio/goquery v1.5.1
 	github.com/antonlindstrom/pgstore v0.0.0-20200229204646-b08ebf1105e0
 	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/gorilla/sessions v1.2.0
