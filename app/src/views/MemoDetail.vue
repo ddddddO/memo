@@ -22,13 +22,14 @@
         <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
       </div>
       <div v-else>
+        <b-form-checkbox v-model="isExposed" value="true" unchecked-value="false">Expose?</b-form-checkbox>
         <h3 style="text-align:start;font-size: medium;">Subject:</h3>
         <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
         <h3 style="text-align:start;font-size: medium;">Content:</h3>
         <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
         <b-button pill size="sm" v-on:click="switchPreviewContent">Preview</b-button>
         <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
-        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.subject, memoDetail.content)">Update</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.subject, memoDetail.content, isExposed)">Update</b-button>
       </div>
     </div>
     <div class="right" v-if="activatedPreviewContent">
@@ -88,7 +89,8 @@ export default {
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
-    endpoint: ''
+    endpoint: '',
+    isExposed: false
   }),
   async created () {
     this.loading = true
@@ -132,7 +134,13 @@ export default {
     switchPreviewContent: function () {
       this.activatedPreviewContent = !this.activatedPreviewContent
     },
-    updateMemo: function (subject, content) {
+    updateMemo: function (subject, content, isExposed) {
+      if (isExposed === 'true') {
+        isExposed = true
+      } else {
+        isExposed = false
+      }
+
       let own = this
       try {
         fetch(this.endpoint, {
@@ -144,7 +152,8 @@ export default {
             user_id: 1,
             memo_id: this.$route.params.memo_id,
             memo_subject: subject,
-            memo_content: content
+            memo_content: content,
+            memo_is_exposed: isExposed
           })
         })
           .then(function (resp) {
