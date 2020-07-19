@@ -74,9 +74,9 @@ func run(db *sql.DB) error {
 		return errors.Wrap(err, "generate html error")
 	}
 
-	// if err := uploadSite(); err != nil {
-	// 	return errors.Wrap(err, "upload site error")
-	// }
+	if err := uploadSite(); err != nil {
+		return errors.Wrap(err, "upload site error")
+	}
 
 	if err := updateMemosExposedAt(db, memos); err != nil {
 		return errors.Wrap(err, "db error")
