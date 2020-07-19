@@ -58,7 +58,7 @@ buildapi:
 deployapp:
 	cd app && npm run build && gcloud app deploy -q
 
-# 以下タスク実行後、GCEへsshし、exposerを実行する。以下の形式
+# 以下タスク実行後、GCEへsshし、exposerを実行する。以下の形式。また、lbfdeatqユーザーになって実行すること。
 # ./exposer --interval=12s --dsn="host=35.190.236.87 dbname=tag-mng user=appuser password=XXXXXXXX sslmode=disable" &
 deployexp:
 	# コンパイルします

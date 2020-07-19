@@ -37,6 +37,12 @@ func Run(conf Config) error {
 	)
 	defer signal.Stop(sig)
 
+	// 初回起動時
+	if err := run(db); err != nil {
+		return errors.WithStack(err)
+	}
+	log.Println("succeeded")
+
 	for {
 		select {
 		case <-ticker.C:
