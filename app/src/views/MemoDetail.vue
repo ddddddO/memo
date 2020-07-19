@@ -1,5 +1,10 @@
 <template>
   <div class="memodetail">
+    <b-modal ref="failed-update" ok-only title="Failed to update...">
+      <div class="d-block text-center">
+        <h3>Sorry, failed to update.</h3>
+      </div>
+    </b-modal>
     <div v-if="loading">
       Loading...
     </div>
@@ -8,30 +13,30 @@
         <h3 style="text-align:start;font-size: medium;">Tags:</h3>
         <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
       </div>
-      <h3 style="text-align:start;font-size: medium;">Subject:</h3>
       <div v-if="!activatedEdit" class="memodetail-subject">
+        <h3 style="text-align:start;font-size: medium;">Subject:</h3>
         <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
-      </div>
-      <div v-else>
-        <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
-      </div>
-      <h3 style="text-align:start;font-size: medium;">Content:</h3>
-      <div v-if="!activatedEdit">
+        <h3 style="text-align:start;font-size: medium;">Content:</h3>
         <h3 style="font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
         <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
         <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
       </div>
       <div v-else>
+        <b-form-checkbox v-model="isExposed" value="true" unchecked-value="false">Expose?</b-form-checkbox>
+        <h3 style="text-align:start;font-size: medium;">Subject:</h3>
+        <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
+        <h3 style="text-align:start;font-size: medium;">Content:</h3>
         <b-form-textarea id="textarea" rows="7" v-model="memoDetail.content"></b-form-textarea>
         <b-button pill size="sm" v-on:click="switchPreviewContent">Preview</b-button>
         <b-button pill size="sm" v-on:click="deactivateEditMemo">Cancel</b-button>
-        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.content)">Update</b-button>
+        <b-button pill size="sm" variant="danger" v-on:click="updateMemo(memoDetail.subject, memoDetail.content, isExposed)">Update</b-button>
       </div>
     </div>
     <div class="right" v-if="activatedPreviewContent">
       <h3 style="text-align:start;font-size: medium;">Preview Content:</h3>
       <b-card>
-        <b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
+        <!--<b-card-text style="font-size: medium;text-align:start;position:relative; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">-->
+        <b-card-text style="text-align:start; height:550px; overflow-y:scroll;" v-html="compiledMarkdownContent">
         </b-card-text>
       </b-card>
     </div>
@@ -63,8 +68,13 @@ button {
     margin-right: 2%;
   }
   .right {
-    overflow: auto;
-    width: 49%;
+    margin-left: 50%;
+  }
+  .card {
+    width: 570px;
+  }
+  .card-text {
+    width: 550px;
   }
 }
 </style>
@@ -79,7 +89,8 @@ export default {
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
-    endpoint: ''
+    endpoint: '',
+    isExposed: false
   }),
   async created () {
     this.loading = true
@@ -123,20 +134,37 @@ export default {
     switchPreviewContent: function () {
       this.activatedPreviewContent = !this.activatedPreviewContent
     },
-    updateMemo: function (content) {
-      fetch(this.endpoint, {
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-        method: 'PATCH',
-        mode: 'cors',
-        credentials: 'include',
-        body: JSON.stringify({
-          user_id: 1,
-          memo_id: this.$route.params.memo_id,
-          memo_subject: this.memoDetail.subject,
-          memo_content: content
+    updateMemo: function (subject, content, isExposed) {
+      if (isExposed === 'true') {
+        isExposed = true
+      } else {
+        isExposed = false
+      }
+
+      let own = this
+      try {
+        fetch(this.endpoint, {
+          headers: { 'Content-Type': 'application/json; charset=utf-8' },
+          method: 'PATCH',
+          mode: 'cors',
+          credentials: 'include',
+          body: JSON.stringify({
+            user_id: 1,
+            memo_id: this.$route.params.memo_id,
+            memo_subject: subject,
+            memo_content: content,
+            memo_is_exposed: isExposed
+          })
         })
-      })
-      this.reloadMemos()
+          .then(function (resp) {
+            if (!resp.ok) {
+              own.$refs['failed-update'].show()
+            }
+          })
+      } catch (err) {
+        console.error(err)
+      }
+      this.$router.push('/memos')
     },
     convertRNtoBR: function (content) {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+

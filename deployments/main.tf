@@ -27,7 +27,12 @@ resource "google_sql_database_instance" "instance" {
   database_version = "POSTGRES_11"
   region           = "asia-northeast1"
   settings {
-    tier = "db-f1-micro"
+    #tier = "db-f1-micro"
+    tier = "db-custom-1-4096"
+    maintenance_window {
+      day  = 1
+      hour = 0
+    }
   }
 }
 
@@ -106,7 +111,7 @@ resource "google_cloudfunctions_function" "function" {
   }
 
   environment_variables = {
-    DBDSN         = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
+    DBDSN = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
   }
 }
 
@@ -219,4 +224,45 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 
 output "api_status" {
   value = "${google_cloud_run_service.api.status}"
+}
+
+# サイトジェネレーター/メモ公開フラグポーリングプログラム用GCE
+resource "google_compute_instance" "hugo-generator" {
+  zone         = "us-central1-a"
+  name         = "hugo-generator"
+  machine_type = "f1-micro"
+  boot_disk {
+    auto_delete = true
+    device_name = "hugo-generator"
+    mode        = "READ_WRITE"
+
+    initialize_params {
+      image  = "https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-10-buster-v20200618"
+      labels = {}
+      size   = 10
+      type   = "pd-standard"
+    }
+  }
+  network_interface {
+    network            = "https://www.googleapis.com/compute/v1/projects/tag-mng-243823/global/networks/default"
+    network_ip         = "10.128.0.5"
+    subnetwork         = "https://www.googleapis.com/compute/v1/projects/tag-mng-243823/regions/us-central1/subnetworks/default"
+    subnetwork_project = "tag-mng-243823"
+
+    access_config {
+      network_tier = "PREMIUM"
+    }
+  }
+  service_account {
+    email = "154979913991-compute@developer.gserviceaccount.com"
+    scopes = [
+      "https://www.googleapis.com/auth/devstorage.read_write",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring.write",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/sqlservice.admin",
+      "https://www.googleapis.com/auth/trace.append",
+    ]
+  }
 }

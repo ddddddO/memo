@@ -5,7 +5,9 @@
 
 ### API
 #### Go レイヤードアーキテクチャ  
-https://yyh-gl.github.io/tech-blog/blog/go_web_api/  
+- [参考](https://yyh-gl.github.io/tech-blog/blog/go_web_api/)  
+- 「ドメイン駆動設計入門」(now)  
+- [「今すぐ「レイヤードアーキテクチャ+DDD」を理解しよう。（golang）」](https://qiita.com/tono-maron/items/345c433b86f74d314c8d) (これから)  
 
 #### UT
 - Go test チート  

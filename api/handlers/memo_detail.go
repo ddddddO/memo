@@ -128,10 +128,11 @@ func strToStrSlice(s string) []string {
 }
 
 type UpdatedMemo struct {
-	UserId      int    `json:"user_id"`
-	MemoId      int    `json:"memo_id"`
-	MemoSubject string `json:"memo_subject"`
-	MemoContent string `json:"memo_content"`
+	UserId        int    `json:"user_id"`
+	MemoId        int    `json:"memo_id"`
+	MemoSubject   string `json:"memo_subject"`
+	MemoContent   string `json:"memo_content"`
+	MemoIsExposed bool   `json:"memo_is_exposed"`
 }
 
 func MemoDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
@@ -150,11 +151,12 @@ func MemoDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
 		}
 
 		const updateMemoQuery = `
-	UPDATE memos SET subject=$1, content=$2
-	 WHERE id=$3 AND users_id=$4
-	`
+		UPDATE memos SET subject=$1, content=$2, is_exposed=$3
+		 WHERE id=$4 AND users_id=$5
+		`
+
 		result, err := DB.Exec(updateMemoQuery,
-			updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoId, updatedMemo.UserId,
+			updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoIsExposed, updatedMemo.MemoId, updatedMemo.UserId,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
