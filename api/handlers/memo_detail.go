@@ -15,11 +15,12 @@ import (
 )
 
 type MemoDetail struct {
-	Id       int      `json:"id"`
-	Subject  string   `json:"subject"`
-	Content  string   `json:"content"`
-	TagIds   []int    `json:"tag_ids"`
-	TagNames []string `json:"tag_names"`
+	Id        int      `json:"id"`
+	Subject   string   `json:"subject"`
+	Content   string   `json:"content"`
+	IsExposed bool     `json:"is_exposed"`
+	TagIds    []int    `json:"tag_ids"`
+	TagNames  []string `json:"tag_names"`
 }
 
 func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
@@ -42,6 +43,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 	    m.id AS id,
 	    m.subject AS subject,
 		m.content AS content,
+		m.is_exposed AS is_exposed,
 		(SELECT jsonb_agg(t.id)
 		  FROM memos m 
 		  JOIN memo_tag mt 
@@ -80,7 +82,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		)
 		// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
 		err = rows.Scan(
-			&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content,
+			&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content, &memoDetail.IsExposed,
 			&tagIds, &tagNames,
 		)
 		if err != nil {
