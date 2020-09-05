@@ -278,30 +278,33 @@ export default {
       let case2 = []
       let case1 = []
       let case0 = []
-      data.forEach(function (datum) {
-        switch (datum.notified_cnt) {
-          case 5:
-            case5.push(datum)
-            break
-          case 4:
-            case4.push(datum)
-            break
-          case 3:
-            case3.push(datum)
-            break
-          case 2:
-            case2.push(datum)
-            break
-          case 1:
-            case1.push(datum)
-            break
-          case 0:
-            case0.push(datum)
-            break
-          default:
-            break
-        }
-      })
+      if (data !== null) {
+        data.forEach(function (datum) {
+          switch (datum.notified_cnt) {
+            case 5:
+              case5.push(datum)
+              break
+            case 4:
+              case4.push(datum)
+              break
+            case 3:
+              case3.push(datum)
+              break
+            case 2:
+              case2.push(datum)
+              break
+            case 1:
+              case1.push(datum)
+              break
+            case 0:
+              case0.push(datum)
+              break
+            default:
+              // dead code
+              break
+          }
+        })
+      }
       this.memoListAfter20days = case5
       this.memoListAfter15days = case4
       this.memoListAfter11days = case3
