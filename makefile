@@ -67,3 +67,6 @@ deployexp:
 	gcloud compute scp _data/exposer hugo-generator:/home/lbfdeatq/newmemos --zone "us-central1-a"
 	# ローカルのコンパイル済みのファイルを削除します
 	rm _data/exposer
+
+connvm:
+	gcloud beta compute ssh --zone "us-central1-a" "hugo-generator" --project "tag-mng-243823"
