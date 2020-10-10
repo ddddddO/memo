@@ -12,3 +12,4 @@ terraform.tfstate.1593237577.backup
 dbconfig.yml
 terraform.tfvars
 *.zip
+exposer.conf
