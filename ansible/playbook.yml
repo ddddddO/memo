@@ -1,0 +1,25 @@
+---
+- hosts:
+    - jobserver
+  tasks:
+    - name: Echo XXX
+      debug:
+        msg: "Hello!!!"
+
+    - name: Install pip3 & supervisor
+      become: yes
+      apt:
+        name:
+          - python3-pip
+          - supervisor
+
+# TODO:
+# リモートホストの/etc/supervisor/conf.d/*.conf　に、exposerデーモンをsupervisorに登録する設定ファイルを置くタスクを書く
+# https://qiita.com/shiraco/items/70c5d48a1b4f43fb4aa7
+
+    # - name: Manage process
+    #   become: yes
+    #   supervisorctl:
+    #     name: XXXX
+    #     state: restarted
+    #     config: /var/opt/my_project/supervisord.conf
