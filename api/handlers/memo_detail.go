@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,23 +44,23 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		m.content AS content,
 		m.is_exposed AS is_exposed,
 		(SELECT jsonb_agg(t.id)
-		  FROM memos m 
-		  JOIN memo_tag mt 
+		  FROM memos m
+		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id
 		  JOIN tags t
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
 		) AS tag_ids,
 		(SELECT jsonb_agg(t.name)
-		  FROM memos m 
-		  JOIN memo_tag mt 
+		  FROM memos m
+		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id
 		  JOIN tags t
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
 		) AS tag_names
-		   FROM memos m 
-		   JOIN memo_tag mt 
+		   FROM memos m
+		   JOIN memo_tag mt
 		   ON m.id = mt.memos_id
 		   JOIN tags t
 		   ON mt.tags_id = t.id
@@ -141,13 +140,7 @@ func MemoDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDetailUpdateHandler----")
 		var updatedMemo UpdatedMemo
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			panic(err)
-			return
-		}
-		if err := json.Unmarshal(buff, &updatedMemo); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
 			return
 		}
@@ -188,13 +181,7 @@ func MemoDetailCreateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDetailCreateHandler----")
 		var createdMemo CreatedMemo
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
-		if err := json.Unmarshal(buff, &createdMemo); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -212,7 +199,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		}
 		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
-		_, err = DB.Exec(createMemoQuery,
+		_, err := DB.Exec(createMemoQuery,
 			createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
 		)
 		if err != nil {
@@ -232,13 +219,7 @@ func MemoDetailDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDetailDeleteHandler----")
 		var deleteMemo DeleteMemo
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
-		if err := json.Unmarshal(buff, &deleteMemo); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
