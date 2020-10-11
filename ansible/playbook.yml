@@ -6,6 +6,12 @@
       debug:
         msg: "Hello!!!"
 
+    - name: Deploy Hugo config.toml
+      become: yes
+      copy:
+        dest: /home/lbfdeatq/newmemos/config.toml
+        src: config.toml
+
     - name: Install pip3 & supervisor
       become: yes
       apt:

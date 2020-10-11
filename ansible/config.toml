@@ -1,0 +1,7 @@
+baseURL = "http://www.dododo.site/"
+languageCode = "en-us"
+title = "メモ"
+theme = "hugo-notepadium"
+hasCJKLanguage = true
+summaryLength = 40
+enableRobotsTXT = true
