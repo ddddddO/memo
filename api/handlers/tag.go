@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 
@@ -103,13 +102,7 @@ func TagDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDetailUpdateHandler----")
 		var updatedTag UpdatedTag
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
-		if err := json.Unmarshal(buff, updatedTag); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -145,13 +138,7 @@ func TagDetailDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDetailDeleteHandler----")
 		var deleteTag DeleteTag
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
-		if err := json.Unmarshal(buff, &deleteTag); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&deleteTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -189,13 +176,7 @@ func TagDetailCreateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDetailCreateHandler----")
 		var createTag CreateTag
-		buff := make([]byte, r.ContentLength)
-		_, err := r.Body.Read(buff)
-		if err != nil && err != io.EOF {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
-		if err := json.Unmarshal(buff, &createTag); err != nil {
+		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
