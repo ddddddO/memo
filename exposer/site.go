@@ -2,6 +2,7 @@ package exposer
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -9,6 +10,64 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
+
+func deleteMDs(subjects []string) error {
+	if len(subjects) == 0 {
+		return nil
+	}
+
+	var convSubjects []string
+	for _, subject := range subjects {
+		convSubjects = append(convSubjects, cnvFileName(subject))
+	}
+
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	absDirPath := fmt.Sprintf("%s/content/posts/", dir)
+	files, err := ioutil.ReadDir(absDirPath)
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	var fileNames []string
+	for _, file := range files {
+		name := file.Name()
+		if strings.HasSuffix(name, ".md") {
+			fileNames = append(fileNames, strings.TrimSuffix(name, ".md"))
+		}
+	}
+
+	var delMDs []string
+	for _, fileName := range fileNames {
+		existDelMD := false
+		for _, subject := range convSubjects {
+			if fileName == subject {
+				existDelMD = false
+				break
+			}
+			existDelMD = true
+		}
+		if existDelMD {
+			delMDs = append(delMDs, fmt.Sprintf("%s.md", fileName))
+		}
+	}
+
+	if len(delMDs) == 0 {
+		return nil
+	}
+
+	for _, fileName := range delMDs {
+		absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
+		if err := exec.Command("rm", absFilePath).Run(); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
 
 func genMDs(memos []Memo) error {
 	for _, memo := range memos {
@@ -93,7 +152,7 @@ func cnvFileName(fileName string) string {
 }
 
 func genSite() error {
-	err := exec.Command("hugo", "-D").Run()
+	err := exec.Command("hugo", "-D", "--cleanDestinationDir").Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -101,7 +160,7 @@ func genSite() error {
 }
 
 func uploadSite() error {
-	err := exec.Command("gsutil", "rsync", "-R", "public", "gs://www.dododo.site").Run()
+	err := exec.Command("gsutil", "rsync", "-d", "-r", "public", "gs://www.dododo.site").Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}

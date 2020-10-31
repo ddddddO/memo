@@ -4,7 +4,6 @@ ALTER TABLE memos ADD COLUMN exposed_at    TIMESTAMP;
 
 DROP TRIGGER IF EXISTS update_memos_content_trigger ON memos;
 -- +migrate StatementBegin
--- TODO: subjectの更新時の処理も入れといたほうが
 CREATE OR REPLACE FUNCTION update_memos_content_function() RETURNS trigger AS $$
     BEGIN
         IF OLD.content <> NEW.content THEN
