@@ -24,6 +24,28 @@ func genDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
+func fetchAllExposedMemoSubject(db *sql.DB) ([]string, error) {
+	const sql = `
+	select subject from memos
+	where is_exposed = true
+	`
+
+	rows, err := db.Query(sql)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var subjects []string
+	for rows.Next() {
+		var subject string
+		if err := rows.Scan(&subject); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		subjects = append(subjects, subject)
+	}
+	return subjects, nil
+}
+
 type Memo struct {
 	id      int
 	subject string
