@@ -63,6 +63,15 @@ func Run(conf Config) error {
 }
 
 func run(db *sql.DB) error {
+	subjects, err := fetchAllExposedMemoSubject(db)
+	if err != nil {
+		return errors.Wrap(err, "db error")
+	}
+
+	if err := deleteMDs(subjects); err != nil {
+		return errors.Wrap(err, "delete md file error")
+	}
+
 	memos, err := fetchMemos(db)
 	if err != nil {
 		return errors.Wrap(err, "db error")
