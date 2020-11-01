@@ -164,7 +164,7 @@ func genSite() error {
 }
 
 func uploadSite() error {
-	err := exec.Command("gsutil", "rsync", "-d", "-r", "public", "gs://www.dododo.site").Run()
+	err := exec.Command("gsutil", "-h", "Cache-Control:public, max-age=180", "rsync", "-d", "-r", "public", "gs://www.dododo.site").Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
