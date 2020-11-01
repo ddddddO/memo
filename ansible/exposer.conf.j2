@@ -1,0 +1,8 @@
+[program:exposer]  ; プロセスの名前
+directory=/home/lbfdeatq/newmemos  ; 作業ディレクトリ
+command=/home/lbfdeatq/newmemos/exposer --interval=3m --dsn="{{ dsn }}"  ; 起動コマンド.
+autostart=true  ; autostartする
+autorestart=true  ; 自動で再起動させる
+;user=root  ; 起動ユーザ
+redirect_stderr=true  ; 標準エラーを出力する
+stdout_logfile=/var/log/supervisor/exposer.log  ; ログファイルの出力先

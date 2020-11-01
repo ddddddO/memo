@@ -2,15 +2,15 @@
 - hosts:
     - jobserver
   tasks:
-    - name: Echo XXX
+    - name: Echo vars
       debug:
-        msg: "Hello!!!"
+        msg: "Hello, {{ test_var }}... {{ dsn }}"
 
     - name: Deploy Hugo config.toml
       become: yes
       copy:
-        dest: /home/lbfdeatq/newmemos/config.toml
         src: config.toml
+        dest: /home/lbfdeatq/newmemos/config.toml
 
     - name: Install pip3 & supervisor
       become: yes
@@ -21,9 +21,9 @@
 
     - name: Deploy exposer deamon supervisor's config
       become: yes
-      copy:
+      template:
+        src: exposer.conf.j2
         dest: /etc/supervisor/conf.d/exposer.conf
-        src: exposer.conf
 
     - name: Manage process
       become: yes
