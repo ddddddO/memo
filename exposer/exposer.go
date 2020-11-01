@@ -68,21 +68,25 @@ func run(db *sql.DB) error {
 		return errors.Wrap(err, "db error")
 	}
 
-	if err := deleteMDs(subjects); err != nil {
+	deletedMDs, err := deleteMDs(subjects)
+	if err != nil {
 		return errors.Wrap(err, "delete md file error")
 	}
+
+	// 念のため。。
+	time.Sleep(3 * time.Second)
 
 	memos, err := fetchMemos(db)
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
 
-	if len(memos) == 0 {
-		return nil
-	}
-
 	if err := genMDs(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
+	}
+
+	if len(memos) == 0 && len(deletedMDs) == 0 {
+		return nil
 	}
 
 	if err := genSite(); err != nil {

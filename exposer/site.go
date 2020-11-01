@@ -11,9 +11,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func deleteMDs(subjects []string) error {
+func deleteMDs(subjects []string) ([]string, error) {
 	if len(subjects) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	var convSubjects []string
@@ -23,13 +23,13 @@ func deleteMDs(subjects []string) error {
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	absDirPath := fmt.Sprintf("%s/content/posts/", dir)
 	files, err := ioutil.ReadDir(absDirPath)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.WithStack(err)
 	}
 
 	var fileNames []string
@@ -56,20 +56,24 @@ func deleteMDs(subjects []string) error {
 	}
 
 	if len(delMDs) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	for _, fileName := range delMDs {
 		absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
 		if err := exec.Command("rm", absFilePath).Run(); err != nil {
-			return errors.WithStack(err)
+			return nil, errors.WithStack(err)
 		}
 	}
 
-	return nil
+	return delMDs, nil
 }
 
 func genMDs(memos []Memo) error {
+	if len(memos) == 0 {
+		return nil
+	}
+
 	for _, memo := range memos {
 		// TODO: ここを並列処理でいけないか
 		if err := genMD(memo); err != nil {
