@@ -29,5 +29,5 @@
       become: yes
       supervisorctl:
         name: exposer
-        state: present
+        state: restarted
         config: /etc/supervisor/supervisord.conf
