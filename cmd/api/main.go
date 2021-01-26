@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	hs "github.com/ddddddO/tag-mng/api/handlers"
+	"github.com/ddddddO/tag-mng/api"
 
 	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
@@ -64,35 +64,35 @@ func main() {
 	router.Use(checkSession(store))
 
 	// health
-	router.Get("/health", hs.HealthHandler(db))
+	router.Get("/health", api.HealthHandler(db))
 	// 認証API
-	router.Post("/auth", hs.NewAuthHandler(db, store).(http.HandlerFunc))
+	router.Post("/auth", api.NewAuthHandler(db, store).(http.HandlerFunc))
 
 	// TODO: /memos
 	//        /memos/{id} な形にする
 	// メモ一覧返却API
-	router.Get("/memos", hs.MemoListHandler(db))
+	router.Get("/memos", api.MemoListHandler(db))
 	// メモ詳細返却API
-	router.Get("/memodetail", hs.MemoDetailHandler(db))
+	router.Get("/memodetail", api.MemoDetailHandler(db))
 	// メモ新規作成API
-	router.Post("/memodetail", hs.MemoDetailCreateHandler(db))
+	router.Post("/memodetail", api.MemoDetailCreateHandler(db))
 	// メモ更新API
-	router.Patch("/memodetail", hs.MemoDetailUpdateHandler(db))
+	router.Patch("/memodetail", api.MemoDetailUpdateHandler(db))
 	// メモ削除API
-	router.Delete("/memodetail", hs.MemoDetailDeleteHandler(db))
+	router.Delete("/memodetail", api.MemoDetailDeleteHandler(db))
 
 	// TODO: /tags
 	//        /tags/{id} な形にする
 	// タグ一覧返却API
-	router.Get("/tags", hs.TagListHandler(db))
+	router.Get("/tags", api.TagListHandler(db))
 	// タグ詳細返却API
-	router.Get("/tagdetail", hs.TagDetailHandler(db))
+	router.Get("/tagdetail", api.TagDetailHandler(db))
 	// タグ新規作成API
-	router.Post("/tagdetail", hs.TagDetailCreateHandler(db))
+	router.Post("/tagdetail", api.TagDetailCreateHandler(db))
 	// タグ更新API
-	router.Patch("/tagdetail", hs.TagDetailUpdateHandler(db))
+	router.Patch("/tagdetail", api.TagDetailUpdateHandler(db))
 	// タグ削除API
-	router.Delete("/tagdetail", hs.TagDetailDeleteHandler(db))
+	router.Delete("/tagdetail", api.TagDetailDeleteHandler(db))
 
 	port := os.Getenv("PORT")
 	if port == "" {
