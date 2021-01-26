@@ -1,30 +1,66 @@
 package handlers
 
 import (
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
-
-	"github.com/ddddddO/tag-mng/api/usecase"
 )
 
-type AuthHandler interface {
-	Login(store sessions.Store) http.Handler
+type User struct {
+	ID     int
+	Name   string
+	Passwd string
 }
 
-type authHandler struct {
-	userUseCase usecase.UserUseCase
-}
-
-func NewAuthHandler(uu usecase.UserUseCase) AuthHandler {
-	return authHandler{
-		userUseCase: uu,
+func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
+	user, err := fetchUser(DB, name, genSecuredPasswd(passwd, name))
+	if err != nil {
+		return 0, err
 	}
+
+	return user.ID, nil
 }
 
-func (ah authHandler) Login(store sessions.Store) http.Handler {
+func fetchUser(DB *sql.DB, name, passwd string) (*User, error) {
+	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
+	rows, err := DB.Query(query, name, passwd)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: ユーザー登録をしてもらう or 正しいname/passwdを指定してもらう
+	if !rows.Next() {
+		return nil, errors.New("error !")
+	}
+
+	us := User{}
+	if err := rows.Scan(&us.ID, &us.Name, &us.Passwd); err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &us, nil
+}
+
+func genSecuredPasswd(name, passwd string) string {
+	secStrPass := name + passwd
+	secPass := sha256.Sum256([]byte(secStrPass))
+	for i := 0; i < 99999; i++ {
+		secStrPass = hex.EncodeToString(secPass[:])
+		secPass = sha256.Sum256([]byte(secStrPass))
+	}
+	return strings.ToLower(hex.EncodeToString(secPass[:]))
+}
+
+func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
@@ -39,7 +75,7 @@ func (ah authHandler) Login(store sessions.Store) http.Handler {
 			return
 		}
 
-		userID, err := ah.userUseCase.FetchUserID(name, passwd)
+		userID, err := fetchUserID(DB, name, passwd)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return

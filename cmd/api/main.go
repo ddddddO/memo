@@ -8,8 +8,6 @@ import (
 	"os"
 
 	hs "github.com/ddddddO/tag-mng/api/handlers"
-	in "github.com/ddddddO/tag-mng/api/infra"
-	uc "github.com/ddddddO/tag-mng/api/usecase"
 
 	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
@@ -65,14 +63,10 @@ func main() {
 
 	router.Use(checkSession(store))
 
-	user := in.NewUser(db)
-	userUseCase := uc.NewUserUseCase(user)
-	authHandler := hs.NewAuthHandler(userUseCase)
-
 	// health
 	router.Get("/health", hs.HealthHandler(db))
 	// 認証API
-	router.Post("/auth", authHandler.Login(store).(http.HandlerFunc))
+	router.Post("/auth", hs.NewAuthHandler(db, store).(http.HandlerFunc))
 
 	// TODO: /memos
 	//        /memos/{id} な形にする
