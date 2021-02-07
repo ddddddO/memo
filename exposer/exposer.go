@@ -64,6 +64,8 @@ func Run(conf Config) error {
 
 func run(db *sql.DB) error {
 	subjects, err := fetchAllExposedMemoSubject(db)
+<<<<<<< HEAD
+=======
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
@@ -73,16 +75,30 @@ func run(db *sql.DB) error {
 	}
 
 	memos, err := fetchMemos(db)
+>>>>>>> master
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
 
-	if len(memos) == 0 {
-		return nil
+	deletedMDs, err := deleteMDs(subjects)
+	if err != nil {
+		return errors.Wrap(err, "delete md file error")
+	}
+
+	// 念のため。。
+	time.Sleep(3 * time.Second)
+
+	memos, err := fetchMemos(db)
+	if err != nil {
+		return errors.Wrap(err, "db error")
 	}
 
 	if err := genMDs(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
+	}
+
+	if len(memos) == 0 && len(deletedMDs) == 0 {
+		return nil
 	}
 
 	if err := genSite(); err != nil {

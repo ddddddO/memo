@@ -72,4 +72,4 @@ connvm:
 	gcloud beta compute ssh --zone "us-central1-a" "hugo-generator" --project "tag-mng-243823"
 
 prov:
-	ansible-playbook ./ansible/playbook.yml -i ./ansible/hosts
+	ansible-playbook --ask-vault-pass ./ansible/playbook.yml -i ./ansible/hosts
