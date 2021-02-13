@@ -56,6 +56,7 @@ buildapi:
 	docker push gcr.io/tag-mng-243823/api
 
 deployapp:
+	gcloud config set project tag-mng-243823 && \
 	cd app && npm run build && gcloud app deploy -q
 
 # 以下タスク実行後、GCEへsshし、exposerを実行する。以下の形式。また、lbfdeatqユーザーになって実行すること。
