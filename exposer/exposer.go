@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
 	"github.com/ddddddO/tag-mng/exposer/datasource"
