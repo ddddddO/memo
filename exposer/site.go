@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/tag-mng/exposer/datasource"
+	"github.com/ddddddO/tag-mng/domain"
 )
 
 func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
@@ -71,7 +71,7 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	return removeMarkdowns, nil
 }
 
-func generateMarkdowns(memos []datasource.Memo) error {
+func generateMarkdowns(memos []domain.MemoDetail) error {
 	if len(memos) == 0 {
 		return nil
 	}
@@ -85,7 +85,7 @@ func generateMarkdowns(memos []datasource.Memo) error {
 	return nil
 }
 
-func generateMarkdown(memo datasource.Memo) error {
+func generateMarkdown(memo domain.MemoDetail) error {
 	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 

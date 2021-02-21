@@ -8,6 +8,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	"github.com/ddddddO/tag-mng/domain"
 )
 
 type Postgres struct {
@@ -53,7 +55,7 @@ func (p *Postgres) FetchAllExposedMemoSubjects() ([]string, error) {
 	return subjects, nil
 }
 
-func (p *Postgres) FetchMemos() ([]Memo, error) {
+func (p *Postgres) FetchMemos() ([]domain.MemoDetail, error) {
 	const sql = `
 	select id, subject, content from memos
 	where (is_exposed = true and exposed_at is null)
@@ -65,9 +67,9 @@ func (p *Postgres) FetchMemos() ([]Memo, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	var memos []Memo
+	var memos []domain.MemoDetail
 	for rows.Next() {
-		var memo Memo
+		var memo domain.MemoDetail
 		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.Content); err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -76,7 +78,7 @@ func (p *Postgres) FetchMemos() ([]Memo, error) {
 	return memos, nil
 }
 
-func (p *Postgres) UpdateMemosExposedAt(memos []Memo) error {
+func (p *Postgres) UpdateMemosExposedAt(memos []domain.MemoDetail) error {
 	var sql = `update memos set exposed_at = now() where id in (%s)`
 
 	tmp := ""

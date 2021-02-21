@@ -11,16 +11,9 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq"
-)
 
-type MemoDetail struct {
-	Id        int      `json:"id"`
-	Subject   string   `json:"subject"`
-	Content   string   `json:"content"`
-	IsExposed bool     `json:"is_exposed"`
-	TagIds    []int    `json:"tag_ids"`
-	TagNames  []string `json:"tag_names"`
-}
+	"github.com/ddddddO/tag-mng/domain"
+)
 
 func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -75,13 +68,13 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		}
 		rows.Next()
 		var (
-			memoDetail MemoDetail
+			memoDetail domain.MemoDetail
 			tagIds     string
 			tagNames   string
 		)
 		// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
 		err = rows.Scan(
-			&memoDetail.Id, &memoDetail.Subject, &memoDetail.Content, &memoDetail.IsExposed,
+			&memoDetail.ID, &memoDetail.Subject, &memoDetail.Content, &memoDetail.IsExposed,
 			&tagIds, &tagNames,
 		)
 		if err != nil {

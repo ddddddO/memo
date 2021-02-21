@@ -1,14 +1,11 @@
 package datasource
 
-// TODO: apiと共通で使えるモデルとして移動する
-type Memo struct {
-	ID      int
-	Subject string
-	Content string
-}
+import (
+	"github.com/ddddddO/tag-mng/domain"
+)
 
 type DataSource interface {
 	FetchAllExposedMemoSubjects() ([]string, error)
-	FetchMemos() ([]Memo, error)
-	UpdateMemosExposedAt(memos []Memo) error
+	FetchMemos() ([]domain.MemoDetail, error)
+	UpdateMemosExposedAt(memos []domain.MemoDetail) error
 }
