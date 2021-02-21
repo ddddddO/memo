@@ -71,7 +71,7 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	return removeMarkdowns, nil
 }
 
-func generateMarkdowns(memos []domain.MemoDetail) error {
+func generateMarkdowns(memos []domain.Memo) error {
 	if len(memos) == 0 {
 		return nil
 	}
@@ -85,7 +85,7 @@ func generateMarkdowns(memos []domain.MemoDetail) error {
 	return nil
 }
 
-func generateMarkdown(memo domain.MemoDetail) error {
+func generateMarkdown(memo domain.Memo) error {
 	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 

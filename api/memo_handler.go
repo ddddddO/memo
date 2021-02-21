@@ -7,17 +7,12 @@ import (
 	"sort"
 
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/domain"
 )
 
-type Memo struct {
-	Id          int    `json:"id"`
-	Subject     string `json:"subject"`
-	NotifiedCnt int    `json:"notified_cnt"`
-	RowVariant  string `json:"_rowVariant"` // for vue
-}
-
 type Memos struct {
-	MemoList []Memo `json:"memo_list"`
+	MemoList []domain.Memo `json:"memo_list"`
 }
 
 func MemoListHandler(DB *sql.DB) http.HandlerFunc {
@@ -52,8 +47,8 @@ func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 		}
 
 		for rows.Next() {
-			var memo Memo
-			if err := rows.Scan(&memo.Id, &memo.Subject, &memo.NotifiedCnt); err != nil {
+			var memo domain.Memo
+			if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
 				return
 			}
@@ -78,7 +73,7 @@ func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-func setColor(m *Memo) {
+func setColor(m *domain.Memo) {
 	switch m.NotifiedCnt {
 	case 0:
 		m.RowVariant = "danger"

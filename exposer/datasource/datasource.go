@@ -6,6 +6,6 @@ import (
 
 type DataSource interface {
 	FetchAllExposedMemoSubjects() ([]string, error)
-	FetchMemos() ([]domain.MemoDetail, error)
-	UpdateMemosExposedAt(memos []domain.MemoDetail) error
+	FetchMemos() ([]domain.Memo, error)
+	UpdateMemosExposedAt(memos []domain.Memo) error
 }

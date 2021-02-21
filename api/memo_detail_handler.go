@@ -68,7 +68,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		}
 		rows.Next()
 		var (
-			memoDetail domain.MemoDetail
+			memoDetail domain.Memo
 			tagIds     string
 			tagNames   string
 		)
