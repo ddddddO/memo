@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func genDB(dsn string) (*sql.DB, error) {
+func generateDB(dsn string) (*sql.DB, error) {
 	if dsn == "" {
 		return nil, errors.New("undefined dsn")
 	}
@@ -24,7 +24,7 @@ func genDB(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func fetchAllExposedMemoSubject(db *sql.DB) ([]string, error) {
+func fetchAllExposedMemoSubjects(db *sql.DB) ([]string, error) {
 	const sql = `
 	select subject from memos
 	where is_exposed = true

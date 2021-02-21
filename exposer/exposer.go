@@ -18,9 +18,9 @@ type Config struct {
 }
 
 func Run(conf Config) error {
-	db, err := genDB(conf.Dsn)
+	db, err := generateDB(conf.Dsn)
 	if err != nil {
-		return errors.Wrap(err, "generate db connection error")
+		return errors.Wrap(err, "db connection error")
 	}
 
 	ticker := time.NewTicker(conf.Interval)
@@ -63,14 +63,14 @@ func Run(conf Config) error {
 }
 
 func run(db *sql.DB) error {
-	subjects, err := fetchAllExposedMemoSubject(db)
+	subjects, err := fetchAllExposedMemoSubjects(db)
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
 
-	deletedMDs, err := deleteMDs(subjects)
+	removedMarkdowns, err := removeMarkdwonsNotIncluded(subjects)
 	if err != nil {
-		return errors.Wrap(err, "delete md file error")
+		return errors.Wrap(err, "remove md file error")
 	}
 
 	// 念のため。。
@@ -81,19 +81,19 @@ func run(db *sql.DB) error {
 		return errors.Wrap(err, "db error")
 	}
 
-	if err := genMDs(memos); err != nil {
+	if err := generateMarkdowns(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
 
-	if len(memos) == 0 && len(deletedMDs) == 0 {
+	if len(memos) == 0 && len(removedMarkdowns) == 0 {
 		return nil
 	}
 
-	if err := genSite(); err != nil {
+	if err := generateSites(); err != nil {
 		return errors.Wrap(err, "generate html error")
 	}
 
-	if err := uploadSite(); err != nil {
+	if err := uploadSites(); err != nil {
 		return errors.Wrap(err, "upload site error")
 	}
 
