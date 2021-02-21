@@ -1,7 +1,6 @@
 package exposer
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +9,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	"github.com/ddddddO/tag-mng/exposer/datasource"
 )
 
 type Config struct {
@@ -18,7 +19,7 @@ type Config struct {
 }
 
 func Run(conf Config) error {
-	db, err := generateDB(conf.Dsn)
+	postgres, err := datasource.NewPostgres(conf.Dsn)
 	if err != nil {
 		return errors.Wrap(err, "db connection error")
 	}
@@ -38,7 +39,7 @@ func Run(conf Config) error {
 	defer signal.Stop(sig)
 
 	// 初回起動時
-	if err := run(db); err != nil {
+	if err := run(postgres); err != nil {
 		return errors.WithStack(err)
 	}
 	log.Println("succeeded")
@@ -46,7 +47,7 @@ func Run(conf Config) error {
 	for {
 		select {
 		case <-ticker.C:
-			if err := run(db); err != nil {
+			if err := run(postgres); err != nil {
 				return errors.WithStack(err)
 			}
 			log.Println("succeeded")
@@ -62,8 +63,8 @@ func Run(conf Config) error {
 	return nil
 }
 
-func run(db *sql.DB) error {
-	subjects, err := fetchAllExposedMemoSubjects(db)
+func run(ds datasource.DataSource) error {
+	subjects, err := ds.FetchAllExposedMemoSubjects()
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
@@ -76,7 +77,7 @@ func run(db *sql.DB) error {
 	// 念のため。。
 	time.Sleep(3 * time.Second)
 
-	memos, err := fetchMemos(db)
+	memos, err := ds.FetchMemos()
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
@@ -97,7 +98,7 @@ func run(db *sql.DB) error {
 		return errors.Wrap(err, "upload site error")
 	}
 
-	if err := updateMemosExposedAt(db, memos); err != nil {
+	if err := ds.UpdateMemosExposedAt(memos); err != nil {
 		return errors.Wrap(err, "db error")
 	}
 

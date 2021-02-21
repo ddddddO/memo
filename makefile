@@ -59,8 +59,8 @@ deployapp:
 	gcloud config set project tag-mng-243823 && \
 	cd app && npm run build && gcloud app deploy -q
 
-# 以下タスク実行後、GCEへsshし、exposerを実行する。lbfdeatqユーザーになって実行すること。
 # このタスク実行前に、make connvmでvmにログインし、sudo supervisorctl stop exposerで一旦止めること。
+# デプロイ後、sudo supervisorctl start exposer の実行を忘れないこと。
 deployexp:
 	# コンパイルします
 	go build -o _data/exposer cmd/exposer/main.go

@@ -9,6 +9,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	"github.com/ddddddO/tag-mng/exposer/datasource"
 )
 
 func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
@@ -69,7 +71,7 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	return removeMarkdowns, nil
 }
 
-func generateMarkdowns(memos []Memo) error {
+func generateMarkdowns(memos []datasource.Memo) error {
 	if len(memos) == 0 {
 		return nil
 	}
@@ -83,8 +85,8 @@ func generateMarkdowns(memos []Memo) error {
 	return nil
 }
 
-func generateMarkdown(memo Memo) error {
-	subject := cnvFileName(memo.subject)
+func generateMarkdown(memo datasource.Memo) error {
+	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 
 	dir, err := os.Getwd()
@@ -113,7 +115,7 @@ func generateMarkdown(memo Memo) error {
 	}
 	defer f.Close()
 	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	title := `title: "` + memo.subject + `"`
+	title := `title: "` + memo.Subject + `"`
 	_, err = f.WriteAt([]byte(title), 4)
 	if err != nil {
 		return errors.WithStack(err)
@@ -123,7 +125,7 @@ func generateMarkdown(memo Memo) error {
 		return errors.WithStack(err)
 	}
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(memo.content), inf.Size())
+	_, err = f.WriteAt([]byte(memo.Content), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}

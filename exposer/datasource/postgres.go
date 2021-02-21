@@ -1,4 +1,4 @@
-package exposer
+package datasource
 
 import (
 	"database/sql"
@@ -10,7 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-func generateDB(dsn string) (*sql.DB, error) {
+type Postgres struct {
+	db *sql.DB
+}
+
+func NewPostgres(dsn string) (*Postgres, error) {
 	if dsn == "" {
 		return nil, errors.New("undefined dsn")
 	}
@@ -21,16 +25,19 @@ func generateDB(dsn string) (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	return db, nil
+
+	return &Postgres{
+		db: db,
+	}, nil
 }
 
-func fetchAllExposedMemoSubjects(db *sql.DB) ([]string, error) {
+func (p *Postgres) FetchAllExposedMemoSubjects() ([]string, error) {
 	const sql = `
 	select subject from memos
 	where is_exposed = true
 	`
 
-	rows, err := db.Query(sql)
+	rows, err := p.db.Query(sql)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -46,20 +53,14 @@ func fetchAllExposedMemoSubjects(db *sql.DB) ([]string, error) {
 	return subjects, nil
 }
 
-type Memo struct {
-	id      int
-	subject string
-	content string
-}
-
-func fetchMemos(db *sql.DB) ([]Memo, error) {
+func (p *Postgres) FetchMemos() ([]Memo, error) {
 	const sql = `
 	select id, subject, content from memos
 	where (is_exposed = true and exposed_at is null)
 	or (is_exposed = true and (exposed_at < updated_at))
 	`
 
-	rows, err := db.Query(sql)
+	rows, err := p.db.Query(sql)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -67,7 +68,7 @@ func fetchMemos(db *sql.DB) ([]Memo, error) {
 	var memos []Memo
 	for rows.Next() {
 		var memo Memo
-		if err := rows.Scan(&memo.id, &memo.subject, &memo.content); err != nil {
+		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.Content); err != nil {
 			return nil, errors.WithStack(err)
 		}
 		memos = append(memos, memo)
@@ -75,17 +76,17 @@ func fetchMemos(db *sql.DB) ([]Memo, error) {
 	return memos, nil
 }
 
-func updateMemosExposedAt(db *sql.DB, memos []Memo) error {
+func (p *Postgres) UpdateMemosExposedAt(memos []Memo) error {
 	var sql = `update memos set exposed_at = now() where id in (%s)`
 
 	tmp := ""
 	for _, m := range memos {
-		id := strconv.Itoa(m.id)
+		id := strconv.Itoa(m.ID)
 		tmp += id + ","
 	}
 	tmp = tmp[:len(tmp)-1]
 
-	_, err := db.Exec(fmt.Sprintf(sql, tmp))
+	_, err := p.db.Exec(fmt.Sprintf(sql, tmp))
 	if err != nil {
 		return errors.WithStack(err)
 	}
