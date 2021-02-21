@@ -1,7 +1,6 @@
 package exposer
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +9,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	"github.com/ddddddO/tag-mng/exposer/datasource"
 )
 
 type Config struct {
@@ -18,9 +19,9 @@ type Config struct {
 }
 
 func Run(conf Config) error {
-	db, err := genDB(conf.Dsn)
+	postgres, err := datasource.NewPostgres(conf.Dsn)
 	if err != nil {
-		return errors.Wrap(err, "generate db connection error")
+		return errors.Wrap(err, "db connection error")
 	}
 
 	ticker := time.NewTicker(conf.Interval)
@@ -38,7 +39,7 @@ func Run(conf Config) error {
 	defer signal.Stop(sig)
 
 	// 初回起動時
-	if err := run(db); err != nil {
+	if err := run(postgres); err != nil {
 		return errors.WithStack(err)
 	}
 	log.Println("succeeded")
@@ -46,7 +47,7 @@ func Run(conf Config) error {
 	for {
 		select {
 		case <-ticker.C:
-			if err := run(db); err != nil {
+			if err := run(postgres); err != nil {
 				return errors.WithStack(err)
 			}
 			log.Println("succeeded")
@@ -62,42 +63,42 @@ func Run(conf Config) error {
 	return nil
 }
 
-func run(db *sql.DB) error {
-	subjects, err := fetchAllExposedMemoSubject(db)
+func run(ds datasource.DataSource) error {
+	subjects, err := ds.FetchAllExposedMemoSubjects()
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
 
-	deletedMDs, err := deleteMDs(subjects)
+	removedMarkdowns, err := removeMarkdwonsNotIncluded(subjects)
 	if err != nil {
-		return errors.Wrap(err, "delete md file error")
+		return errors.Wrap(err, "remove md file error")
 	}
 
 	// 念のため。。
 	time.Sleep(3 * time.Second)
 
-	memos, err := fetchMemos(db)
+	memos, err := ds.FetchMemos()
 	if err != nil {
 		return errors.Wrap(err, "db error")
 	}
 
-	if err := genMDs(memos); err != nil {
+	if err := generateMarkdowns(memos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
 
-	if len(memos) == 0 && len(deletedMDs) == 0 {
+	if len(memos) == 0 && len(removedMarkdowns) == 0 {
 		return nil
 	}
 
-	if err := genSite(); err != nil {
+	if err := generateSites(); err != nil {
 		return errors.Wrap(err, "generate html error")
 	}
 
-	if err := uploadSite(); err != nil {
+	if err := uploadSites(); err != nil {
 		return errors.Wrap(err, "upload site error")
 	}
 
-	if err := updateMemosExposedAt(db, memos); err != nil {
+	if err := ds.UpdateMemosExposedAt(memos); err != nil {
 		return errors.Wrap(err, "db error")
 	}
 

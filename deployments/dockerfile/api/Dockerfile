@@ -3,6 +3,7 @@ FROM golang:1.13-alpine as builder
 WORKDIR /go/src/github.com/ddddddO/tag-mng
 COPY cmd/api/main.go go.* ./
 COPY api/ api/
+COPY domain/ domain/
 
 RUN go build -o go-api main.go
 
