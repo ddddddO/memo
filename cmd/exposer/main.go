@@ -26,6 +26,6 @@ func main() {
 
 	err := exposer.Run(conf)
 	if err != nil {
-		log.Fatalf("failed to expose memo\n%+v", err)
+		log.Fatalf("failed to expose memos\n%+v", err)
 	}
 }

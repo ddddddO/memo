@@ -9,9 +9,11 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+
+	"github.com/ddddddO/tag-mng/domain"
 )
 
-func deleteMDs(subjects []string) ([]string, error) {
+func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	if len(subjects) == 0 {
 		return nil, nil
 	}
@@ -40,51 +42,51 @@ func deleteMDs(subjects []string) ([]string, error) {
 		}
 	}
 
-	var delMDs []string
+	var removeMarkdowns []string
 	for _, fileName := range fileNames {
-		existDelMD := false
+		isRemoving := false
 		for _, subject := range convSubjects {
 			if fileName == subject {
-				existDelMD = false
+				isRemoving = false
 				break
 			}
-			existDelMD = true
+			isRemoving = true
 		}
-		if existDelMD {
-			delMDs = append(delMDs, fmt.Sprintf("%s.md", fileName))
+		if isRemoving {
+			removeMarkdowns = append(removeMarkdowns, fmt.Sprintf("%s.md", fileName))
 		}
 	}
 
-	if len(delMDs) == 0 {
+	if len(removeMarkdowns) == 0 {
 		return nil, nil
 	}
 
-	for _, fileName := range delMDs {
+	for _, fileName := range removeMarkdowns {
 		absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
 		if err := exec.Command("rm", absFilePath).Run(); err != nil {
 			return nil, errors.WithStack(err)
 		}
 	}
 
-	return delMDs, nil
+	return removeMarkdowns, nil
 }
 
-func genMDs(memos []Memo) error {
+func generateMarkdowns(memos []domain.Memo) error {
 	if len(memos) == 0 {
 		return nil
 	}
 
 	for _, memo := range memos {
 		// TODO: ここを並列処理でいけないか
-		if err := genMD(memo); err != nil {
+		if err := generateMarkdown(memo); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	return nil
 }
 
-func genMD(memo Memo) error {
-	subject := cnvFileName(memo.subject)
+func generateMarkdown(memo domain.Memo) error {
+	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 
 	dir, err := os.Getwd()
@@ -113,7 +115,7 @@ func genMD(memo Memo) error {
 	}
 	defer f.Close()
 	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	title := `title: "` + memo.subject + `"`
+	title := `title: "` + memo.Subject + `"`
 	_, err = f.WriteAt([]byte(title), 4)
 	if err != nil {
 		return errors.WithStack(err)
@@ -123,7 +125,7 @@ func genMD(memo Memo) error {
 		return errors.WithStack(err)
 	}
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(memo.content), inf.Size())
+	_, err = f.WriteAt([]byte(memo.Content), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -155,7 +157,7 @@ func cnvFileName(fileName string) string {
 	return cnvFileName
 }
 
-func genSite() error {
+func generateSites() error {
 	err := exec.Command("hugo", "-D", "--cleanDestinationDir").Run()
 	if err != nil {
 		return errors.WithStack(err)
@@ -163,7 +165,7 @@ func genSite() error {
 	return nil
 }
 
-func uploadSite() error {
+func uploadSites() error {
 	err := exec.Command("gsutil", "-h", "Cache-Control:public, max-age=180", "rsync", "-d", "-r", "public", "gs://www.dododo.site").Run()
 	if err != nil {
 		return errors.WithStack(err)
