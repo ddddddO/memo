@@ -1,7 +1,6 @@
 package exposer
 
 import (
-	"database/sql"
 	"log"
 	"os"
 	"os/signal"
