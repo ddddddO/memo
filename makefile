@@ -76,3 +76,8 @@ connvm:
 
 prov:
 	ansible-playbook --ask-vault-pass ./ansible/playbook.yml -i ./ansible/hosts
+
+# NOTE: SQL Workbench/Jから接続して操作する。
+#       redashはdocker-composeで起動したが、cloudsqlに接続出来なかった。なのでGCE上で起動するようにする。
+proxy_cloudpg:
+	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
