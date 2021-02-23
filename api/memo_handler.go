@@ -26,20 +26,20 @@ type Memos struct {
 func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		userId := params.Get("userId")
-		if len(userId) == 0 {
+		userID := params.Get("userId")
+		if len(userID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 			return
 		}
-		tagId := params.Get("tagId")
+		tagID := params.Get("tagId")
 
 		var rows *sql.Rows
 		var memos Memos
 		var err error
 		// NOTE: tagIdが設定されていない場合
-		if len(tagId) == 0 {
+		if len(tagID) == 0 {
 			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
-			rows, err = DB.Query(query, userId)
+			rows, err = DB.Query(query, userID)
 			if err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 				return
@@ -47,7 +47,7 @@ func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 		} else {
 			// NOTE: tagIdが設定されている場合
 			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
-			rows, err = DB.Query(query, userId, tagId)
+			rows, err = DB.Query(query, userID, tagID)
 			if err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 				return
@@ -100,15 +100,15 @@ func setColor(m *domain.Memo) {
 
 func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		memoId := chi.URLParam(r, "id")
-		if len(memoId) == 0 {
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
 			return
 		}
 
 		params := r.URL.Query()
-		userId := params.Get("userId")
-		if len(userId) == 0 {
+		userID := params.Get("userId")
+		if len(userID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 			return
 		}
@@ -144,7 +144,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		GROUP BY m.id
 	`
 
-		rows, err := DB.Query(memoDetailQuery, memoId, userId)
+		rows, err := DB.Query(memoDetailQuery, memoID, userID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -152,19 +152,19 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		rows.Next()
 		var (
 			memoDetail domain.Memo
-			tagIds     string
+			tagIDs     string
 			tagNames   string
 		)
 		// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
 		err = rows.Scan(
 			&memoDetail.ID, &memoDetail.Subject, &memoDetail.Content, &memoDetail.IsExposed,
-			&tagIds, &tagNames,
+			&tagIDs, &tagNames,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 			return
 		}
-		memoDetail.TagIDs = strToIntSlice(tagIds)
+		memoDetail.TagIDs = strToIntSlice(tagIDs)
 		memoDetail.TagNames = strToStrSlice(tagNames)
 
 		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16

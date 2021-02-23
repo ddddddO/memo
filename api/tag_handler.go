@@ -19,8 +19,8 @@ type Tags struct {
 func TagListHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		userId := params.Get("userId")
-		if len(userId) == 0 {
+		userID := params.Get("userId")
+		if len(userID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 			return
 		}
@@ -29,7 +29,7 @@ func TagListHandler(DB *sql.DB) http.HandlerFunc {
 		var tags Tags
 		var err error
 		query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
-		rows, err = DB.Query(query, userId)
+		rows, err = DB.Query(query, userID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -59,7 +59,7 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagId := chi.URLParam(r, "id")
 		if len(tagId) == 0 {
-			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 			return
 		}
 
