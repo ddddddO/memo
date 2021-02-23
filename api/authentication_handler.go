@@ -12,13 +12,15 @@ import (
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/domain"
 )
 
-type User struct {
-	ID     int
-	Name   string
-	Passwd string
-}
+// type User struct {
+// 	ID     int
+// 	Name   string
+// 	Passwd string
+// }
 
 func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
 	user, err := fetchUser(DB, name, genSecuredPasswd(passwd, name))
@@ -29,7 +31,7 @@ func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
 	return user.ID, nil
 }
 
-func fetchUser(DB *sql.DB, name, passwd string) (*User, error) {
+func fetchUser(DB *sql.DB, name, passwd string) (*domain.User, error) {
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
 	rows, err := DB.Query(query, name, passwd)
 	if err != nil {
@@ -41,13 +43,13 @@ func fetchUser(DB *sql.DB, name, passwd string) (*User, error) {
 		return nil, errors.New("error !")
 	}
 
-	us := User{}
-	if err := rows.Scan(&us.ID, &us.Name, &us.Passwd); err != nil {
+	user := domain.User{}
+	if err := rows.Scan(&user.ID, &user.Name, &user.Password); err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	return &us, nil
+	return &user, nil
 }
 
 func genSecuredPasswd(name, passwd string) string {
@@ -77,7 +79,7 @@ func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
 
 		userID, err := fetchUserID(DB, name, passwd)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
+			errResponse(w, http.StatusUnauthorized, "failed", err)
 			return
 		}
 
