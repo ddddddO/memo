@@ -142,10 +142,19 @@ func genPostgresStore(db *sql.DB) (sessions.Store, error) {
 		return nil, err
 	}
 
-	pgStore.Options = &sessions.Options{
-		MaxAge:   60 * 60 * 6, // Cookieの有効期限。一旦6時間
-		Secure:   true,        // httpsのみ使用可能
-		SameSite: http.SameSiteNoneMode,
+	// ローカル開発時
+	if os.Getenv("DEBUG") != "" {
+		pgStore.Options = &sessions.Options{
+			MaxAge:   60 * 60 * 24,
+			Secure:   false,
+			SameSite: http.SameSiteDefaultMode,
+		}
+	} else { // 本番
+		pgStore.Options = &sessions.Options{
+			MaxAge:   60 * 60 * 6, // Cookieの有効期限。一旦6時間
+			Secure:   true,        // trueの時、httpsのみでCookie使用可能
+			SameSite: http.SameSiteNoneMode,
+		}
 	}
 	return pgStore, nil
 }
