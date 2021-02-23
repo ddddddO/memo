@@ -164,7 +164,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 			return
 		}
-		memoDetail.TagIds = strToIntSlice(tagIds)
+		memoDetail.TagIDs = strToIntSlice(tagIds)
 		memoDetail.TagNames = strToStrSlice(tagNames)
 
 		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
@@ -204,18 +204,10 @@ func strToStrSlice(s string) []string {
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
-type UpdatedMemo struct {
-	UserId        int    `json:"user_id"`
-	MemoId        int    `json:"memo_id"`
-	MemoSubject   string `json:"memo_subject"`
-	MemoContent   string `json:"memo_content"`
-	MemoIsExposed bool   `json:"memo_is_exposed"`
-}
-
 func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoUpdateHandler----")
-		var updatedMemo UpdatedMemo
+		var updatedMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
 			return
@@ -227,7 +219,7 @@ func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 		`
 
 		result, err := DB.Exec(updateMemoQuery,
-			updatedMemo.MemoSubject, updatedMemo.MemoContent, updatedMemo.MemoIsExposed, updatedMemo.MemoId, updatedMemo.UserId,
+			updatedMemo.Subject, updatedMemo.Content, updatedMemo.IsExposed, updatedMemo.ID, updatedMemo.UserID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -246,17 +238,10 @@ func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-type CreatedMemo struct {
-	UserId      int    `json:"user_id"`
-	TagIds      []int  `json:"tag_ids"`
-	MemoSubject string `json:"memo_subject"`
-	MemoContent string `json:"memo_content"`
-}
-
 func MemoCreateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoCreateHandler----")
-		var createdMemo CreatedMemo
+		var createdMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -270,13 +255,13 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 `
 
 		var valuesStr string
-		for _, tagId := range createdMemo.TagIds {
-			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagId)
+		for _, tagID := range createdMemo.TagIDs {
+			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagID)
 		}
 		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
 		_, err := DB.Exec(createMemoQuery,
-			createdMemo.MemoSubject, createdMemo.MemoContent, createdMemo.UserId,
+			createdMemo.Subject, createdMemo.Content, createdMemo.UserID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -286,15 +271,10 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 	}
 }
 
-type DeleteMemo struct {
-	UserId int `json:"user_id"`
-	MemoId int `json:"memo_id"`
-}
-
 func MemoDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDeleteHandler----")
-		var deleteMemo DeleteMemo
+		var deleteMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -305,7 +285,7 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `
 
 		result, err := DB.Exec(deleteMemoQuery,
-			deleteMemo.UserId, deleteMemo.MemoId,
+			deleteMemo.UserID, deleteMemo.ID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)

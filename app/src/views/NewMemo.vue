@@ -85,8 +85,8 @@ export default {
         body: JSON.stringify({
           user_id: 1,
           tag_ids: this.tagsSelected,
-          memo_subject: this.subject,
-          memo_content: this.content
+          subject: this.subject,
+          content: this.content
         })
       })
       this.$router.push('/memos')

@@ -144,10 +144,10 @@ export default {
           credentials: 'include',
           body: JSON.stringify({
             user_id: 1,
-            memo_id: this.$route.params.memo_id,
-            memo_subject: subject,
-            memo_content: content,
-            memo_is_exposed: isExposed
+            id: this.$route.params.memo_id,
+            subject: subject,
+            content: content,
+            is_exposed: isExposed
           })
         })
           .then(function (resp) {
@@ -171,7 +171,7 @@ export default {
         credentials: 'include',
         body: JSON.stringify({
           user_id: 1,
-          memo_id: this.$route.params.memo_id
+          id: this.$route.params.memo_id
         })
       })
       setTimeout(() => { this.$router.push('/memos') }, '500')
