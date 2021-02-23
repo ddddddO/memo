@@ -137,14 +137,14 @@ export default {
     updateMemo: function (subject, content, isExposed) {
       let own = this
       try {
-        fetch(this.endpoint, {
+        let memoID = this.$route.params.memo_id
+        fetch(this.endpoint + memoID, {
           headers: { 'Content-Type': 'application/json; charset=utf-8' },
           method: 'PATCH',
           mode: 'cors',
           credentials: 'include',
           body: JSON.stringify({
             user_id: 1,
-            id: this.$route.params.memo_id,
             subject: subject,
             content: content,
             is_exposed: isExposed
@@ -164,14 +164,14 @@ export default {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+
     },
     deleteMemo: function () {
-      fetch(this.endpoint, {
+      let memoID = this.$route.params.memo_id
+      fetch(this.endpoint + memoID, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'DELETE',
         mode: 'cors',
         credentials: 'include',
         body: JSON.stringify({
-          user_id: 1,
-          id: this.$route.params.memo_id
+          user_id: 1
         })
       })
       setTimeout(() => { this.$router.push('/memos') }, '500')
