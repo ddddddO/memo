@@ -207,6 +207,13 @@ func strToStrSlice(s string) []string {
 func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoUpdateHandler----")
+
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
+
 		var updatedMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
@@ -219,7 +226,7 @@ func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 		`
 
 		result, err := DB.Exec(updateMemoQuery,
-			updatedMemo.Subject, updatedMemo.Content, updatedMemo.IsExposed, updatedMemo.ID, updatedMemo.UserID,
+			updatedMemo.Subject, updatedMemo.Content, updatedMemo.IsExposed, memoID, updatedMemo.UserID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -274,6 +281,13 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 func MemoDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDeleteHandler----")
+
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
+
 		var deleteMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -285,7 +299,7 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `
 
 		result, err := DB.Exec(deleteMemoQuery,
-			deleteMemo.UserID, deleteMemo.ID,
+			deleteMemo.UserID, memoID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)

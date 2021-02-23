@@ -74,9 +74,9 @@ func main() {
 		// メモ新規作成API
 		r.Post("/", api.MemoCreateHandler(db))
 		// メモ更新API
-		r.Patch("/", api.MemoUpdateHandler(db))
+		r.Patch("/{id}", api.MemoUpdateHandler(db))
 		// メモ削除API
-		r.Delete("/", api.MemoDeleteHandler(db))
+		r.Delete("/{id}", api.MemoDeleteHandler(db))
 		// メモ詳細返却API
 		r.Get("/{id}", api.MemoDetailHandler(db))
 	})
@@ -87,9 +87,9 @@ func main() {
 		// タグ新規作成API
 		r.Post("/", api.TagCreateHandler(db))
 		// タグ更新API
-		r.Patch("/", api.TagUpdateHandler(db))
+		r.Patch("/{id}", api.TagUpdateHandler(db))
 		// タグ削除API
-		r.Delete("/", api.TagDeleteHandler(db))
+		r.Delete("/{id}", api.TagDeleteHandler(db))
 		// タグ詳細返却API
 		r.Get("/{id}", api.TagDetailHandler(db))
 	})

@@ -93,6 +93,13 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagUpdateHandler----")
+
+		tagID := chi.URLParam(r, "id")
+		if len(tagID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
+			return
+		}
+
 		var updatedTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -103,7 +110,7 @@ func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 UPDATE tags SET name = $1 WHERE id = $2
 `
 		result, err := DB.Exec(updateTagQuery,
-			updatedTag.Name, updatedTag.ID,
+			updatedTag.Name, tagID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -125,9 +132,10 @@ UPDATE tags SET name = $1 WHERE id = $2
 func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDeleteHandler----")
-		var deleteTag domain.Tag
-		if err := json.NewDecoder(r.Body).Decode(&deleteTag); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
+
+		tagID := chi.URLParam(r, "id")
+		if len(tagID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 			return
 		}
 
@@ -135,7 +143,7 @@ func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 DELETE FROM tags WHERE id = $1
 `
 		result, err := DB.Exec(deleteTagQuery,
-			deleteTag.ID,
+			tagID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
