@@ -8,15 +8,12 @@ import (
 
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/domain"
 )
 
-type Tag struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 type Tags struct {
-	TagList []Tag `json:"tag_list"`
+	TagList []domain.Tag `json:"tag_list"`
 }
 
 func TagListHandler(DB *sql.DB) http.HandlerFunc {
@@ -39,8 +36,8 @@ func TagListHandler(DB *sql.DB) http.HandlerFunc {
 		}
 
 		for rows.Next() {
-			var tag Tag
-			if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
+			var tag domain.Tag
+			if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 				return
 			}
@@ -76,8 +73,8 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 		}
 
 		rows.Next()
-		var tag Tag
-		if err := rows.Scan(&tag.Id, &tag.Name); err != nil {
+		var tag domain.Tag
+		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 			return
 		}
@@ -93,15 +90,10 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-type UpdatedTag struct {
-	Id   int    `json:"tag_id"`
-	Name string `json:"tag_name"`
-}
-
 func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagUpdateHandler----")
-		var updatedTag UpdatedTag
+		var updatedTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -111,7 +103,7 @@ func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 UPDATE tags SET name = $1 WHERE id = $2
 `
 		result, err := DB.Exec(updateTagQuery,
-			updatedTag.Name, updatedTag.Id,
+			updatedTag.Name, updatedTag.ID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -130,14 +122,10 @@ UPDATE tags SET name = $1 WHERE id = $2
 	}
 }
 
-type DeleteTag struct {
-	Id int `json:"tag_id"`
-}
-
 func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDeleteHandler----")
-		var deleteTag DeleteTag
+		var deleteTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&deleteTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -147,7 +135,7 @@ func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 DELETE FROM tags WHERE id = $1
 `
 		result, err := DB.Exec(deleteTagQuery,
-			deleteTag.Id,
+			deleteTag.ID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
@@ -166,16 +154,10 @@ DELETE FROM tags WHERE id = $1
 	}
 }
 
-type CreateTag struct {
-	Id     int    `json:"tag_id"`
-	Name   string `json:"tag_name"`
-	UserId int    `json:"user_id"`
-}
-
 func TagCreateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagCreateHandler----")
-		var createTag CreateTag
+		var createTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -185,7 +167,7 @@ func TagCreateHandler(DB *sql.DB) http.HandlerFunc {
 INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 `
 		result, err := DB.Exec(createTagQuery,
-			createTag.Name, createTag.UserId,
+			createTag.Name, createTag.UserID,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
