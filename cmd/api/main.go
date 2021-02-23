@@ -68,31 +68,31 @@ func main() {
 	// 認証API
 	router.Post("/auth", api.NewAuthHandler(db, store).(http.HandlerFunc))
 
-	// TODO: /memos
-	//        /memos/{id} な形にする
-	// メモ一覧返却API
-	router.Get("/memos", api.MemoListHandler(db))
-	// メモ詳細返却API
-	router.Get("/memodetail", api.MemoDetailHandler(db))
-	// メモ新規作成API
-	router.Post("/memodetail", api.MemoDetailCreateHandler(db))
-	// メモ更新API
-	router.Patch("/memodetail", api.MemoDetailUpdateHandler(db))
-	// メモ削除API
-	router.Delete("/memodetail", api.MemoDetailDeleteHandler(db))
+	router.Route("/memos", func(r chi.Router) {
+		// メモ一覧返却API
+		r.Get("/", api.MemoListHandler(db))
+		// メモ新規作成API
+		r.Post("/", api.MemoDetailCreateHandler(db))
+		// メモ更新API
+		r.Patch("/", api.MemoDetailUpdateHandler(db))
+		// メモ削除API
+		r.Delete("/", api.MemoDetailDeleteHandler(db))
+		// メモ詳細返却API
+		r.Get("/{id}", api.MemoDetailHandler(db))
+	})
 
-	// TODO: /tags
-	//        /tags/{id} な形にする
-	// タグ一覧返却API
-	router.Get("/tags", api.TagListHandler(db))
-	// タグ詳細返却API
-	router.Get("/tagdetail", api.TagDetailHandler(db))
-	// タグ新規作成API
-	router.Post("/tagdetail", api.TagDetailCreateHandler(db))
-	// タグ更新API
-	router.Patch("/tagdetail", api.TagDetailUpdateHandler(db))
-	// タグ削除API
-	router.Delete("/tagdetail", api.TagDetailDeleteHandler(db))
+	router.Route("/tags", func(r chi.Router) {
+		// タグ一覧返却API
+		r.Get("/", api.TagListHandler(db))
+		// タグ新規作成API
+		r.Post("/", api.TagDetailCreateHandler(db))
+		// タグ更新API
+		r.Patch("/", api.TagDetailUpdateHandler(db))
+		// タグ削除API
+		r.Delete("/", api.TagDetailDeleteHandler(db))
+		// タグ詳細返却API
+		r.Get("/{id}", api.TagDetailHandler(db))
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

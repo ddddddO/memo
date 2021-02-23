@@ -93,10 +93,10 @@ export default {
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
-        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos'
         this.tagEndpoint = process.env.VUE_APP_API_ENDPOINT + '/tags'
       } else {
-        this.endpoint = 'http://localhost:8082/memodetail'
+        this.endpoint = 'http://localhost:8082/memos'
         this.tagEndpoint = 'http://localhost:8082/tags'
       }
     }

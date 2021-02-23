@@ -99,7 +99,7 @@ export default {
     const memoId = this.$route.params.memo_id
     try {
       this.memoDetail = await fetch(
-        this.endpoint + '?userId=' + userId + '&' + 'memoId=' + memoId,
+        this.endpoint + memoId + '?userId=' + userId,
         {
           mode: 'cors',
           credentials: 'include',
@@ -178,9 +178,9 @@ export default {
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
-        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos/'
       } else {
-        this.endpoint = 'http://localhost:8082/memodetail'
+        this.endpoint = 'http://localhost:8082/memos/'
       }
     }
   },

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
@@ -17,13 +18,13 @@ import (
 
 func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		params := r.URL.Query()
-		memoId := params.Get("memoId")
+		memoId := chi.URLParam(r, "id")
 		if len(memoId) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
 			return
 		}
 
+		params := r.URL.Query()
 		userId := params.Get("userId")
 		if len(userId) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)

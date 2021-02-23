@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 )
 
@@ -59,8 +60,7 @@ func TagListHandler(DB *sql.DB) http.HandlerFunc {
 
 func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		params := r.URL.Query()
-		tagId := params.Get("tagId")
+		tagId := chi.URLParam(r, "id")
 		if len(tagId) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 			return
