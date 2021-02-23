@@ -72,11 +72,11 @@ func main() {
 		// メモ一覧返却API
 		r.Get("/", api.MemoListHandler(db))
 		// メモ新規作成API
-		r.Post("/", api.MemoDetailCreateHandler(db))
+		r.Post("/", api.MemoCreateHandler(db))
 		// メモ更新API
-		r.Patch("/", api.MemoDetailUpdateHandler(db))
+		r.Patch("/", api.MemoUpdateHandler(db))
 		// メモ削除API
-		r.Delete("/", api.MemoDetailDeleteHandler(db))
+		r.Delete("/", api.MemoDeleteHandler(db))
 		// メモ詳細返却API
 		r.Get("/{id}", api.MemoDetailHandler(db))
 	})
@@ -85,11 +85,11 @@ func main() {
 		// タグ一覧返却API
 		r.Get("/", api.TagListHandler(db))
 		// タグ新規作成API
-		r.Post("/", api.TagDetailCreateHandler(db))
+		r.Post("/", api.TagCreateHandler(db))
 		// タグ更新API
-		r.Patch("/", api.TagDetailUpdateHandler(db))
+		r.Patch("/", api.TagUpdateHandler(db))
 		// タグ削除API
-		r.Delete("/", api.TagDetailDeleteHandler(db))
+		r.Delete("/", api.TagDeleteHandler(db))
 		// タグ詳細返却API
 		r.Get("/{id}", api.TagDetailHandler(db))
 	})

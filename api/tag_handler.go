@@ -98,9 +98,9 @@ type UpdatedTag struct {
 	Name string `json:"tag_name"`
 }
 
-func TagDetailUpdateHandler(DB *sql.DB) http.HandlerFunc {
+func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----TagDetailUpdateHandler----")
+		log.Print("----TagUpdateHandler----")
 		var updatedTag UpdatedTag
 		if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -134,9 +134,9 @@ type DeleteTag struct {
 	Id int `json:"tag_id"`
 }
 
-func TagDetailDeleteHandler(DB *sql.DB) http.HandlerFunc {
+func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----TagDetailDeleteHandler----")
+		log.Print("----TagDeleteHandler----")
 		var deleteTag DeleteTag
 		if err := json.NewDecoder(r.Body).Decode(&deleteTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -172,9 +172,9 @@ type CreateTag struct {
 	UserId int    `json:"user_id"`
 }
 
-func TagDetailCreateHandler(DB *sql.DB) http.HandlerFunc {
+func TagCreateHandler(DB *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----TagDetailCreateHandler----")
+		log.Print("----TagCreateHandler----")
 		var createTag CreateTag
 		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
