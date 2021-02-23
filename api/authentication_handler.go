@@ -16,12 +16,6 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-// type User struct {
-// 	ID     int
-// 	Name   string
-// 	Passwd string
-// }
-
 func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
 	user, err := fetchUser(DB, name, genSecuredPasswd(passwd, name))
 	if err != nil {
