@@ -16,8 +16,8 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
-	user, err := fetchUser(DB, name, genSecuredPasswd(passwd, name))
+func fetchUserID(db *sql.DB, name, passwd string) (int, error) {
+	user, err := fetchUser(db, name, genSecuredPasswd(passwd, name))
 	if err != nil {
 		return 0, err
 	}
@@ -25,9 +25,9 @@ func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
 	return user.ID, nil
 }
 
-func fetchUser(DB *sql.DB, name, passwd string) (*domain.User, error) {
+func fetchUser(db *sql.DB, name, passwd string) (*domain.User, error) {
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
-	rows, err := DB.Query(query, name, passwd)
+	rows, err := db.Query(query, name, passwd)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func genSecuredPasswd(name, passwd string) string {
 	return strings.ToLower(hex.EncodeToString(secPass[:]))
 }
 
-func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
+func NewAuthHandler(db *sql.DB, store sessions.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
@@ -71,7 +71,7 @@ func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
 			return
 		}
 
-		userID, err := fetchUserID(DB, name, passwd)
+		userID, err := fetchUserID(db, name, passwd)
 		if err != nil {
 			errResponse(w, http.StatusUnauthorized, "failed", err)
 			return

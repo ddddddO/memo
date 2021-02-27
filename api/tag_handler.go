@@ -16,7 +16,7 @@ type Tags struct {
 	TagList []domain.Tag `json:"tag_list"`
 }
 
-func TagListHandler(DB *sql.DB) http.HandlerFunc {
+func TagListHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -29,7 +29,7 @@ func TagListHandler(DB *sql.DB) http.HandlerFunc {
 		var tags Tags
 		var err error
 		query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
-		rows, err = DB.Query(query, userID)
+		rows, err = db.Query(query, userID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -55,7 +55,7 @@ func TagListHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
+func TagDetailHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagId := chi.URLParam(r, "id")
 		if len(tagId) == 0 {
@@ -66,7 +66,7 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 		var rows *sql.Rows
 		var err error
 		query := "SELECT id, name FROM tags WHERE id = $1"
-		rows, err = DB.Query(query, tagId)
+		rows, err = db.Query(query, tagId)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -90,7 +90,7 @@ func TagDetailHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
+func TagUpdateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagUpdateHandler----")
 
@@ -109,7 +109,7 @@ func TagUpdateHandler(DB *sql.DB) http.HandlerFunc {
 		const updateTagQuery = `
 UPDATE tags SET name = $1 WHERE id = $2
 `
-		result, err := DB.Exec(updateTagQuery,
+		result, err := db.Exec(updateTagQuery,
 			updatedTag.Name, tagID,
 		)
 		if err != nil {
@@ -129,7 +129,7 @@ UPDATE tags SET name = $1 WHERE id = $2
 	}
 }
 
-func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
+func TagDeleteHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagDeleteHandler----")
 
@@ -142,7 +142,7 @@ func TagDeleteHandler(DB *sql.DB) http.HandlerFunc {
 		const deleteTagQuery = `
 DELETE FROM tags WHERE id = $1
 `
-		result, err := DB.Exec(deleteTagQuery,
+		result, err := db.Exec(deleteTagQuery,
 			tagID,
 		)
 		if err != nil {
@@ -162,7 +162,7 @@ DELETE FROM tags WHERE id = $1
 	}
 }
 
-func TagCreateHandler(DB *sql.DB) http.HandlerFunc {
+func TagCreateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----TagCreateHandler----")
 		var createTag domain.Tag
@@ -174,7 +174,7 @@ func TagCreateHandler(DB *sql.DB) http.HandlerFunc {
 		const createTagQuery = `
 INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 `
-		result, err := DB.Exec(createTagQuery,
+		result, err := db.Exec(createTagQuery,
 			createTag.Name, createTag.UserID,
 		)
 		if err != nil {

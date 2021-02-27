@@ -23,7 +23,7 @@ type Memos struct {
 	MemoList []domain.Memo `json:"memo_list"`
 }
 
-func MemoListHandler(DB *sql.DB) http.HandlerFunc {
+func MemoListHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -39,7 +39,7 @@ func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 		// NOTE: tagIdが設定されていない場合
 		if len(tagID) == 0 {
 			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
-			rows, err = DB.Query(query, userID)
+			rows, err = db.Query(query, userID)
 			if err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 				return
@@ -47,7 +47,7 @@ func MemoListHandler(DB *sql.DB) http.HandlerFunc {
 		} else {
 			// NOTE: tagIdが設定されている場合
 			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
-			rows, err = DB.Query(query, userID, tagID)
+			rows, err = db.Query(query, userID, tagID)
 			if err != nil {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 				return
@@ -98,7 +98,7 @@ func setColor(m *domain.Memo) {
 	}
 }
 
-func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
+func MemoDetailHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -144,7 +144,7 @@ func MemoDetailHandler(DB *sql.DB) http.HandlerFunc {
 		GROUP BY m.id
 	`
 
-		rows, err := DB.Query(memoDetailQuery, memoID, userID)
+		rows, err := db.Query(memoDetailQuery, memoID, userID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -204,7 +204,7 @@ func strToStrSlice(s string) []string {
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
-func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
+func MemoUpdateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoUpdateHandler----")
 
@@ -225,7 +225,7 @@ func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 		 WHERE id=$4 AND users_id=$5
 		`
 
-		result, err := DB.Exec(updateMemoQuery,
+		result, err := db.Exec(updateMemoQuery,
 			updatedMemo.Subject, updatedMemo.Content, updatedMemo.IsExposed, memoID, updatedMemo.UserID,
 		)
 		if err != nil {
@@ -245,7 +245,7 @@ func MemoUpdateHandler(DB *sql.DB) http.HandlerFunc {
 	}
 }
 
-func MemoCreateHandler(DB *sql.DB) http.HandlerFunc {
+func MemoCreateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoCreateHandler----")
 		var createdMemo domain.Memo
@@ -267,7 +267,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		}
 		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
-		_, err := DB.Exec(createMemoQuery,
+		_, err := db.Exec(createMemoQuery,
 			createdMemo.Subject, createdMemo.Content, createdMemo.UserID,
 		)
 		if err != nil {
@@ -278,7 +278,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 	}
 }
 
-func MemoDeleteHandler(DB *sql.DB) http.HandlerFunc {
+func MemoDeleteHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log.Print("----MemoDeleteHandler----")
 
@@ -298,7 +298,7 @@ func MemoDeleteHandler(DB *sql.DB) http.HandlerFunc {
 DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `
 
-		result, err := DB.Exec(deleteMemoQuery,
+		result, err := db.Exec(deleteMemoQuery,
 			deleteMemo.UserID, memoID,
 		)
 		if err != nil {

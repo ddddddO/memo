@@ -8,9 +8,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func HealthHandler(DB *sql.DB) http.HandlerFunc {
+func HealthHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := DB.Query("SELECT 1")
+		_, err := db.Query("SELECT 1")
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
