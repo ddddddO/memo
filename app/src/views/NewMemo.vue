@@ -94,7 +94,7 @@ export default {
           content: this.content
         })
       })
-      this.$router.push('/memos')
+      setTimeout(() => { this.$router.push('/memos') }, '500')
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
