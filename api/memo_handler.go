@@ -113,6 +113,7 @@ func MemoDetailHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// TODO: 見直す
 		const memoDetailQuery = `
 	SELECT
 	    m.id AS id,
@@ -164,9 +165,8 @@ func MemoDetailHandler(db *sql.DB) http.HandlerFunc {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 			return
 		}
-		memoDetail.TagIDs = strToIntSlice(tagIDs)
-		memoDetail.TagNames = strToStrSlice(tagNames)
 
+		memoDetail.Tags = toTags(tagIDs, tagNames)
 		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
 		var memoDetailJson bytes.Buffer
 		encoder := json.NewEncoder(&memoDetailJson)
@@ -176,6 +176,22 @@ func MemoDetailHandler(db *sql.DB) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		w.Write(memoDetailJson.Bytes())
 	}
+}
+
+func toTags(ids, names string) []domain.Tag {
+	convertedIDs := strToIntSlice(ids)
+	convertedNames := strToStrSlice(names)
+
+	var tags []domain.Tag
+	for i := range convertedIDs {
+		tag := domain.Tag{}
+		tag.ID = convertedIDs[i]
+		tag.Name = convertedNames[i]
+
+		tags = append(tags, tag)
+	}
+
+	return tags
 }
 
 func strToIntSlice(s string) []int {
@@ -220,27 +236,64 @@ func MemoUpdateHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		tx, err := db.Begin()
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 0", err)
+			return
+		}
+		defer tx.Rollback()
+
 		const updateMemoQuery = `
 		UPDATE memos SET subject=$1, content=$2, is_exposed=$3
 		 WHERE id=$4 AND users_id=$5
 		`
 
-		result, err := db.Exec(updateMemoQuery,
+		result, err := tx.Exec(updateMemoQuery,
 			updatedMemo.Subject, updatedMemo.Content, updatedMemo.IsExposed, memoID, updatedMemo.UserID,
 		)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 			return
 		}
 		n, err := result.RowsAffected()
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
 		}
 		if n != 1 {
 			errResponse(w, http.StatusInternalServerError, "failed to update memo", nil)
 			return
 		}
+
+		const deleteMemoTagQuery = `
+		DELETE FROM memo_tag WHERE memos_id=$1 AND tags_id <> 1
+		`
+
+		_, err = tx.Exec(deleteMemoTagQuery, memoID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+			return
+		}
+
+		var insertMemoTagQuery = `
+		INSERT INTO memo_tag(memos_id, tags_id) VALUES
+		%s
+		`
+
+		var valuesStr string
+		for _, tag := range updatedMemo.Tags {
+			valuesStr += fmt.Sprintf("(%v, %d),", memoID, tag.ID)
+		}
+		insertMemoTagQuery = fmt.Sprintf(insertMemoTagQuery, valuesStr[:len(valuesStr)-1])
+
+		_, err = tx.Exec(insertMemoTagQuery)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
+			return
+		}
+
+		tx.Commit()
+
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -262,8 +315,8 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 `
 
 		var valuesStr string
-		for _, tagID := range createdMemo.TagIDs {
-			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tagID)
+		for _, tag := range createdMemo.Tags {
+			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tag.ID)
 		}
 		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
@@ -294,6 +347,7 @@ func MemoDeleteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
+		// FIXME: そういえばmemo_tagテーブルからレコード削除していない
 		const deleteMemoQuery = `
 DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `

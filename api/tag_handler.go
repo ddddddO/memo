@@ -13,7 +13,7 @@ import (
 )
 
 type Tags struct {
-	TagList []domain.Tag `json:"tag_list"`
+	List []domain.Tag `json:"tags"`
 }
 
 func TagListHandler(db *sql.DB) http.HandlerFunc {
@@ -41,7 +41,7 @@ func TagListHandler(db *sql.DB) http.HandlerFunc {
 				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
 				return
 			}
-			tags.TagList = append(tags.TagList, tag)
+			tags.List = append(tags.List, tag)
 		}
 
 		tagsJson, err := json.Marshal(tags)
