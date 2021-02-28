@@ -12,6 +12,9 @@
       </b-form-checkbox-group>
     </b-form-group>
     </div>
+    <div>
+      <b-form-checkbox v-model="isExposed">Expose?</b-form-checkbox>
+    </div>
     <div class="memodetail-subject">
       <h3 style="text-align:start;font-size: medium;">Subject:</h3>
       <b-form-input rows="10" v-model="subject"></b-form-input>
@@ -38,6 +41,7 @@ export default {
   name: 'createMemo',
   data: () => ({
     loaded: false,
+    isExposed: false,
     subject: '',
     content: '',
     tags: null,
@@ -84,6 +88,7 @@ export default {
         credentials: 'include',
         body: JSON.stringify({
           user_id: 1,
+          is_exposed: this.isExposed,
           tag_ids: this.tagsSelected,
           subject: this.subject,
           content: this.content

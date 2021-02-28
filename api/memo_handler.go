@@ -255,7 +255,7 @@ func MemoCreateHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		var createMemoQuery = `
-WITH inserted AS (INSERT INTO memos(subject, content, users_id) VALUES($1, $2, $3) RETURNING id)
+WITH inserted AS (INSERT INTO memos(subject, content, users_id, is_exposed) VALUES($1, $2, $3, $4) RETURNING id)
 INSERT INTO memo_tag(memos_id, tags_id) VALUES
 	((SELECT id FROM inserted), 1)
 	%s;
@@ -268,7 +268,7 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
 
 		_, err := db.Exec(createMemoQuery,
-			createdMemo.Subject, createdMemo.Content, createdMemo.UserID,
+			createdMemo.Subject, createdMemo.Content, createdMemo.UserID, createdMemo.IsExposed,
 		)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
