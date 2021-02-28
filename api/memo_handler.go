@@ -347,12 +347,18 @@ func MemoDeleteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// FIXME: そういえばmemo_tagテーブルからレコード削除していない
 		const deleteMemoQuery = `
 DELETE FROM memos WHERE users_id = $1 AND id = $2;
 `
 
-		result, err := db.Exec(deleteMemoQuery,
+		tx, err := db.Begin()
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
+			return
+		}
+		defer tx.Rollback()
+
+		result, err := tx.Exec(deleteMemoQuery,
 			deleteMemo.UserID, memoID,
 		)
 		if err != nil {
@@ -368,6 +374,19 @@ DELETE FROM memos WHERE users_id = $1 AND id = $2;
 			errResponse(w, http.StatusInternalServerError, "failed", nil)
 			return
 		}
+
+		const deleteMemoTagQuery = `
+DELETE FROM memo_tag WHERE memos_id = $1
+`
+
+		_, err = tx.Exec(deleteMemoTagQuery, memoID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
+			return
+		}
+
+		tx.Commit()
+
 		w.WriteHeader(http.StatusOK)
 	}
 }

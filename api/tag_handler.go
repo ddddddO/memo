@@ -142,9 +142,15 @@ func TagDeleteHandler(db *sql.DB) http.HandlerFunc {
 		const deleteTagQuery = `
 DELETE FROM tags WHERE id = $1
 `
-		result, err := db.Exec(deleteTagQuery,
-			tagID,
-		)
+
+		tx, err := db.Begin()
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
+			return
+		}
+		defer tx.Rollback()
+
+		result, err := tx.Exec(deleteTagQuery, tagID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
@@ -158,6 +164,19 @@ DELETE FROM tags WHERE id = $1
 			errResponse(w, http.StatusInternalServerError, "failed", nil)
 			return
 		}
+
+		const deleteMemoTagQuery = `
+DELETE FROM memo_tag WHERE tags_id = $1
+`
+
+		_, err = tx.Exec(deleteMemoTagQuery, tagID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
+			return
+		}
+
+		tx.Commit()
+
 		w.WriteHeader(http.StatusOK)
 	}
 }

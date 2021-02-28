@@ -35,6 +35,21 @@ export default new Router({
       path: '/new_memo',
       name: 'new-memo',
       component: () => import('./views/NewMemo.vue')
+    },
+    {
+      path: '/tags',
+      name: 'tags',
+      component: () => import('./views/Tags.vue')
+    },
+    {
+      path: '/tagdetail/:tag_id',
+      name: 'tag-detail',
+      component: () => import('./views/TagDetail.vue')
+    },
+    {
+      path: '/new_tag',
+      name: 'new-tag',
+      component: () => import('./views/NewTag.vue')
     }
   ]
 })
