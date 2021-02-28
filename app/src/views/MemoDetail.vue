@@ -130,7 +130,11 @@ export default {
         .then(function (sJson) {
           const tmp = JSON.parse(sJson)
           // ALLを除外するため
-          tmp.tags.shift()
+          for (let i = 0; i < tmp.tags.length; i++) {
+            if (tmp.tags[i].id === 1) {
+              tmp.tags.splice(i, 1)
+            }
+          }
           return tmp
         })
     } catch (err) {
