@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ddddddO/tag-mng/api"
 
@@ -55,6 +56,11 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
+
+	// https://tutuz-tech.hatenablog.com/entry/2020/03/24/170159
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(20)
+	db.SetConnMaxLifetime(3 * time.Minute)
 
 	store, err := genPostgresStore(db)
 	if err != nil {
