@@ -58,8 +58,8 @@ func main() {
 	defer db.Close()
 
 	// https://tutuz-tech.hatenablog.com/entry/2020/03/24/170159
-	db.SetMaxOpenConns(20)
-	db.SetMaxIdleConns(20)
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(15)
 	db.SetConnMaxLifetime(3 * time.Minute)
 
 	store, err := genPostgresStore(db)
