@@ -27,6 +27,11 @@ export default new Router({
       component: () => import('./views/Memos.vue')
     },
     {
+      path: '/memos/:tag_id',
+      name: 'memos',
+      component: () => import('./views/Memos.vue')
+    },
+    {
       path: '/memodetail/:memo_id',
       name: 'memo-detail',
       component: () => import('./views/MemoDetail.vue')

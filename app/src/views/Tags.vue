@@ -12,7 +12,7 @@
             id="tags"
             :items="tags"
             :fields="fields"
-            :small="small"
+            small
             sticky-header
             striped
             hover
@@ -20,6 +20,11 @@
             <template v-slot:cell(id)="data">
               <router-link :to="{ name:'tag-detail', params: { tag_id: data.value }}">
                 <a>{{ data.value }}</a>
+              </router-link>
+            </template>
+            <template v-slot:cell()="data">
+              <router-link :to="{ name:'memos', params: { tag_id: data.item.id }}">
+                <a>{{ data.item.name }}</a>
               </router-link>
             </template>
           </b-table>
@@ -36,7 +41,10 @@ export default {
     tagEndpoint: '',
     tags: [],
     loading: false,
-    fields: ['id', 'name']
+    fields: [
+      { key: 'id', label: 'Refer to' },
+      { key: 'name', label: 'Search for' }
+    ]
   }),
   async created () {
     this.loading = true

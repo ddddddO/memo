@@ -89,7 +89,7 @@ dev_app:
 	rsync -av app/src/ ~/work/tag-mng/app/src/
 	# cloudsqlをローカルでプロキシして、apiを起動する
 	make proxy_cloudpg
-	DBDSN="host=localhost dbname=tag-mng user=xxxxx password=xxxxx sslmode=disable port=15432" SESSION_KEY="xxxxxx" DEBUG=1 go run main.go
+	DBDSN="host=localhost dbname=tag-mng user=xxxxx password=xxxxx sslmode=disable port=15432" SESSION_KEY="xxxxxx" DEBUG=1 go run cmd/api/main.go
 	# ~/work/tag-mng/app で開発
 	# 次に、~/work/tag-mng/app　を/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app　に同期
 	rsync -av ~/work/tag-mng/app/src/ app/src/
