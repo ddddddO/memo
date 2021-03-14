@@ -19,21 +19,19 @@ func NewHealthHandler(repo repository.HealthRepository) *healthHandler {
 	}
 }
 
-func (h *healthHandler) Check() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := h.repo.Check(); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
+func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
+	if err := h.repo.Check(); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
 
-		res := struct {
-			Message string `json:"message"`
-		}{
-			Message: "health ok!",
-		}
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
+	res := struct {
+		Message string `json:"message"`
+	}{
+		Message: "health ok!",
+	}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
 	}
 }

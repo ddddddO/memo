@@ -72,41 +72,41 @@ func main() {
 	// ヘルスチェック
 	healthRepository := postgres.NewHealthRepository(db)
 	healthHandler := api.NewHealthHandler(healthRepository)
-	router.Get("/health", healthHandler.Check())
+	router.Get("/health", healthHandler.Check)
 
 	// 認証API
 	userRepository := postgres.NewUserRepository(db)
 	authHandler := api.NewAuthHandler(userRepository, store)
-	router.Post("/auth", authHandler.Auth())
+	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)
 	memoHandler := api.NewMemoHandler(memoRepository)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
-		r.Get("/", memoHandler.List())
+		r.Get("/", memoHandler.List)
 		// メモ新規作成API
-		r.Post("/", memoHandler.Create())
+		r.Post("/", memoHandler.Create)
 		// メモ更新API
-		r.Patch("/{id}", memoHandler.Update())
+		r.Patch("/{id}", memoHandler.Update)
 		// メモ削除API
-		r.Delete("/{id}", memoHandler.Delete())
+		r.Delete("/{id}", memoHandler.Delete)
 		// メモ詳細返却API
-		r.Get("/{id}", memoHandler.Detail())
+		r.Get("/{id}", memoHandler.Detail)
 	})
 
 	tagRepository := postgres.NewTagRepository(db)
 	tagHandler := api.NewTagHandler(tagRepository)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
-		r.Get("/", tagHandler.List())
+		r.Get("/", tagHandler.List)
 		// タグ新規作成API
-		r.Post("/", tagHandler.Create())
+		r.Post("/", tagHandler.Create)
 		// タグ更新API
-		r.Patch("/{id}", tagHandler.Update())
+		r.Patch("/{id}", tagHandler.Update)
 		// タグ削除API
-		r.Delete("/{id}", tagHandler.Delete())
+		r.Delete("/{id}", tagHandler.Delete)
 		// タグ詳細返却API
-		r.Get("/{id}", tagHandler.Detail())
+		r.Get("/{id}", tagHandler.Detail)
 	})
 
 	port := os.Getenv("PORT")
