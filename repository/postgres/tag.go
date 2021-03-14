@@ -9,17 +9,17 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-type TagPGRepository struct {
+type tagPGRepository struct {
 	db *sql.DB
 }
 
-func NewTagPGRepository(db *sql.DB) *TagPGRepository {
-	return &TagPGRepository{
+func NewTagPGRepository(db *sql.DB) *tagPGRepository {
+	return &tagPGRepository{
 		db: db,
 	}
 }
 
-func (pg *TagPGRepository) FetchList(userID int) ([]domain.Tag, error) {
+func (pg *tagPGRepository) FetchList(userID int) ([]domain.Tag, error) {
 	var (
 		rows *sql.Rows
 		tags []domain.Tag
@@ -41,7 +41,7 @@ func (pg *TagPGRepository) FetchList(userID int) ([]domain.Tag, error) {
 	return tags, nil
 }
 
-func (pg *TagPGRepository) Fetch(tagID int) (domain.Tag, error) {
+func (pg *tagPGRepository) Fetch(tagID int) (domain.Tag, error) {
 	var tag domain.Tag
 	query := "SELECT id, name FROM tags WHERE id = $1"
 	if err := pg.db.QueryRow(query, tagID).Scan(&tag.ID, &tag.Name); err != nil {
@@ -50,7 +50,7 @@ func (pg *TagPGRepository) Fetch(tagID int) (domain.Tag, error) {
 	return tag, nil
 }
 
-func (pg *TagPGRepository) Update(tag domain.Tag) error {
+func (pg *tagPGRepository) Update(tag domain.Tag) error {
 	const updateTagQuery = `
 	UPDATE tags SET name = $1 WHERE id = $2
 	`
@@ -70,7 +70,7 @@ func (pg *TagPGRepository) Update(tag domain.Tag) error {
 	return nil
 }
 
-func (pg *TagPGRepository) Delete(tag domain.Tag) error {
+func (pg *tagPGRepository) Delete(tag domain.Tag) error {
 	const deleteTagQuery = `
 	DELETE FROM tags WHERE id = $1
 	`
@@ -107,7 +107,7 @@ func (pg *TagPGRepository) Delete(tag domain.Tag) error {
 	return nil
 }
 
-func (pg *TagPGRepository) Create(tag domain.Tag) error {
+func (pg *tagPGRepository) Create(tag domain.Tag) error {
 	const createTagQuery = `
 	INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 	`

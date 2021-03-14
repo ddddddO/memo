@@ -6,17 +6,17 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type HealthPGRepository struct {
+type healthPGRepository struct {
 	db *sql.DB
 }
 
-func NewHealthPGRepository(db *sql.DB) *HealthPGRepository {
-	return &HealthPGRepository{
+func NewHealthPGRepository(db *sql.DB) *healthPGRepository {
+	return &healthPGRepository{
 		db: db,
 	}
 }
 
-func (pg *HealthPGRepository) Check() error {
+func (pg *healthPGRepository) Check() error {
 	_, err := pg.db.Query("SELECT 1")
 	if err != nil {
 		return err
