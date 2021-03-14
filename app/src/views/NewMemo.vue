@@ -1,16 +1,19 @@
 <template>
   <div class="creatememo">
     <div class="memodetail-tags" v-if="loaded">
-      <!--<h3 style="text-align:start;font-size: medium;">Tags: FIXME: checkbox</h3>-->
       <b-form-group label="Tags:" style="text-align:start;">
-      <b-form-checkbox-group
-        id="checkbox-group-1"
-        v-model="tagsSelected"
-        name="tags"
-      >
-        <b-form-checkbox v-for="tag in tags" :key=tag.name :value=tag.id>{{ tag.name }}</b-form-checkbox>
-      </b-form-checkbox-group>
-    </b-form-group>
+        <b-form-checkbox-group
+          id="checkbox-group-1"
+          v-model="selectedTagIDs"
+          name="tags"
+        >
+          <!-- TODO: タグの選択は、別にモーダルを表示してそこで選択したい。タグが多すぎる -->
+          <b-form-checkbox v-for="tag in tags" :key=tag.name :value=tag.id>{{ tag.name }}</b-form-checkbox>
+        </b-form-checkbox-group>
+      </b-form-group>
+    </div>
+    <div>
+      <b-form-checkbox v-model="isExposed">Expose?</b-form-checkbox>
     </div>
     <div class="memodetail-subject">
       <h3 style="text-align:start;font-size: medium;">Subject:</h3>
@@ -38,10 +41,11 @@ export default {
   name: 'createMemo',
   data: () => ({
     loaded: false,
+    isExposed: false,
     subject: '',
     content: '',
-    tags: null,
-    tagsSelected: [],
+    tags: [],
+    selectedTagIDs: [],
     endpoint: '',
     tagEndpoint: ''
   }),
@@ -61,22 +65,28 @@ export default {
         })
         .then(function (j) {
           const tmp2 = JSON.stringify(j)
-          // NOTE: apiからのレスポンスに含まれるエスケープ文字列をトリムし、かつ、JSONレスポンスの先頭・末尾の「"」をトリム
-          return tmp2.replace(/\\"/g, '"').slice(1, -1)
+          return tmp2
         })
         .then(function (sj) {
           const tmp3 = JSON.parse(sj)
-          const tagList = tmp3.tag_list
+          const tagList = tmp3.tags
+          // ALLを除外するため
+          tagList.shift()
           return tagList
         })
     } catch (err) {
       console.error(err)
     }
-    console.log(this.tags)
     this.loaded = true
   },
   methods: {
     createMemo: function () {
+      let selectedTags = []
+      for (const id of this.selectedTagIDs) {
+        let tag = { id: id }
+        selectedTags.push(tag)
+      }
+
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'POST',
@@ -84,19 +94,20 @@ export default {
         credentials: 'include',
         body: JSON.stringify({
           user_id: 1,
-          tag_ids: this.tagsSelected,
-          memo_subject: this.subject,
-          memo_content: this.content
+          is_exposed: this.isExposed,
+          tags: selectedTags,
+          subject: this.subject,
+          content: this.content
         })
       })
-      this.$router.push('/memos')
+      setTimeout(() => { this.$router.push('/memos') }, '500')
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
-        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos'
         this.tagEndpoint = process.env.VUE_APP_API_ENDPOINT + '/tags'
       } else {
-        this.endpoint = 'http://localhost:8082/memodetail'
+        this.endpoint = 'http://localhost:8082/memos'
         this.tagEndpoint = 'http://localhost:8082/tags'
       }
     }

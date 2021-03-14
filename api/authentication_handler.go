@@ -1,66 +1,16 @@
 package api
 
 import (
-	"crypto/sha256"
-	"database/sql"
-	"encoding/hex"
 	"encoding/json"
-	"errors"
-	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/repository"
 )
 
-type User struct {
-	ID     int
-	Name   string
-	Passwd string
-}
-
-func fetchUserID(DB *sql.DB, name, passwd string) (int, error) {
-	user, err := fetchUser(DB, name, genSecuredPasswd(passwd, name))
-	if err != nil {
-		return 0, err
-	}
-
-	return user.ID, nil
-}
-
-func fetchUser(DB *sql.DB, name, passwd string) (*User, error) {
-	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
-	rows, err := DB.Query(query, name, passwd)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: ユーザー登録をしてもらう or 正しいname/passwdを指定してもらう
-	if !rows.Next() {
-		return nil, errors.New("error !")
-	}
-
-	us := User{}
-	if err := rows.Scan(&us.ID, &us.Name, &us.Passwd); err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return &us, nil
-}
-
-func genSecuredPasswd(name, passwd string) string {
-	secStrPass := name + passwd
-	secPass := sha256.Sum256([]byte(secStrPass))
-	for i := 0; i < 99999; i++ {
-		secStrPass = hex.EncodeToString(secPass[:])
-		secPass = sha256.Sum256([]byte(secStrPass))
-	}
-	return strings.ToLower(hex.EncodeToString(secPass[:]))
-}
-
-func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
+func NewAuthHandler(repo repository.UserRepository, store sessions.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
@@ -69,15 +19,15 @@ func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
 			return
 		}
 
-		passwd := r.PostFormValue("passwd")
-		if len(passwd) == 0 {
+		password := r.PostFormValue("passwd")
+		if len(password) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty key 'passwd'", nil)
 			return
 		}
 
-		userID, err := fetchUserID(DB, name, passwd)
+		user, err := repo.Fetch(name, password)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
+			errResponse(w, http.StatusUnauthorized, "failed", err)
 			return
 		}
 
@@ -88,20 +38,14 @@ func NewAuthHandler(DB *sql.DB, store sessions.Store) http.Handler {
 			return
 		}
 
-		type response struct {
+		res := struct {
 			UserID int `json:"user_id"`
+		}{
+			UserID: user.ID,
 		}
-		res := response{
-			UserID: userID,
-		}
-
-		resJson, err := json.Marshal(res)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(resJson))
 	})
 }

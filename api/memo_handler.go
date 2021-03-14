@@ -1,91 +1,169 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
-	"sort"
+	"strconv"
 
+	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/tag-mng/repository"
 )
 
-type Memos struct {
-	MemoList []domain.Memo `json:"memo_list"`
-}
-
-func MemoListHandler(DB *sql.DB) http.HandlerFunc {
+func MemoListHandler(repo repository.MemoRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
-		userId := params.Get("userId")
-		if len(userId) == 0 {
+		userID := params.Get("userId")
+		if len(userID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 			return
 		}
-		tagId := params.Get("tagId")
+		tagID := params.Get("tagId")
 
-		var rows *sql.Rows
-		var memos Memos
-		var err error
-		// NOTE: tagIdが設定されていない場合
-		if len(tagId) == 0 {
-			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
-			rows, err = DB.Query(query, userId)
-			if err != nil {
-				errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
-				return
-			}
-		} else {
-			// NOTE: tagIdが設定されている場合
-			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
-			rows, err = DB.Query(query, userId, tagId)
-			if err != nil {
-				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-				return
-			}
+		uid, err := strconv.Atoi(userID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
 		}
-
-		for rows.Next() {
-			var memo domain.Memo
-			if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
-				errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
-				return
-			}
-			setColor(&memo)
-			memos.MemoList = append(memos.MemoList, memo)
+		tid, err := strconv.Atoi(tagID)
+		if err != nil {
+			tid = -1
 		}
-		// NOTE: NotifiedCntでメモを昇順にソート
-		sort.SliceStable(memos.MemoList,
-			func(i, j int) bool {
-				return memos.MemoList[i].NotifiedCnt < memos.MemoList[j].NotifiedCnt
-			},
-		)
-
-		memosJson, err := json.Marshal(memos)
+		memos, err := repo.FetchList(uid, tid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(memosJson))
+		res := struct {
+			Memos []domain.Memo `json:"memo_list"`
+		}{
+			Memos: memos,
+		}
+		if err := json.NewEncoder(w).Encode(res); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
 	}
 }
 
-func setColor(m *domain.Memo) {
-	switch m.NotifiedCnt {
-	case 0:
-		m.RowVariant = "danger"
-	case 1:
-		m.RowVariant = "warning"
-	case 2:
-		m.RowVariant = "primary"
-	case 3:
-		m.RowVariant = "info"
-	case 4:
-		m.RowVariant = "secondary"
-	case 5:
-		m.RowVariant = "success"
+func MemoDetailHandler(repo repository.MemoRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
+
+		params := r.URL.Query()
+		userID := params.Get("userId")
+		if len(userID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+			return
+		}
+
+		uid, err := strconv.Atoi(userID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+		mid, err := strconv.Atoi(memoID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		memo, err := repo.Fetch(uid, mid)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
+		encoder := json.NewEncoder(w)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(memo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+	}
+}
+
+func MemoUpdateHandler(repo repository.MemoRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
+		mid, err := strconv.Atoi(memoID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		updatedMemo := domain.Memo{
+			ID: mid,
+		}
+		if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
+			return
+		}
+
+		if err := repo.Update(updatedMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func MemoCreateHandler(repo repository.MemoRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var createdMemo domain.Memo
+		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		if err := repo.Create(createdMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func MemoDeleteHandler(repo repository.MemoRepository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		memoID := chi.URLParam(r, "id")
+		if len(memoID) == 0 {
+			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+			return
+		}
+		mid, err := strconv.Atoi(memoID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		deleteMemo := domain.Memo{
+			ID: mid,
+		}
+		if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		if err := repo.Delete(deleteMemo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }

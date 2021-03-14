@@ -205,7 +205,8 @@ export default {
     memoListAfter1day: null
   }),
   created () {
-    this.fetchData()
+    const tagID = this.$route.params.tag_id
+    this.fetchData(tagID)
   },
   computed: {
     rows () {
@@ -229,17 +230,21 @@ export default {
     }
   },
   methods: {
-    buildEndpoint: function () {
+    buildEndpoint: function (tagID) {
       if (process.env.NODE_ENV === 'production') {
         this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos' + '?userId=1'
       } else {
         this.endpoint = 'http://localhost:8082' + '/memos' + '?userId=1'
       }
+
+      if (typeof tagID !== 'undefined') {
+        this.endpoint += '&tagId=' + tagID
+      }
     },
-    fetchData: function () {
+    fetchData: function (tagID) {
       this.loading = true
       this.memoList = null
-      this.buildEndpoint()
+      this.buildEndpoint(tagID)
       let data = null
       const fetchFunc = async () => {
         try {

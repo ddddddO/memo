@@ -175,6 +175,10 @@ resource "random_string" "session_key" {
   special = false
 }
 
+output "session_key" {
+  value = "${random_string.session_key}"
+}
+
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 resource "google_cloud_run_service" "api" {
   provider = google-beta
@@ -234,6 +238,7 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 output "api_status" {
   value = "${google_cloud_run_service.api.status}"
 }
+
 
 # サイトジェネレーター/メモ公開フラグポーリングプログラム用GCE
 resource "google_compute_instance" "hugo-generator" {

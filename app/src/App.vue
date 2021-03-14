@@ -4,7 +4,8 @@
       <header id="app-header">
         <router-link to="/">Home</router-link> |
         <router-link to="/about">About</router-link> |
-        <router-link to="/memos">Memos</router-link>
+        <router-link to="/memos">Memos</router-link> |
+        <router-link to="/tags">Tags</router-link>
       </header>
     </div>
     <router-view/>

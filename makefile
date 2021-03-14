@@ -81,3 +81,17 @@ prov:
 #       redashはdocker-composeで起動したが、cloudsqlに接続出来なかった。なのでGCE上で起動するようにする。
 proxy_cloudpg:
 	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
+
+# DON'T EXECUTE
+# NOTE: /mnt/c配下でnpm run serveがとても遅くてつらいため、開発は~/work/tag-mng/appでやる。
+dev_app:
+	# まず、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app を~/work/tag-mng/appへ同期
+	rsync -av app/src/ ~/work/tag-mng/app/src/
+	# cloudsqlをローカルでプロキシして、apiを起動する
+	make proxy_cloudpg
+	DBDSN="host=localhost dbname=tag-mng user=xxxxx password=xxxxx sslmode=disable port=15432" SESSION_KEY="xxxxxx" DEBUG=1 go run cmd/api/main.go
+	# ~/work/tag-mng/app で開発
+	# 次に、~/work/tag-mng/app　を/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app　に同期
+	rsync -av ~/work/tag-mng/app/src/ app/src/
+	# 最後に、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app で動作確認
+	cd app && npm run serve
