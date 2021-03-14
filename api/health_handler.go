@@ -1,18 +1,18 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
 
 	_ "github.com/lib/pq"
+
+	"github.com/ddddddO/tag-mng/repository"
 )
 
-func HealthHandler(db *sql.DB) http.HandlerFunc {
+func HealthHandler(repo repository.HealthRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_, err := db.Query("SELECT 1")
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
+		if err := repo.Check(); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
@@ -21,7 +21,6 @@ func HealthHandler(db *sql.DB) http.HandlerFunc {
 		}{
 			Message: "health ok!",
 		}
-
 		if err := json.NewEncoder(w).Encode(res); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return

@@ -15,6 +15,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/ddddddO/tag-mng/api"
+	"github.com/ddddddO/tag-mng/repository/postgres"
 )
 
 func main() {
@@ -66,38 +67,42 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	router.Use(checkSession(store))
 
-	// health
-	router.Get("/health", api.HealthHandler(db))
-	// 認証API
-	router.Post("/auth", api.NewAuthHandler(db, store).(http.HandlerFunc))
+	// ヘルスチェック
+	healthRepository := postgres.NewHealthPGRepository(db)
+	router.Get("/health", api.HealthHandler(healthRepository))
 
+	// 認証API
+	userRepository := postgres.NewUserPGRepository(db)
+	router.Post("/auth", api.NewAuthHandler(userRepository, store).(http.HandlerFunc))
+
+	memoRepository := postgres.NewMemoPGRepository(db)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
-		r.Get("/", api.MemoListHandler(db))
+		r.Get("/", api.MemoListHandler(memoRepository))
 		// メモ新規作成API
-		r.Post("/", api.MemoCreateHandler(db))
+		r.Post("/", api.MemoCreateHandler(memoRepository))
 		// メモ更新API
-		r.Patch("/{id}", api.MemoUpdateHandler(db))
+		r.Patch("/{id}", api.MemoUpdateHandler(memoRepository))
 		// メモ削除API
-		r.Delete("/{id}", api.MemoDeleteHandler(db))
+		r.Delete("/{id}", api.MemoDeleteHandler(memoRepository))
 		// メモ詳細返却API
-		r.Get("/{id}", api.MemoDetailHandler(db))
+		r.Get("/{id}", api.MemoDetailHandler(memoRepository))
 	})
 
+	tagRepository := postgres.NewTagPGRepository(db)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
-		r.Get("/", api.TagListHandler(db))
+		r.Get("/", api.TagListHandler(tagRepository))
 		// タグ新規作成API
-		r.Post("/", api.TagCreateHandler(db))
+		r.Post("/", api.TagCreateHandler(tagRepository))
 		// タグ更新API
-		r.Patch("/{id}", api.TagUpdateHandler(db))
+		r.Patch("/{id}", api.TagUpdateHandler(tagRepository))
 		// タグ削除API
-		r.Delete("/{id}", api.TagDeleteHandler(db))
+		r.Delete("/{id}", api.TagDeleteHandler(tagRepository))
 		// タグ詳細返却API
-		r.Get("/{id}", api.TagDetailHandler(db))
+		r.Get("/{id}", api.TagDetailHandler(tagRepository))
 	})
 
 	port := os.Getenv("PORT")

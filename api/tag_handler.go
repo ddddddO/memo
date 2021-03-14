@@ -1,21 +1,18 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/tag-mng/repository"
 )
 
-type Tags struct {
-	List []domain.Tag `json:"tags"`
-}
-
-func TagListHandler(db *sql.DB) http.HandlerFunc {
+func TagListHandler(repo repository.TagRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -24,46 +21,46 @@ func TagListHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		var (
-			rows *sql.Rows
-			tags Tags
-			err  error
-		)
-		query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
-		rows, err = db.Query(query, userID)
+		uid, err := strconv.Atoi(userID)
 		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
-		for rows.Next() {
-			var tag domain.Tag
-			if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
-				errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-				return
-			}
-			tags.List = append(tags.List, tag)
+		tags, err := repo.FetchList(uid)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
 		}
 
-		if err := json.NewEncoder(w).Encode(tags); err != nil {
+		res := struct {
+			Tags []domain.Tag `json:"tags"`
+		}{
+			Tags: tags,
+		}
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 	}
 }
 
-func TagDetailHandler(db *sql.DB) http.HandlerFunc {
+func TagDetailHandler(repo repository.TagRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tagId := chi.URLParam(r, "id")
-		if len(tagId) == 0 {
+		tagID := chi.URLParam(r, "id")
+		if len(tagID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 			return
 		}
 
-		var tag domain.Tag
-		query := "SELECT id, name FROM tags WHERE id = $1"
-		if err := db.QueryRow(query, tagId).Scan(&tag.ID, &tag.Name); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+		tid, err := strconv.Atoi(tagID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+		tag, err := repo.Fetch(tid)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
@@ -74,94 +71,62 @@ func TagDetailHandler(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-func TagUpdateHandler(db *sql.DB) http.HandlerFunc {
+func TagUpdateHandler(repo repository.TagRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 			return
 		}
+		tid, err := strconv.Atoi(tagID)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
 
-		var updatedTag domain.Tag
+		updatedTag := domain.Tag{
+			ID: tid,
+		}
 		if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 
-		const updateTagQuery = `
-UPDATE tags SET name = $1 WHERE id = $2
-`
-		result, err := db.Exec(updateTagQuery,
-			updatedTag.Name, tagID,
-		)
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+		if err := repo.Update(updatedTag); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-		n, err := result.RowsAffected()
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-			return
-		}
-		if n != 1 {
-			errResponse(w, http.StatusInternalServerError, "failed", nil)
-			return
-		}
+
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func TagDeleteHandler(db *sql.DB) http.HandlerFunc {
+func TagDeleteHandler(repo repository.TagRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 			return
 		}
-
-		const deleteTagQuery = `
-DELETE FROM tags WHERE id = $1
-`
-
-		tx, err := db.Begin()
+		tid, err := strconv.Atoi(tagID)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 			return
 		}
-		defer tx.Rollback()
 
-		result, err := tx.Exec(deleteTagQuery, tagID)
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+		deleteTag := domain.Tag{
+			ID: tid,
+		}
+		if err := repo.Delete(deleteTag); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 			return
 		}
-		n, err := result.RowsAffected()
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-			return
-		}
-		if n != 1 {
-			errResponse(w, http.StatusInternalServerError, "failed", nil)
-			return
-		}
-
-		const deleteMemoTagQuery = `
-DELETE FROM memo_tag WHERE tags_id = $1
-`
-
-		_, err = tx.Exec(deleteMemoTagQuery, tagID)
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 4", err)
-			return
-		}
-
-		tx.Commit()
 
 		w.WriteHeader(http.StatusOK)
 	}
 }
 
-func TagCreateHandler(db *sql.DB) http.HandlerFunc {
+func TagCreateHandler(repo repository.TagRepository) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
@@ -169,25 +134,11 @@ func TagCreateHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		const createTagQuery = `
-INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
-`
-		result, err := db.Exec(createTagQuery,
-			createTag.Name, createTag.UserID,
-		)
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
+		if err := repo.Create(createTag); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-		n, err := result.RowsAffected()
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
-			return
-		}
-		if n != 1 {
-			errResponse(w, http.StatusInternalServerError, "failed", nil)
-			return
-		}
+
 		w.WriteHeader(http.StatusOK)
 	}
 }
