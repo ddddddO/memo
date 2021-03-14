@@ -10,19 +10,19 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-type AuthHandler struct {
+type authHandler struct {
 	repo  repository.UserRepository
 	store sessions.Store
 }
 
-func NewAuthHandler(repo repository.UserRepository, store sessions.Store) *AuthHandler {
-	return &AuthHandler{
+func NewAuthHandler(repo repository.UserRepository, store sessions.Store) *authHandler {
+	return &authHandler{
 		repo:  repo,
 		store: store,
 	}
 }
 
-func (h *AuthHandler) Auth() http.HandlerFunc {
+func (h *authHandler) Auth() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")

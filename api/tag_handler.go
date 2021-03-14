@@ -12,17 +12,17 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-type TagHandler struct {
+type tagHandler struct {
 	repo repository.TagRepository
 }
 
-func NewTagHandler(repo repository.TagRepository) *TagHandler {
-	return &TagHandler{
+func NewTagHandler(repo repository.TagRepository) *tagHandler {
+	return &tagHandler{
 		repo: repo,
 	}
 }
 
-func (h *TagHandler) List() http.HandlerFunc {
+func (h *tagHandler) List() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -55,7 +55,7 @@ func (h *TagHandler) List() http.HandlerFunc {
 	}
 }
 
-func (h *TagHandler) Detail() http.HandlerFunc {
+func (h *tagHandler) Detail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -81,7 +81,7 @@ func (h *TagHandler) Detail() http.HandlerFunc {
 	}
 }
 
-func (h *TagHandler) Update() http.HandlerFunc {
+func (h *tagHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -111,7 +111,7 @@ func (h *TagHandler) Update() http.HandlerFunc {
 	}
 }
 
-func (h *TagHandler) Delete() http.HandlerFunc {
+func (h *tagHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -136,7 +136,7 @@ func (h *TagHandler) Delete() http.HandlerFunc {
 	}
 }
 
-func (h *TagHandler) Create() http.HandlerFunc {
+func (h *tagHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {

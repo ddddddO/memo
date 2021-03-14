@@ -12,17 +12,17 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-type MemoHandler struct {
+type memoHandler struct {
 	repo repository.MemoRepository
 }
 
-func NewMemoHandler(repo repository.MemoRepository) *MemoHandler {
-	return &MemoHandler{
+func NewMemoHandler(repo repository.MemoRepository) *memoHandler {
+	return &memoHandler{
 		repo: repo,
 	}
 }
 
-func (h *MemoHandler) List() http.HandlerFunc {
+func (h *memoHandler) List() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -59,7 +59,7 @@ func (h *MemoHandler) List() http.HandlerFunc {
 	}
 }
 
-func (h *MemoHandler) Detail() http.HandlerFunc {
+func (h *memoHandler) Detail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -101,7 +101,7 @@ func (h *MemoHandler) Detail() http.HandlerFunc {
 	}
 }
 
-func (h *MemoHandler) Update() http.HandlerFunc {
+func (h *memoHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -131,7 +131,7 @@ func (h *MemoHandler) Update() http.HandlerFunc {
 	}
 }
 
-func (h *MemoHandler) Create() http.HandlerFunc {
+func (h *memoHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createdMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
@@ -148,7 +148,7 @@ func (h *MemoHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (h *MemoHandler) Delete() http.HandlerFunc {
+func (h *memoHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
