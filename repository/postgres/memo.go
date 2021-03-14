@@ -13,17 +13,17 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-type memoPGRepository struct {
+type memoRepository struct {
 	db *sql.DB
 }
 
-func NewMemoPGRepository(db *sql.DB) *memoPGRepository {
-	return &memoPGRepository{
+func NewMemoRepository(db *sql.DB) *memoRepository {
+	return &memoRepository{
 		db: db,
 	}
 }
 
-func (pg *memoPGRepository) FetchList(userID int, tagID int) ([]domain.Memo, error) {
+func (pg *memoRepository) FetchList(userID int, tagID int) ([]domain.Memo, error) {
 	var (
 		rows  *sql.Rows
 		memos []domain.Memo
@@ -81,7 +81,7 @@ func setColor(m *domain.Memo) {
 	}
 }
 
-func (pg *memoPGRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
+func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 	// TODO: 見直す
 	const memoDetailQuery = `
 	SELECT
@@ -172,7 +172,7 @@ func toStrings(s string) []string {
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
-func (pg *memoPGRepository) Update(memo domain.Memo) error {
+func (pg *memoRepository) Update(memo domain.Memo) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (pg *memoPGRepository) Update(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *memoPGRepository) Create(memo domain.Memo) error {
+func (pg *memoRepository) Create(memo domain.Memo) error {
 	var createMemoQuery = `
 	WITH inserted AS (INSERT INTO memos(subject, content, users_id, is_exposed) VALUES($1, $2, $3, $4) RETURNING id)
 	INSERT INTO memo_tag(memos_id, tags_id) VALUES
@@ -252,7 +252,7 @@ func (pg *memoPGRepository) Create(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *memoPGRepository) Delete(memo domain.Memo) error {
+func (pg *memoRepository) Delete(memo domain.Memo) error {
 	const deleteMemoQuery = `
 	DELETE FROM memos WHERE users_id = $1 AND id = $2;
 	`

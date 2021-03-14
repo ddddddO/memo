@@ -70,16 +70,16 @@ func main() {
 	router.Use(checkSession(store))
 
 	// ヘルスチェック
-	healthRepository := postgres.NewHealthPGRepository(db)
+	healthRepository := postgres.NewHealthRepository(db)
 	healthHandler := api.NewHealthHandler(healthRepository)
 	router.Get("/health", healthHandler.Check())
 
 	// 認証API
-	userRepository := postgres.NewUserPGRepository(db)
+	userRepository := postgres.NewUserRepository(db)
 	authHandler := api.NewAuthHandler(userRepository, store)
 	router.Post("/auth", authHandler.Auth())
 
-	memoRepository := postgres.NewMemoPGRepository(db)
+	memoRepository := postgres.NewMemoRepository(db)
 	memoHandler := api.NewMemoHandler(memoRepository)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
@@ -94,7 +94,7 @@ func main() {
 		r.Get("/{id}", memoHandler.Detail())
 	})
 
-	tagRepository := postgres.NewTagPGRepository(db)
+	tagRepository := postgres.NewTagRepository(db)
 	tagHandler := api.NewTagHandler(tagRepository)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
