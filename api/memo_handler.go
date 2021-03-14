@@ -1,18 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
-	"net/http"
-	"sort"
-
-	_ "github.com/lib/pq"
-
-	"bytes"
 	"fmt"
 	"log"
+	"net/http"
+	"sort"
 	"strconv"
 	"strings"
+
+	_ "github.com/lib/pq"
 
 	"github.com/go-chi/chi"
 

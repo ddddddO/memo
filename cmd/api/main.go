@@ -8,13 +8,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/ddddddO/tag-mng/api"
-
 	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
+
+	"github.com/ddddddO/tag-mng/api"
 )
 
 func main() {
