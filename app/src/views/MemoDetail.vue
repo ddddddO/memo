@@ -8,12 +8,13 @@
     <div v-if="loading">
       Loading...
     </div>
-    <div class="left">
-      <div class="memodetail-tags">
-        <h3 style="text-align:start;font-size: medium;">Tags:</h3>
-        <b style="font-size: medium;" v-for="tagName in memoDetail.tag_names" :key="tagName">{{ tagName }} / </b>
-      </div>
+    <div v-else class="left">
       <div v-if="!activatedEdit" class="memodetail-subject">
+        <div class="memodetail-tags">
+          <h3 style="text-align:start;font-size: medium;">Tags:</h3>
+          <b style="font-size: medium;" v-for="tag in memoDetail.tags" :key="tag">{{ tag.name }} / </b>
+        </div>
+
         <h3 style="text-align:start;font-size: medium;">Subject:</h3>
         <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
         <h3 style="text-align:start;font-size: medium;">Content:</h3>
@@ -22,6 +23,18 @@
         <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
       </div>
       <div v-else>
+        <div class="memodetail-tags">
+          <b-form-group label="Tags:" style="text-align:start;">
+            <b-form-checkbox-group
+              id="checkbox-group-1"
+              v-model="selectedTagIDs"
+              name="tags"
+            >
+              <!-- TODO: タグの選択は、別にモーダルを表示してそこで選択したい。タグが多すぎる -->
+              <b-form-checkbox v-for="tag in tags" :key=tag.name :value=tag.id>{{ tag.name }}</b-form-checkbox>
+            </b-form-checkbox-group>
+          </b-form-group>
+        </div>
         <b-form-checkbox v-model="memoDetail.is_exposed">Expose?</b-form-checkbox>
         <h3 style="text-align:start;font-size: medium;">Subject:</h3>
         <b-form-input rows="10" v-model="memoDetail.subject"></b-form-input>
@@ -89,8 +102,10 @@ export default {
     memoDetail: null,
     activatedEdit: false,
     activatedPreviewContent: false,
-    endpoint: ''
-    // isExposed: false
+    endpoint: '',
+    tagEndpoint: '',
+    tags: [],
+    selectedTagIDs: []
   }),
   async created () {
     this.loading = true
@@ -99,7 +114,7 @@ export default {
     const memoId = this.$route.params.memo_id
     try {
       this.memoDetail = await fetch(
-        this.endpoint + '?userId=' + userId + '&' + 'memoId=' + memoId,
+        this.endpoint + memoId + '?userId=' + userId,
         {
           mode: 'cors',
           credentials: 'include',
@@ -114,6 +129,12 @@ export default {
         })
         .then(function (sJson) {
           const tmp = JSON.parse(sJson)
+          // ALLを除外するため
+          for (let i = 0; i < tmp.tags.length; i++) {
+            if (tmp.tags[i].id === 1) {
+              tmp.tags.splice(i, 1)
+            }
+          }
           return tmp
         })
     } catch (err) {
@@ -121,6 +142,39 @@ export default {
     }
 
     this.memoDetail.content = this.convertRNtoBR(this.memoDetail.content)
+
+    try {
+      this.tags = await fetch(this.tagEndpoint + '?userId=1', {
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'include'
+      })
+        .then(function (resp) {
+          const tmp1 = resp.json()
+          return tmp1
+        })
+        .then(function (j) {
+          const tmp2 = JSON.stringify(j)
+          return tmp2
+        })
+        .then(function (sj) {
+          const tmp3 = JSON.parse(sj)
+          const tagList = tmp3.tags
+          // ALLを除外するため
+          tagList.shift()
+          return tagList
+        })
+    } catch (err) {
+      console.error(err)
+    }
+
+    let ids = []
+    for (const tag of this.memoDetail.tags) {
+      ids.push(tag.id)
+    }
+    this.selectedTagIDs = ids
+
     this.loading = false
   },
   methods: {
@@ -135,19 +189,26 @@ export default {
       this.activatedPreviewContent = !this.activatedPreviewContent
     },
     updateMemo: function (subject, content, isExposed) {
+      let tags = []
+      for (const id of this.selectedTagIDs) {
+        let tag = { id: id }
+        tags.push(tag)
+      }
+
       let own = this
       try {
-        fetch(this.endpoint, {
+        let memoID = this.$route.params.memo_id
+        fetch(this.endpoint + memoID, {
           headers: { 'Content-Type': 'application/json; charset=utf-8' },
           method: 'PATCH',
           mode: 'cors',
           credentials: 'include',
           body: JSON.stringify({
             user_id: 1,
-            memo_id: this.$route.params.memo_id,
-            memo_subject: subject,
-            memo_content: content,
-            memo_is_exposed: isExposed
+            subject: subject,
+            content: content,
+            is_exposed: isExposed,
+            tags: tags
           })
         })
           .then(function (resp) {
@@ -164,23 +225,25 @@ export default {
       return content.replace(/(\\r\\n)/g, '<br>').replace(/(\\n)/g, '<br>') // windows+
     },
     deleteMemo: function () {
-      fetch(this.endpoint, {
+      let memoID = this.$route.params.memo_id
+      fetch(this.endpoint + memoID, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         method: 'DELETE',
         mode: 'cors',
         credentials: 'include',
         body: JSON.stringify({
-          user_id: 1,
-          memo_id: this.$route.params.memo_id
+          user_id: 1
         })
       })
       setTimeout(() => { this.$router.push('/memos') }, '500')
     },
     buildEndpoint: function () {
       if (process.env.NODE_ENV === 'production') {
-        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memodetail'
+        this.endpoint = process.env.VUE_APP_API_ENDPOINT + '/memos/'
+        this.tagEndpoint = process.env.VUE_APP_API_ENDPOINT + '/tags'
       } else {
-        this.endpoint = 'http://localhost:8082/memodetail'
+        this.endpoint = 'http://localhost:8082/memos/'
+        this.tagEndpoint = 'http://localhost:8082/tags'
       }
     }
   },

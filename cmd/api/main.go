@@ -6,14 +6,16 @@ import (
 	"log"
 	"net/http"
 	"os"
-
-	"github.com/ddddddO/tag-mng/api"
+	"time"
 
 	"github.com/antonlindstrom/pgstore"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
+
+	"github.com/ddddddO/tag-mng/api"
+	"github.com/ddddddO/tag-mng/repository/postgres"
 )
 
 func main() {
@@ -56,43 +58,52 @@ func main() {
 	}
 	defer db.Close()
 
+	// https://tutuz-tech.hatenablog.com/entry/2020/03/24/170159
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(15)
+	db.SetConnMaxLifetime(3 * time.Minute)
+
 	store, err := genPostgresStore(db)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	router.Use(checkSession(store))
 
-	// health
-	router.Get("/health", api.HealthHandler(db))
+	// ヘルスチェック
+	healthRepository := postgres.NewHealthPGRepository(db)
+	router.Get("/health", api.HealthHandler(healthRepository))
+
 	// 認証API
-	router.Post("/auth", api.NewAuthHandler(db, store).(http.HandlerFunc))
+	userRepository := postgres.NewUserPGRepository(db)
+	router.Post("/auth", api.NewAuthHandler(userRepository, store).(http.HandlerFunc))
 
-	// TODO: /memos
-	//        /memos/{id} な形にする
-	// メモ一覧返却API
-	router.Get("/memos", api.MemoListHandler(db))
-	// メモ詳細返却API
-	router.Get("/memodetail", api.MemoDetailHandler(db))
-	// メモ新規作成API
-	router.Post("/memodetail", api.MemoDetailCreateHandler(db))
-	// メモ更新API
-	router.Patch("/memodetail", api.MemoDetailUpdateHandler(db))
-	// メモ削除API
-	router.Delete("/memodetail", api.MemoDetailDeleteHandler(db))
+	memoRepository := postgres.NewMemoPGRepository(db)
+	router.Route("/memos", func(r chi.Router) {
+		// メモ一覧返却API
+		r.Get("/", api.MemoListHandler(memoRepository))
+		// メモ新規作成API
+		r.Post("/", api.MemoCreateHandler(memoRepository))
+		// メモ更新API
+		r.Patch("/{id}", api.MemoUpdateHandler(memoRepository))
+		// メモ削除API
+		r.Delete("/{id}", api.MemoDeleteHandler(memoRepository))
+		// メモ詳細返却API
+		r.Get("/{id}", api.MemoDetailHandler(memoRepository))
+	})
 
-	// TODO: /tags
-	//        /tags/{id} な形にする
-	// タグ一覧返却API
-	router.Get("/tags", api.TagListHandler(db))
-	// タグ詳細返却API
-	router.Get("/tagdetail", api.TagDetailHandler(db))
-	// タグ新規作成API
-	router.Post("/tagdetail", api.TagDetailCreateHandler(db))
-	// タグ更新API
-	router.Patch("/tagdetail", api.TagDetailUpdateHandler(db))
-	// タグ削除API
-	router.Delete("/tagdetail", api.TagDetailDeleteHandler(db))
+	tagRepository := postgres.NewTagPGRepository(db)
+	router.Route("/tags", func(r chi.Router) {
+		// タグ一覧返却API
+		r.Get("/", api.TagListHandler(tagRepository))
+		// タグ新規作成API
+		r.Post("/", api.TagCreateHandler(tagRepository))
+		// タグ更新API
+		r.Patch("/{id}", api.TagUpdateHandler(tagRepository))
+		// タグ削除API
+		r.Delete("/{id}", api.TagDeleteHandler(tagRepository))
+		// タグ詳細返却API
+		r.Get("/{id}", api.TagDetailHandler(tagRepository))
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -142,10 +153,19 @@ func genPostgresStore(db *sql.DB) (sessions.Store, error) {
 		return nil, err
 	}
 
-	pgStore.Options = &sessions.Options{
-		MaxAge:   60 * 60 * 6, // Cookieの有効期限。一旦6時間
-		Secure:   true,        // httpsのみ使用可能
-		SameSite: http.SameSiteNoneMode,
+	// ローカル開発時
+	if os.Getenv("DEBUG") != "" {
+		pgStore.Options = &sessions.Options{
+			MaxAge:   60 * 60 * 24,
+			Secure:   false,
+			SameSite: http.SameSiteDefaultMode,
+		}
+	} else { // 本番
+		pgStore.Options = &sessions.Options{
+			MaxAge:   60 * 60 * 6, // Cookieの有効期限。一旦6時間
+			Secure:   true,        // trueの時、httpsのみでCookie使用可能
+			SameSite: http.SameSiteNoneMode,
+		}
 	}
 	return pgStore, nil
 }
