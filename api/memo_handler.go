@@ -12,7 +12,17 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-func MemoListHandler(repo repository.MemoRepository) http.HandlerFunc {
+type MemoHandler struct {
+	repo repository.MemoRepository
+}
+
+func NewMemoHandler(repo repository.MemoRepository) *MemoHandler {
+	return &MemoHandler{
+		repo: repo,
+	}
+}
+
+func (h *MemoHandler) List() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -31,7 +41,7 @@ func MemoListHandler(repo repository.MemoRepository) http.HandlerFunc {
 		if err != nil {
 			tid = -1
 		}
-		memos, err := repo.FetchList(uid, tid)
+		memos, err := h.repo.FetchList(uid, tid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -49,7 +59,7 @@ func MemoListHandler(repo repository.MemoRepository) http.HandlerFunc {
 	}
 }
 
-func MemoDetailHandler(repo repository.MemoRepository) http.HandlerFunc {
+func (h *MemoHandler) Detail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -75,7 +85,7 @@ func MemoDetailHandler(repo repository.MemoRepository) http.HandlerFunc {
 			return
 		}
 
-		memo, err := repo.Fetch(uid, mid)
+		memo, err := h.repo.Fetch(uid, mid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -91,7 +101,7 @@ func MemoDetailHandler(repo repository.MemoRepository) http.HandlerFunc {
 	}
 }
 
-func MemoUpdateHandler(repo repository.MemoRepository) http.HandlerFunc {
+func (h *MemoHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -112,7 +122,7 @@ func MemoUpdateHandler(repo repository.MemoRepository) http.HandlerFunc {
 			return
 		}
 
-		if err := repo.Update(updatedMemo); err != nil {
+		if err := h.repo.Update(updatedMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -121,7 +131,7 @@ func MemoUpdateHandler(repo repository.MemoRepository) http.HandlerFunc {
 	}
 }
 
-func MemoCreateHandler(repo repository.MemoRepository) http.HandlerFunc {
+func (h *MemoHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createdMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
@@ -129,7 +139,7 @@ func MemoCreateHandler(repo repository.MemoRepository) http.HandlerFunc {
 			return
 		}
 
-		if err := repo.Create(createdMemo); err != nil {
+		if err := h.repo.Create(createdMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -138,7 +148,7 @@ func MemoCreateHandler(repo repository.MemoRepository) http.HandlerFunc {
 	}
 }
 
-func MemoDeleteHandler(repo repository.MemoRepository) http.HandlerFunc {
+func (h *MemoHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
@@ -159,7 +169,7 @@ func MemoDeleteHandler(repo repository.MemoRepository) http.HandlerFunc {
 			return
 		}
 
-		if err := repo.Delete(deleteMemo); err != nil {
+		if err := h.repo.Delete(deleteMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}

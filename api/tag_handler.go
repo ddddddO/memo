@@ -12,7 +12,17 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-func TagListHandler(repo repository.TagRepository) http.HandlerFunc {
+type TagHandler struct {
+	repo repository.TagRepository
+}
+
+func NewTagHandler(repo repository.TagRepository) *TagHandler {
+	return &TagHandler{
+		repo: repo,
+	}
+}
+
+func (h *TagHandler) List() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		params := r.URL.Query()
 		userID := params.Get("userId")
@@ -27,7 +37,7 @@ func TagListHandler(repo repository.TagRepository) http.HandlerFunc {
 			return
 		}
 
-		tags, err := repo.FetchList(uid)
+		tags, err := h.repo.FetchList(uid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -45,7 +55,7 @@ func TagListHandler(repo repository.TagRepository) http.HandlerFunc {
 	}
 }
 
-func TagDetailHandler(repo repository.TagRepository) http.HandlerFunc {
+func (h *TagHandler) Detail() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -58,7 +68,7 @@ func TagDetailHandler(repo repository.TagRepository) http.HandlerFunc {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-		tag, err := repo.Fetch(tid)
+		tag, err := h.repo.Fetch(tid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -71,7 +81,7 @@ func TagDetailHandler(repo repository.TagRepository) http.HandlerFunc {
 	}
 }
 
-func TagUpdateHandler(repo repository.TagRepository) http.HandlerFunc {
+func (h *TagHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -92,7 +102,7 @@ func TagUpdateHandler(repo repository.TagRepository) http.HandlerFunc {
 			return
 		}
 
-		if err := repo.Update(updatedTag); err != nil {
+		if err := h.repo.Update(updatedTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
@@ -101,7 +111,7 @@ func TagUpdateHandler(repo repository.TagRepository) http.HandlerFunc {
 	}
 }
 
-func TagDeleteHandler(repo repository.TagRepository) http.HandlerFunc {
+func (h *TagHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tagID := chi.URLParam(r, "id")
 		if len(tagID) == 0 {
@@ -117,7 +127,7 @@ func TagDeleteHandler(repo repository.TagRepository) http.HandlerFunc {
 		deleteTag := domain.Tag{
 			ID: tid,
 		}
-		if err := repo.Delete(deleteTag); err != nil {
+		if err := h.repo.Delete(deleteTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 			return
 		}
@@ -126,7 +136,7 @@ func TagDeleteHandler(repo repository.TagRepository) http.HandlerFunc {
 	}
 }
 
-func TagCreateHandler(repo repository.TagRepository) http.HandlerFunc {
+func (h *TagHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var createTag domain.Tag
 		if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
@@ -134,7 +144,7 @@ func TagCreateHandler(repo repository.TagRepository) http.HandlerFunc {
 			return
 		}
 
-		if err := repo.Create(createTag); err != nil {
+		if err := h.repo.Create(createTag); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}

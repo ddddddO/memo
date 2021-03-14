@@ -10,8 +10,20 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-func NewAuthHandler(repo repository.UserRepository, store sessions.Store) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+type AuthHandler struct {
+	repo  repository.UserRepository
+	store sessions.Store
+}
+
+func NewAuthHandler(repo repository.UserRepository, store sessions.Store) *AuthHandler {
+	return &AuthHandler{
+		repo:  repo,
+		store: store,
+	}
+}
+
+func (h *AuthHandler) Auth() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO: name -> email へ変更したい
 		name := r.PostFormValue("name")
 		if len(name) == 0 {
@@ -25,13 +37,13 @@ func NewAuthHandler(repo repository.UserRepository, store sessions.Store) http.H
 			return
 		}
 
-		user, err := repo.Fetch(name, password)
+		user, err := h.repo.Fetch(name, password)
 		if err != nil {
 			errResponse(w, http.StatusUnauthorized, "failed", err)
 			return
 		}
 
-		session, _ := store.New(r, "STORE")
+		session, _ := h.store.New(r, "STORE")
 		session.Values["authed"] = true
 		if err := session.Save(r, w); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -47,5 +59,5 @@ func NewAuthHandler(repo repository.UserRepository, store sessions.Store) http.H
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-	})
+	}
 }

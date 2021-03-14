@@ -9,9 +9,19 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-func HealthHandler(repo repository.HealthRepository) http.HandlerFunc {
+type HealthHandler struct {
+	repo repository.HealthRepository
+}
+
+func NewHealthHandler(repo repository.HealthRepository) *HealthHandler {
+	return &HealthHandler{
+		repo: repo,
+	}
+}
+
+func (h *HealthHandler) Check() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if err := repo.Check(); err != nil {
+		if err := h.repo.Check(); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
