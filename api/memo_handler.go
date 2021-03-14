@@ -1,19 +1,16 @@
 package api
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 
-	_ "github.com/lib/pq"
-
 	"github.com/go-chi/chi"
+	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
 )
@@ -32,9 +29,11 @@ func MemoListHandler(db *sql.DB) http.HandlerFunc {
 		}
 		tagID := params.Get("tagId")
 
-		var rows *sql.Rows
-		var memos Memos
-		var err error
+		var (
+			rows  *sql.Rows
+			memos Memos
+			err   error
+		)
 		// NOTE: tagIdが設定されていない場合
 		if len(tagID) == 0 {
 			query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
@@ -68,15 +67,10 @@ func MemoListHandler(db *sql.DB) http.HandlerFunc {
 				return memos.MemoList[i].NotifiedCnt < memos.MemoList[j].NotifiedCnt
 			},
 		)
-
-		memosJson, err := json.Marshal(memos)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(memos); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(memosJson))
 	}
 }
 
@@ -144,42 +138,33 @@ func MemoDetailHandler(db *sql.DB) http.HandlerFunc {
 		GROUP BY m.id
 	`
 
-		rows, err := db.Query(memoDetailQuery, memoID, userID)
-		if err != nil {
+		var (
+			memo     domain.Memo
+			tagIDs   string
+			tagNames string
+		)
+		if err := db.QueryRow(memoDetailQuery, memoID, userID).Scan(
+			&memo.ID, &memo.Subject, &memo.Content, &memo.IsExposed,
+			&tagIDs, &tagNames,
+		); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed to connect db 2", err)
 			return
 		}
-		rows.Next()
-		var (
-			memoDetail domain.Memo
-			tagIDs     string
-			tagNames   string
-		)
-		// NOTE: 気持ち悪いけど、tagIds/tagNamesは別変数で取得して、sliceに変換してmemoDetailのフィールドに格納する
-		err = rows.Scan(
-			&memoDetail.ID, &memoDetail.Subject, &memoDetail.Content, &memoDetail.IsExposed,
-			&tagIDs, &tagNames,
-		)
-		if err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed to connect db 3", err)
+
+		memo.Tags = toTags(tagIDs, tagNames)
+		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
+		encoder := json.NewEncoder(w)
+		encoder.SetEscapeHTML(false)
+		if err := encoder.Encode(memo); err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-
-		memoDetail.Tags = toTags(tagIDs, tagNames)
-		//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
-		var memoDetailJson bytes.Buffer
-		encoder := json.NewEncoder(&memoDetailJson)
-		encoder.SetEscapeHTML(false)
-		encoder.Encode(memoDetail)
-
-		w.WriteHeader(http.StatusOK)
-		w.Write(memoDetailJson.Bytes())
 	}
 }
 
 func toTags(ids, names string) []domain.Tag {
-	convertedIDs := strToIntSlice(ids)
-	convertedNames := strToStrSlice(names)
+	convertedIDs := toInts(ids)
+	convertedNames := toStrings(names)
 
 	var tags []domain.Tag
 	for i := range convertedIDs {
@@ -189,11 +174,10 @@ func toTags(ids, names string) []domain.Tag {
 
 		tags = append(tags, tag)
 	}
-
 	return tags
 }
 
-func strToIntSlice(s string) []int {
+func toInts(s string) []int {
 	if len(s) <= 2 {
 		return []int{}
 	}
@@ -211,18 +195,15 @@ func strToIntSlice(s string) []int {
 	return nums
 }
 
-func strToStrSlice(s string) []string {
+func toStrings(s string) []string {
 	if len(s) <= 2 {
 		return []string{}
 	}
-
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
 func MemoUpdateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----MemoUpdateHandler----")
-
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
@@ -279,11 +260,11 @@ func MemoUpdateHandler(db *sql.DB) http.HandlerFunc {
 		%s
 		`
 
-		var valuesStr string
+		var values string
 		for _, tag := range updatedMemo.Tags {
-			valuesStr += fmt.Sprintf("(%v, %d),", memoID, tag.ID)
+			values += fmt.Sprintf("(%v, %d),", memoID, tag.ID)
 		}
-		insertMemoTagQuery = fmt.Sprintf(insertMemoTagQuery, valuesStr[:len(valuesStr)-1])
+		insertMemoTagQuery = fmt.Sprintf(insertMemoTagQuery, values[:len(values)-1])
 
 		_, err = tx.Exec(insertMemoTagQuery)
 		if err != nil {
@@ -299,7 +280,6 @@ func MemoUpdateHandler(db *sql.DB) http.HandlerFunc {
 
 func MemoCreateHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----MemoCreateHandler----")
 		var createdMemo domain.Memo
 		if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -313,11 +293,11 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 	%s;
 `
 
-		var valuesStr string
+		var values string
 		for _, tag := range createdMemo.Tags {
-			valuesStr += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tag.ID)
+			values += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tag.ID)
 		}
-		createMemoQuery = fmt.Sprintf(createMemoQuery, valuesStr)
+		createMemoQuery = fmt.Sprintf(createMemoQuery, values)
 
 		_, err := db.Exec(createMemoQuery,
 			createdMemo.Subject, createdMemo.Content, createdMemo.UserID, createdMemo.IsExposed,
@@ -332,8 +312,6 @@ INSERT INTO memo_tag(memos_id, tags_id) VALUES
 
 func MemoDeleteHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Print("----MemoDeleteHandler----")
-
 		memoID := chi.URLParam(r, "id")
 		if len(memoID) == 0 {
 			errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)

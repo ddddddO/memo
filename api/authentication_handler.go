@@ -84,20 +84,14 @@ func NewAuthHandler(db *sql.DB, store sessions.Store) http.Handler {
 			return
 		}
 
-		type response struct {
+		res := struct {
 			UserID int `json:"user_id"`
-		}
-		res := response{
+		}{
 			UserID: userID,
 		}
-
-		resJson, err := json.Marshal(res)
-		if err != nil {
+		if err := json.NewEncoder(w).Encode(res); err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
-
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(resJson))
 	})
 }
