@@ -17,10 +17,10 @@
 
         <h3 style="text-align:start;font-size: medium;">Subject:</h3>
         <h2 style="font-size: x-large;">{{ memoDetail.subject }}</h2>
-        <h3 style="text-align:start;font-size: medium;">Content:</h3>
-        <h3 style="font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
         <b-button pill size="sm" v-on:click="activateEditMemo">Edit</b-button>
         <b-button pill size="sm" variant="danger" v-on:click="$bvModal.show('confirm-delete')">Delete</b-button>
+        <h3 style="text-align:start;font-size: medium;">Content:</h3>
+        <h3 style="font-size: large;text-align:start;" v-html="compiledMarkdownContent"></h3>
       </div>
       <div v-else>
         <div class="memodetail-tags">
