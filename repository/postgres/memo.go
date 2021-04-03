@@ -89,7 +89,7 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 	    m.subject AS subject,
 		m.content AS content,
 		m.is_exposed AS is_exposed,
-		(SELECT jsonb_agg(t.id)
+		(SELECT jsonb_agg(DISTINCT(t.id))
 		  FROM memos m
 		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id
@@ -97,7 +97,7 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
 		) AS tag_ids,
-		(SELECT jsonb_agg(t.name)
+		(SELECT jsonb_agg(DISTINCT(t.name))
 		  FROM memos m
 		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id

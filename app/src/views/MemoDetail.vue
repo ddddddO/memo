@@ -12,7 +12,7 @@
       <div v-if="!activatedEdit" class="memodetail-subject">
         <div class="memodetail-tags">
           <h3 style="text-align:start;font-size: medium;">Tags:</h3>
-          <b style="font-size: medium;" v-for="tag in memoDetail.tags" :key="tag">{{ tag.name }} / </b>
+          <b style="font-size: medium;" v-for="tag in memoDetail.tags" :key="tag">#{{ tag.name | trimWquote }} </b>
         </div>
 
         <h3 style="text-align:start;font-size: medium;">Subject:</h3>
@@ -250,6 +250,12 @@ export default {
   computed: {
     compiledMarkdownContent: function () {
       return marked(this.memoDetail.content)
+    }
+  },
+  filters: {
+    trimWquote: function (value) {
+      // FIXME: タグの先頭2文字が"であるのはなぜか
+      return value.substring(2, value.length - 1)
     }
   }
 }
