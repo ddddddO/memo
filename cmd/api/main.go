@@ -70,39 +70,43 @@ func main() {
 	router.Use(checkSession(store))
 
 	// ヘルスチェック
-	healthRepository := postgres.NewHealthPGRepository(db)
-	router.Get("/health", api.HealthHandler(healthRepository))
+	healthRepository := postgres.NewHealthRepository(db)
+	healthHandler := api.NewHealthHandler(healthRepository)
+	router.Get("/health", healthHandler.Check)
 
 	// 認証API
-	userRepository := postgres.NewUserPGRepository(db)
-	router.Post("/auth", api.NewAuthHandler(userRepository, store).(http.HandlerFunc))
+	userRepository := postgres.NewUserRepository(db)
+	authHandler := api.NewAuthHandler(userRepository, store)
+	router.Post("/auth", authHandler.Auth)
 
-	memoRepository := postgres.NewMemoPGRepository(db)
+	memoRepository := postgres.NewMemoRepository(db)
+	memoHandler := api.NewMemoHandler(memoRepository)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
-		r.Get("/", api.MemoListHandler(memoRepository))
+		r.Get("/", memoHandler.List)
 		// メモ新規作成API
-		r.Post("/", api.MemoCreateHandler(memoRepository))
+		r.Post("/", memoHandler.Create)
 		// メモ更新API
-		r.Patch("/{id}", api.MemoUpdateHandler(memoRepository))
+		r.Patch("/{id}", memoHandler.Update)
 		// メモ削除API
-		r.Delete("/{id}", api.MemoDeleteHandler(memoRepository))
+		r.Delete("/{id}", memoHandler.Delete)
 		// メモ詳細返却API
-		r.Get("/{id}", api.MemoDetailHandler(memoRepository))
+		r.Get("/{id}", memoHandler.Detail)
 	})
 
-	tagRepository := postgres.NewTagPGRepository(db)
+	tagRepository := postgres.NewTagRepository(db)
+	tagHandler := api.NewTagHandler(tagRepository)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
-		r.Get("/", api.TagListHandler(tagRepository))
+		r.Get("/", tagHandler.List)
 		// タグ新規作成API
-		r.Post("/", api.TagCreateHandler(tagRepository))
+		r.Post("/", tagHandler.Create)
 		// タグ更新API
-		r.Patch("/{id}", api.TagUpdateHandler(tagRepository))
+		r.Patch("/{id}", tagHandler.Update)
 		// タグ削除API
-		r.Delete("/{id}", api.TagDeleteHandler(tagRepository))
+		r.Delete("/{id}", tagHandler.Delete)
 		// タグ詳細返却API
-		r.Get("/{id}", api.TagDetailHandler(tagRepository))
+		r.Get("/{id}", tagHandler.Detail)
 	})
 
 	port := os.Getenv("PORT")

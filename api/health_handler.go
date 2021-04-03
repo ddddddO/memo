@@ -9,21 +9,29 @@ import (
 	"github.com/ddddddO/tag-mng/repository"
 )
 
-func HealthHandler(repo repository.HealthRepository) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if err := repo.Check(); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
+type healthHandler struct {
+	repo repository.HealthRepository
+}
 
-		res := struct {
-			Message string `json:"message"`
-		}{
-			Message: "health ok!",
-		}
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			errResponse(w, http.StatusInternalServerError, "failed", err)
-			return
-		}
+func NewHealthHandler(repo repository.HealthRepository) *healthHandler {
+	return &healthHandler{
+		repo: repo,
+	}
+}
+
+func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
+	if err := h.repo.Check(); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
+
+	res := struct {
+		Message string `json:"message"`
+	}{
+		Message: "health ok!",
+	}
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
 	}
 }

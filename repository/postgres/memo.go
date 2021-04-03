@@ -13,17 +13,17 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-type MemoPGRepository struct {
+type memoRepository struct {
 	db *sql.DB
 }
 
-func NewMemoPGRepository(db *sql.DB) *MemoPGRepository {
-	return &MemoPGRepository{
+func NewMemoRepository(db *sql.DB) *memoRepository {
+	return &memoRepository{
 		db: db,
 	}
 }
 
-func (pg *MemoPGRepository) FetchList(userID int, tagID int) ([]domain.Memo, error) {
+func (pg *memoRepository) FetchList(userID int, tagID int) ([]domain.Memo, error) {
 	var (
 		rows  *sql.Rows
 		memos []domain.Memo
@@ -81,7 +81,7 @@ func setColor(m *domain.Memo) {
 	}
 }
 
-func (pg *MemoPGRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
+func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 	// TODO: 見直す
 	const memoDetailQuery = `
 	SELECT
@@ -89,7 +89,7 @@ func (pg *MemoPGRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 	    m.subject AS subject,
 		m.content AS content,
 		m.is_exposed AS is_exposed,
-		(SELECT jsonb_agg(t.id)
+		(SELECT jsonb_agg(DISTINCT(t.id))
 		  FROM memos m
 		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id
@@ -97,7 +97,7 @@ func (pg *MemoPGRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 		  ON mt.tags_id = t.id
 	      WHERE m.id = $1 AND m.users_id = $2
 		) AS tag_ids,
-		(SELECT jsonb_agg(t.name)
+		(SELECT jsonb_agg(DISTINCT(t.name))
 		  FROM memos m
 		  JOIN memo_tag mt
 		  ON m.id = mt.memos_id
@@ -172,7 +172,7 @@ func toStrings(s string) []string {
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
-func (pg *MemoPGRepository) Update(memo domain.Memo) error {
+func (pg *memoRepository) Update(memo domain.Memo) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (pg *MemoPGRepository) Update(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *MemoPGRepository) Create(memo domain.Memo) error {
+func (pg *memoRepository) Create(memo domain.Memo) error {
 	var createMemoQuery = `
 	WITH inserted AS (INSERT INTO memos(subject, content, users_id, is_exposed) VALUES($1, $2, $3, $4) RETURNING id)
 	INSERT INTO memo_tag(memos_id, tags_id) VALUES
@@ -252,7 +252,7 @@ func (pg *MemoPGRepository) Create(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *MemoPGRepository) Delete(memo domain.Memo) error {
+func (pg *memoRepository) Delete(memo domain.Memo) error {
 	const deleteMemoQuery = `
 	DELETE FROM memos WHERE users_id = $1 AND id = $2;
 	`

@@ -13,17 +13,17 @@ import (
 	"github.com/ddddddO/tag-mng/domain"
 )
 
-type UserPGRepository struct {
+type userRepository struct {
 	db *sql.DB
 }
 
-func NewUserPGRepository(db *sql.DB) *UserPGRepository {
-	return &UserPGRepository{
+func NewUserRepository(db *sql.DB) *userRepository {
+	return &userRepository{
 		db: db,
 	}
 }
 
-func (pg *UserPGRepository) Fetch(name string, password string) (*domain.User, error) {
+func (pg *userRepository) Fetch(name string, password string) (*domain.User, error) {
 	user, err := pg.fetchUser(name, genSecuredPassword(password, name))
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (pg *UserPGRepository) Fetch(name string, password string) (*domain.User, e
 	return user, nil
 }
 
-func (pg *UserPGRepository) fetchUser(name, password string) (*domain.User, error) {
+func (pg *userRepository) fetchUser(name, password string) (*domain.User, error) {
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
 	rows, err := pg.db.Query(query, name, password)
 	if err != nil {
