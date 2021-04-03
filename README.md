@@ -1,7 +1,7 @@
 # tag-mng
 
 ## 構成
-![1](https://github.com/ddddddO/tag-mng/blob/develop/arc/arc.png)
+![1](https://github.com/ddddddO/tag-mng/blob/master/arc/arc.png)
 
 ### API
 #### UT
@@ -16,13 +16,13 @@ https://qiita.com/muroon/items/f8beec802c29e66d1918
 
 ### APP
 #### Login
-![1](https://github.com/ddddddO/tag-mng/blob/develop/arc/_screen/login_by_smartphone.png)
+![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/login_by_smartphone.png)
 
 #### View memo list
-![1](https://github.com/ddddddO/tag-mng/blob/develop/arc/_screen/memos_by_smartphone.png)
+![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memos_by_smartphone.png)
 
 #### View memo list(PC)
-![1](https://github.com/ddddddO/tag-mng/blob/develop/arc/_screen/memos_by_browser.png)
+![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memos_by_browser.png)
 
 #### Edit memo
-![1](https://github.com/ddddddO/tag-mng/blob/develop/arc/_screen/memo_edit_by_smartphone.png?raw=true)
+![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memo_edit_by_smartphone.png?raw=true)
