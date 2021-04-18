@@ -57,7 +57,7 @@ func (p *Postgres) FetchAllExposedMemoSubjects() ([]string, error) {
 
 func (p *Postgres) FetchMemos() ([]domain.Memo, error) {
 	const sql = `
-	select id, subject, content, created_at from memos
+	select id, subject, content, created_at, updated_at from memos
 	where (is_exposed = true and exposed_at is null)
 	or (is_exposed = true and (exposed_at < updated_at))
 	`
@@ -70,7 +70,7 @@ func (p *Postgres) FetchMemos() ([]domain.Memo, error) {
 	var memos []domain.Memo
 	for rows.Next() {
 		var memo domain.Memo
-		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.Content, &memo.CreatedAt); err != nil {
+		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.Content, &memo.CreatedAt, &memo.UpdatedAt); err != nil {
 			return nil, errors.WithStack(err)
 		}
 		memos = append(memos, memo)

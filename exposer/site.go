@@ -125,10 +125,7 @@ func generateMarkdown(memo domain.Memo) error {
 		return errors.WithStack(err)
 	}
 
-	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
-	memoCreatedAt := memo.CreatedAt.In(jst).String()
-	content := "メモ新規作成日: " + memoCreatedAt + "\n\n" + "---" + "\n\n" + memo.Content
-
+	content := buildContent(memo)
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
 	_, err = f.WriteAt([]byte(content), inf.Size())
 	if err != nil {
@@ -136,6 +133,26 @@ func generateMarkdown(memo domain.Memo) error {
 	}
 
 	return nil
+}
+
+const layout = "2006-1-2 15:04:05"
+
+func buildContent(memo domain.Memo) string {
+	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
+	memoCreatedAt := memo.CreatedAt.In(jst).Format(layout)
+	memoUpdatedAt := memo.UpdatedAt.In(jst).Format(layout)
+
+	contentHeaderTemplate := `
+| 新規作成 | 最終更新 |
+| -- | -- |
+| %s | %s |
+`
+
+	contentHeader := fmt.Sprintf(contentHeaderTemplate, memoCreatedAt, memoUpdatedAt)
+	contentBody := memo.Content
+
+	content := contentHeader + "\n\n" + "---" + "\n\n" + contentBody
+	return content
 }
 
 func exists(filePath string) bool {
