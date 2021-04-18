@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -123,8 +124,13 @@ func generateMarkdown(memo domain.Memo) error {
 	if err != nil {
 		return errors.WithStack(err)
 	}
+
+	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
+	memoCreatedAt := memo.CreatedAt.In(jst).String()
+	content := "メモ新規作成日: " + memoCreatedAt + "\n\n" + "---" + "\n\n" + memo.Content
+
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(memo.Content), inf.Size())
+	_, err = f.WriteAt([]byte(content), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}
