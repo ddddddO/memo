@@ -135,7 +135,7 @@ func generateMarkdown(memo domain.Memo) error {
 	return nil
 }
 
-const layout = "2006-1-2 15:04:05"
+const layout = "2006-1-2"
 
 func buildContent(memo domain.Memo) string {
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
