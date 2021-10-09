@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"encoding/json"
@@ -13,12 +13,12 @@ import (
 )
 
 type memoHandler struct {
-	repo repository.MemoRepository
+	memoRepo repository.MemoRepository
 }
 
-func NewMemoHandler(repo repository.MemoRepository) *memoHandler {
+func NewMemo(memoRepo repository.MemoRepository) *memoHandler {
 	return &memoHandler{
-		repo: repo,
+		memoRepo: memoRepo,
 	}
 }
 
@@ -40,7 +40,7 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tid = -1
 	}
-	memos, err := h.repo.FetchList(uid, tid)
+	memos, err := h.memoRepo.FetchList(uid, tid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -82,7 +82,7 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, err := h.repo.Fetch(uid, mid)
+	memo, err := h.memoRepo.Fetch(uid, mid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -117,7 +117,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(updatedMemo); err != nil {
+	if err := h.memoRepo.Update(updatedMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -132,7 +132,7 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Create(createdMemo); err != nil {
+	if err := h.memoRepo.Create(createdMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -160,7 +160,7 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Delete(deleteMemo); err != nil {
+	if err := h.memoRepo.Delete(deleteMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

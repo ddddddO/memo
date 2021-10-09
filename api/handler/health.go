@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"encoding/json"
@@ -10,17 +10,17 @@ import (
 )
 
 type healthHandler struct {
-	repo repository.HealthRepository
+	healthRepo repository.HealthRepository
 }
 
-func NewHealthHandler(repo repository.HealthRepository) *healthHandler {
+func NewHealth(healthRepo repository.HealthRepository) *healthHandler {
 	return &healthHandler{
-		repo: repo,
+		healthRepo: healthRepo,
 	}
 }
 
 func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
-	if err := h.repo.Check(); err != nil {
+	if err := h.healthRepo.Check(); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

@@ -14,7 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 
-	"github.com/ddddddO/tag-mng/api"
+	"github.com/ddddddO/tag-mng/api/handler"
 	"github.com/ddddddO/tag-mng/repository/postgres"
 )
 
@@ -71,16 +71,16 @@ func main() {
 
 	// ヘルスチェック
 	healthRepository := postgres.NewHealthRepository(db)
-	healthHandler := api.NewHealthHandler(healthRepository)
+	healthHandler := handler.NewHealth(healthRepository)
 	router.Get("/health", healthHandler.Check)
 
 	// 認証API
 	userRepository := postgres.NewUserRepository(db)
-	authHandler := api.NewAuthHandler(userRepository, store)
+	authHandler := handler.NewAuth(userRepository, store)
 	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)
-	memoHandler := api.NewMemoHandler(memoRepository)
+	memoHandler := handler.NewMemo(memoRepository)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
 		r.Get("/", memoHandler.List)
@@ -95,7 +95,7 @@ func main() {
 	})
 
 	tagRepository := postgres.NewTagRepository(db)
-	tagHandler := api.NewTagHandler(tagRepository)
+	tagHandler := handler.NewTag(tagRepository)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
 		r.Get("/", tagHandler.List)

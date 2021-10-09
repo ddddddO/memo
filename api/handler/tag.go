@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"encoding/json"
@@ -13,12 +13,12 @@ import (
 )
 
 type tagHandler struct {
-	repo repository.TagRepository
+	tagRepo repository.TagRepository
 }
 
-func NewTagHandler(repo repository.TagRepository) *tagHandler {
+func NewTag(tagRepo repository.TagRepository) *tagHandler {
 	return &tagHandler{
-		repo: repo,
+		tagRepo: tagRepo,
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tags, err := h.repo.FetchList(uid)
+	tags, err := h.tagRepo.FetchList(uid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -65,7 +65,7 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
-	tag, err := h.repo.Fetch(tid)
+	tag, err := h.tagRepo.Fetch(tid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -97,7 +97,7 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(updatedTag); err != nil {
+	if err := h.tagRepo.Update(updatedTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -120,7 +120,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	deleteTag := domain.Tag{
 		ID: tid,
 	}
-	if err := h.repo.Delete(deleteTag); err != nil {
+	if err := h.tagRepo.Delete(deleteTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
@@ -135,7 +135,7 @@ func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Create(createTag); err != nil {
+	if err := h.tagRepo.Create(createTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

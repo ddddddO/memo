@@ -1,4 +1,4 @@
-package api
+package handler
 
 import (
 	"encoding/json"
@@ -11,14 +11,14 @@ import (
 )
 
 type authHandler struct {
-	repo  repository.UserRepository
-	store sessions.Store
+	userRepo repository.UserRepository
+	store    sessions.Store
 }
 
-func NewAuthHandler(repo repository.UserRepository, store sessions.Store) *authHandler {
+func NewAuth(userRepo repository.UserRepository, store sessions.Store) *authHandler {
 	return &authHandler{
-		repo:  repo,
-		store: store,
+		userRepo: userRepo,
+		store:    store,
 	}
 }
 
@@ -36,7 +36,7 @@ func (h *authHandler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.repo.Fetch(name, password)
+	user, err := h.userRepo.Fetch(name, password)
 	if err != nil {
 		errResponse(w, http.StatusUnauthorized, "failed", err)
 		return
