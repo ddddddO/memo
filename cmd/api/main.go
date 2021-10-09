@@ -15,6 +15,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/ddddddO/tag-mng/api/handler"
+	"github.com/ddddddO/tag-mng/api/usecase"
 	"github.com/ddddddO/tag-mng/repository/postgres"
 )
 
@@ -76,7 +77,9 @@ func main() {
 
 	// 認証API
 	userRepository := postgres.NewUserRepository(db)
-	authHandler := handler.NewAuth(userRepository, store)
+	authUsecase := usecase.NewAuth(userRepository, store)
+	authHandler := handler.NewAuth(authUsecase)
+
 	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)

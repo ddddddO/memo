@@ -4,21 +4,22 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/tag-mng/repository"
+	"github.com/ddddddO/tag-mng/domain"
 )
 
-type authHandler struct {
-	userRepo repository.UserRepository
-	store    sessions.Store
+type authUsecase interface {
+	Login(name string, password string, w http.ResponseWriter, r *http.Request) (*domain.User, error)
 }
 
-func NewAuth(userRepo repository.UserRepository, store sessions.Store) *authHandler {
+type authHandler struct {
+	usecase authUsecase
+}
+
+func NewAuth(usecase authUsecase) *authHandler {
 	return &authHandler{
-		userRepo: userRepo,
-		store:    store,
+		usecase: usecase,
 	}
 }
 
@@ -36,15 +37,22 @@ func (h *authHandler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepo.Fetch(name, password)
-	if err != nil {
-		errResponse(w, http.StatusUnauthorized, "failed", err)
-		return
-	}
+	// user, err := h.userRepo.Fetch(name, password)
+	// if err != nil {
+	// 	errResponse(w, http.StatusUnauthorized, "failed", err)
+	// 	return
+	// }
 
-	session, _ := h.store.New(r, "STORE")
-	session.Values["authed"] = true
-	if err := session.Save(r, w); err != nil {
+	// session, _ := h.store.New(r, "STORE")
+	// session.Values["authed"] = true
+	// if err := session.Save(r, w); err != nil {
+	// 	errResponse(w, http.StatusInternalServerError, "failed", err)
+	// 	return
+	// }
+
+	user, err := h.usecase.Login(name, password, w, r)
+	if err != nil {
+		// TODO: 認証エラーは4xx系エラーを返すようにする
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
