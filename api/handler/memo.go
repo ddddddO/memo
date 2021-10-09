@@ -9,16 +9,23 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
-	"github.com/ddddddO/tag-mng/repository"
 )
 
-type memoHandler struct {
-	memoRepo repository.MemoRepository
+type memoUsecase interface {
+	FetchList(userID int, tagID int) ([]domain.Memo, error)
+	Fetch(userID int, memoID int) (domain.Memo, error)
+	Update(domain.Memo) error
+	Create(domain.Memo) error
+	Delete(domain.Memo) error
 }
 
-func NewMemo(memoRepo repository.MemoRepository) *memoHandler {
+type memoHandler struct {
+	usecase memoUsecase
+}
+
+func NewMemo(usecase memoUsecase) *memoHandler {
 	return &memoHandler{
-		memoRepo: memoRepo,
+		usecase: usecase,
 	}
 }
 
@@ -40,7 +47,8 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tid = -1
 	}
-	memos, err := h.memoRepo.FetchList(uid, tid)
+
+	memos, err := h.usecase.FetchList(uid, tid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -82,7 +90,7 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, err := h.memoRepo.Fetch(uid, mid)
+	memo, err := h.usecase.Fetch(uid, mid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -117,7 +125,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.memoRepo.Update(updatedMemo); err != nil {
+	if err := h.usecase.Update(updatedMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -132,11 +140,12 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.memoRepo.Create(createdMemo); err != nil {
+	if err := h.usecase.Create(createdMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
+	// TODO: 201 createdへ変更
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -160,10 +169,11 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.memoRepo.Delete(deleteMemo); err != nil {
+	if err := h.usecase.Delete(deleteMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
+	// TODO: 204 no content?
 	w.WriteHeader(http.StatusOK)
 }

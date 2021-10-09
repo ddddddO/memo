@@ -5,22 +5,24 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
-
-	"github.com/ddddddO/tag-mng/repository"
 )
 
-type healthHandler struct {
-	healthRepo repository.HealthRepository
+type healthUsecase interface {
+	Check() error
 }
 
-func NewHealth(healthRepo repository.HealthRepository) *healthHandler {
+type healthHandler struct {
+	usecase healthUsecase
+}
+
+func NewHealth(usecase healthUsecase) *healthHandler {
 	return &healthHandler{
-		healthRepo: healthRepo,
+		usecase: usecase,
 	}
 }
 
 func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
-	if err := h.healthRepo.Check(); err != nil {
+	if err := h.usecase.Check(); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

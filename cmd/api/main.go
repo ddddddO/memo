@@ -72,7 +72,8 @@ func main() {
 
 	// ヘルスチェック
 	healthRepository := postgres.NewHealthRepository(db)
-	healthHandler := handler.NewHealth(healthRepository)
+	healthUsecase := usecase.NewHealth(healthRepository)
+	healthHandler := handler.NewHealth(healthUsecase)
 	router.Get("/health", healthHandler.Check)
 
 	// 認証API
@@ -83,7 +84,8 @@ func main() {
 	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)
-	memoHandler := handler.NewMemo(memoRepository)
+	memoUsecase := usecase.NewMemoUsecase(memoRepository)
+	memoHandler := handler.NewMemo(memoUsecase)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
 		r.Get("/", memoHandler.List)
