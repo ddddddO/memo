@@ -82,7 +82,7 @@ prov:
 proxy_cloudpg:
 	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
 
-# DON'T EXECUTE
+# DON'T EXECUTE 'make dev_app'
 # NOTE: /mnt/c配下でnpm run serveがとても遅くてつらいため、開発は~/work/tag-mng/appでやる。
 dev_app:
 	# まず、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app を~/work/tag-mng/appへ同期
@@ -95,3 +95,22 @@ dev_app:
 	rsync -av ~/work/tag-mng/app/src/ app/src/
 	# 最後に、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app で動作確認
 	cd app && npm run serve
+
+# DON'T EXECUTE 'make dev_front'
+# NOTE: /mnt/c配下でnpm run serveがとても遅くてつらいため、開発は~/work/tag-mng/frontでやる。
+# TODO: そもそも、/mnt/c配下のリポジトリをdebianのhomeディレクトリ配下に移動したい
+dev_front:
+	# まず、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/front を~/work/tag-mng/frontへ同期
+	# front/src以外のfront配下のファイルを変更したら実施
+	# rsync -av front/ ~/work/tag-mng/front/
+	rsync -av front/src ~/work/tag-mng/front/src
+	# cloudsqlをローカルでプロキシして、apiを起動する
+	make proxy_cloudpg
+	DBDSN="host=localhost dbname=tag-mng user=xxxxx password=xxxxx sslmode=disable port=15432" SESSION_KEY="xxxxxx" DEBUG=1 go run cmd/api/main.go
+	# ~/work/tag-mng/front で開発
+	cd ~/work/tag-mng/front
+	# 次に、~/work/tag-mng/front　を/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/front　に同期
+	cd /mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng
+	rsync -av ~/work/tag-mng/front/src/ front/src/
+	# 最後に、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/front で動作確認
+	cd front && npm run serve
