@@ -9,16 +9,23 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/tag-mng/domain"
-	"github.com/ddddddO/tag-mng/repository"
 )
 
-type tagHandler struct {
-	tagRepo repository.TagRepository
+type tagUsecase interface {
+	FetchList(userID int) ([]domain.Tag, error)
+	Fetch(tagID int) (domain.Tag, error)
+	Update(tag domain.Tag) error
+	Create(tag domain.Tag) error
+	Delete(tag domain.Tag) error
 }
 
-func NewTag(tagRepo repository.TagRepository) *tagHandler {
+type tagHandler struct {
+	usecase tagUsecase
+}
+
+func NewTag(usecase tagUsecase) *tagHandler {
 	return &tagHandler{
-		tagRepo: tagRepo,
+		usecase: usecase,
 	}
 }
 
@@ -36,7 +43,7 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tags, err := h.tagRepo.FetchList(uid)
+	tags, err := h.usecase.FetchList(uid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -65,7 +72,7 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
-	tag, err := h.tagRepo.Fetch(tid)
+	tag, err := h.usecase.Fetch(tid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -97,7 +104,7 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.tagRepo.Update(updatedTag); err != nil {
+	if err := h.usecase.Update(updatedTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -120,7 +127,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	deleteTag := domain.Tag{
 		ID: tid,
 	}
-	if err := h.tagRepo.Delete(deleteTag); err != nil {
+	if err := h.usecase.Delete(deleteTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
@@ -135,7 +142,7 @@ func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.tagRepo.Create(createTag); err != nil {
+	if err := h.usecase.Create(createTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

@@ -11,7 +11,7 @@ type memoUsecase struct {
 	memoRepo repository.MemoRepository
 }
 
-func NewMemoUsecase(memoRepo repository.MemoRepository) *memoUsecase {
+func NewMemo(memoRepo repository.MemoRepository) *memoUsecase {
 	return &memoUsecase{
 		memoRepo: memoRepo,
 	}

@@ -84,7 +84,7 @@ func main() {
 	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)
-	memoUsecase := usecase.NewMemoUsecase(memoRepository)
+	memoUsecase := usecase.NewMemo(memoRepository)
 	memoHandler := handler.NewMemo(memoUsecase)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
@@ -100,7 +100,8 @@ func main() {
 	})
 
 	tagRepository := postgres.NewTagRepository(db)
-	tagHandler := handler.NewTag(tagRepository)
+	tagUsecase := usecase.NewTag(tagRepository)
+	tagHandler := handler.NewTag(tagUsecase)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
 		r.Get("/", tagHandler.List)
