@@ -101,7 +101,6 @@ dev_app:
 # TODO: そもそも、/mnt/c配下のリポジトリをdebianのhomeディレクトリ配下に移動したい
 dev_front:
 	# まず、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/front を~/work/tag-mng/frontへ同期
-	# front/src以外のfront配下のファイルを変更したら実施
 	# rsync -av front/ ~/work/tag-mng/front/
 	rsync -av front/src ~/work/tag-mng/front/src
 	# cloudsqlをローカルでプロキシして、apiを起動する
