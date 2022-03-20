@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/memo/domain"
 )
 
 func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/memo/domain"
 )
 
 type TagRepository interface {

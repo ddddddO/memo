@@ -1,7 +1,7 @@
 package datasource
 
 import (
-	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/memo/domain"
 )
 
 type DataSource interface {

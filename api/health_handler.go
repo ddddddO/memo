@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/tag-mng/repository"
+	"github.com/ddddddO/memo/repository"
 )
 
 type healthHandler struct {

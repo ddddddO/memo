@@ -8,8 +8,8 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/tag-mng/domain"
-	"github.com/ddddddO/tag-mng/repository"
+	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/repository"
 )
 
 type tagHandler struct {

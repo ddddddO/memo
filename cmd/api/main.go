@@ -14,8 +14,8 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 
-	"github.com/ddddddO/tag-mng/api"
-	"github.com/ddddddO/tag-mng/repository/postgres"
+	"github.com/ddddddO/memo/api"
+	"github.com/ddddddO/memo/repository/postgres"
 )
 
 func main() {

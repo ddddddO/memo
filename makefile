@@ -17,7 +17,7 @@ localpipg:
 # ローカルにCloud SQLのDBデータのpostgresを初期化して起動
 localcloudpg:
 	# postgresコンテナ起動とともにDATABASE(tag-mng)を作成します
-	docker run -d --name local-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -v /mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/db/create_db:/docker-entrypoint-initdb.d/ postgres:11-alpine
+	docker run -d --name local-postgres -p 5432:5432 -e POSTGRES_PASSWORD=postgres -v /home/ochi/github.com/ddddddO/memo/db/create_db:/docker-entrypoint-initdb.d/ postgres:11-alpine
 	# 初期化されたDBに対して、初期データを投入します
 	sleep 5 && PGPASSWORD=postgres psql -h localhost -U postgres -d tag-mng -f _data/cloud_sql_dump.sql
 	# 起動したlocalのpostgresコンテナのtag-mngデータベースに対してマイグレートアップします
@@ -43,16 +43,18 @@ cloudpg:
 	#PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/data_dump.sql
 	#PGPASSWORD=$(DB_PASSWD) psql -h localhost -p 15432 -U appuser -d tag-mng -f _data/update_time.sql
 
+# NOTE: 2021-04以降のデータが取得出来てない。何か制限ある？
 # Cloud SQLからデータを取得
 genclouddata:
 	# GCSバケットへcurlでエクスポート(https://cloud.google.com/sql/docs/postgres/import-export/exporting?hl=ja#rest)
 	scripts/sql_to_gcs.sh
 	# GCSバケットからローカルへDL(https://cloud.google.com/storage/docs/downloading-objects?hl=ja#gsutil)
-	sleep 3 && gsutil cp gs://tag-mng/cloud_sql_dump.sql /mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/_data/cloud_sql_dump.sql
+	sleep 3 && gsutil cp gs://tag-mng/cloud_sql_dump.sql /home/ochi/github.com/ddddddO/memo/_data/cloud_sql_dump.sql
 
-## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
+## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。そして、cloud runをdestroy -> applyする
+## terraform destroy -target google_cloud_run_service.api -> terraform apply
 buildapi:
-	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f deployments/dockerfile/api/Dockerfile .
+	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f dockerfiles/api/Dockerfile .
 	docker push gcr.io/tag-mng-243823/api
 
 deployapp:
@@ -81,17 +83,3 @@ prov:
 #       redashはdocker-composeで起動したが、cloudsqlに接続出来なかった。なのでGCE上で起動するようにする。
 proxy_cloudpg:
 	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
-
-# DON'T EXECUTE
-# NOTE: /mnt/c配下でnpm run serveがとても遅くてつらいため、開発は~/work/tag-mng/appでやる。
-dev_app:
-	# まず、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app を~/work/tag-mng/appへ同期
-	rsync -av app/src/ ~/work/tag-mng/app/src/
-	# cloudsqlをローカルでプロキシして、apiを起動する
-	make proxy_cloudpg
-	DBDSN="host=localhost dbname=tag-mng user=xxxxx password=xxxxx sslmode=disable port=15432" SESSION_KEY="xxxxxx" DEBUG=1 go run cmd/api/main.go
-	# ~/work/tag-mng/app で開発
-	# 次に、~/work/tag-mng/app　を/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app　に同期
-	rsync -av ~/work/tag-mng/app/src/ app/src/
-	# 最後に、/mnt/c/DEV/workspace/GO/src/github.com/ddddddO/tag-mng/app で動作確認
-	cd app && npm run serve

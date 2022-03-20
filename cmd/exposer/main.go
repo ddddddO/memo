@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/ddddddO/tag-mng/exposer"
+	"github.com/ddddddO/memo/exposer"
 )
 
 var (

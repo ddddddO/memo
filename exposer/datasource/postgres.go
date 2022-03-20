@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/tag-mng/domain"
+	"github.com/ddddddO/memo/domain"
 )
 
 type Postgres struct {

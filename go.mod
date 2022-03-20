@@ -1,4 +1,4 @@
-module github.com/ddddddO/tag-mng
+module github.com/ddddddO/memo
 
 go 1.13
 

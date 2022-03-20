@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/tag-mng/exposer/datasource"
+	"github.com/ddddddO/memo/exposer/datasource"
 )
 
 type Config struct {
