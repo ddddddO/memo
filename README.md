@@ -1,28 +1,28 @@
-# tag-mng
+# memo
+private & public memo system
 
-## 構成
-![1](https://github.com/ddddddO/tag-mng/blob/master/arc/arc.png)
 
-### API
-#### UT
-- Go test チート
-https://qiita.com/nirasan/items/b357f0ad9172ab9fa19b
+## Components
+![1](/arc/arc.png)
 
-- http test
-https://kaneshin.hateblo.jp/entry/2016/12/02/200108
+### Back-end(Go)
+- REST API
+- Batch
+    - `exposer`
+        - Change memos from private to public.
+    - `notified-cnt-incrementer`
+        - Increase the number since the last update date of the memo.
 
-- testify/mock を使ったテスト
-https://qiita.com/muroon/items/f8beec802c29e66d1918
+### Front-end(Vue.js)
 
-### APP
 #### Login
-![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/login_by_smartphone.png)
+![1](/arc/_screen/login_by_smartphone.png)
 
 #### View memo list
-![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memos_by_smartphone.png)
+![1](/arc/_screen/memos_by_smartphone.png)
 
 #### View memo list(PC)
-![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memos_by_browser.png)
+![1](/arc/_screen/memos_by_browser.png)
 
 #### Edit memo
-![1](https://github.com/ddddddO/tag-mng/blob/master/arc/_screen/memo_edit_by_smartphone.png?raw=true)
+![1](/arc/_screen/memo_edit_by_smartphone.png?raw=true)
