@@ -6,9 +6,7 @@ cover.out
 cover.html
 .terraform
 terraform.tfstate
-terraform.tfstate.backup
-terraform.tfstate.1593237429.backup
-terraform.tfstate.1593237577.backup
+terraform.tfstate.*
 dbconfig.yml
 terraform.tfvars
 *.zip

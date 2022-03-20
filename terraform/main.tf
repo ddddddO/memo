@@ -1,61 +1,17 @@
-provider "google" {
-  credentials = "${file("~/.config/gcloud/legacy_credentials/lbfdeatq@gmail.com/adc.json")}"
-
-  project = "tag-mng-243823"
-  region  = "asia-northeast1"
-  zone    = "asia-northeast1-c"
+module "cloud_sql" {
+  source = "./modules/cloud_sql"
 }
 
-provider "google-beta" {
-  credentials = "${file("~/.config/gcloud/legacy_credentials/lbfdeatq@gmail.com/adc.json")}"
-
-  project = "tag-mng-243823"
-  region  = "asia-northeast1"
-  zone    = "asia-northeast1-c"
-}
-
-
-# Cloud SQL
-resource "google_sql_database" "database" {
-  name     = "tag-mng"
-  project  = "tag-mng-243823"
-  instance = google_sql_database_instance.instance.name
-}
-
-resource "google_sql_database_instance" "instance" {
-  name             = "tag-mng-cloud"
-  database_version = "POSTGRES_11"
-  region           = "asia-northeast1"
-  settings {
-    tier = "db-f1-micro"
-    #tier = "db-custom-1-4096"
-    maintenance_window {
-      day  = 1
-      hour = 0
-    }
-    ip_configuration {
-      ipv4_enabled = true
-      require_ssl  = false
-
-      authorized_networks {
-        name  = "hugo-generator"
-        value = "35.226.69.24/32"
-      }
-    }
-  }
-}
-
+# NOTE: 以下３つでmoduleかなあ
 resource "random_password" "db_password" {
   length  = 16
   special = false
 }
-
 resource "google_sql_user" "user" {
   name     = "appuser"
-  instance = google_sql_database_instance.instance.name
-  password = random_password.db_password.result
+  instance = module.cloud_sql.instance_name
+  password = "${random_password.db_password.result}"
 }
-
 output "db_appuser_passwd" {
   value = "${random_password.db_password.result}"
 }
@@ -175,10 +131,6 @@ resource "random_string" "session_key" {
   special = false
 }
 
-output "session_key" {
-  value = "${random_string.session_key}"
-}
-
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 resource "google_cloud_run_service" "api" {
   provider = google-beta
@@ -203,7 +155,7 @@ resource "google_cloud_run_service" "api" {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "1000"
         # NOTE: Cloud Run -> Cloud SQLへ接続するために必要
-        "run.googleapis.com/cloudsql-instances" = "tag-mng-243823:asia-northeast1:${google_sql_database_instance.instance.name}"
+        "run.googleapis.com/cloudsql-instances" = "tag-mng-243823:asia-northeast1:${module.cloud_sql.instance_name}}"
       }
     }
   }
@@ -234,11 +186,6 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
 
   policy_data = data.google_iam_policy.noauth.policy_data
 }
-
-output "api_status" {
-  value = "${google_cloud_run_service.api.status}"
-}
-
 
 # サイトジェネレーター/メモ公開フラグポーリングプログラム用GCE
 resource "google_compute_instance" "hugo-generator" {
