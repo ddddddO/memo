@@ -83,3 +83,9 @@ prov:
 #       redashはdocker-composeで起動したが、cloudsqlに接続出来なかった。なのでGCE上で起動するようにする。
 proxy_cloudpg:
 	cloud_sql_proxy -instances=tag-mng-243823:asia-northeast1:tag-mng-cloud=tcp:15432 &
+
+# NOTE: cloud sqlからmodelsディレクトリにコード生成
+#       予め、make proxy_cloudpg
+# DB_PASSWD="xxxxxxxx" make xo
+xo:
+	xo schema postgres://appuser:$(DB_PASSWD)@localhost:15432/tag-mng?sslmode=disable
