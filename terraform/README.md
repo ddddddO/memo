@@ -1,6 +1,6 @@
 # Standard Module Structure
 - https://www.terraform.io/language/modules/develop/structure
-- TODO: module化をすすめる
+- TODO: moduleがまだ抽象化できてない
 
 # Tips
 - `terraform state mv <old> <new>`
