@@ -145,6 +145,40 @@ func TagByID(ctx context.Context, db DB, id int) (*Tag, error) {
 	return &t, nil
 }
 
+// TagsByUsersID retrieves a row from 'public.tags' as a Tag.
+//
+// Generated from index 'tags_users_id_idx'.
+func TagsByUsersID(ctx context.Context, db DB, usersID sql.NullInt64) ([]*Tag, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`id, name, users_id ` +
+		`FROM public.tags ` +
+		`WHERE users_id = $1`
+	// run
+	logf(sqlstr, usersID)
+	rows, err := db.QueryContext(ctx, sqlstr, usersID)
+	if err != nil {
+		return nil, logerror(err)
+	}
+	defer rows.Close()
+	// process
+	var res []*Tag
+	for rows.Next() {
+		t := Tag{
+			_exists: true,
+		}
+		// scan
+		if err := rows.Scan(&t.ID, &t.Name, &t.UsersID); err != nil {
+			return nil, logerror(err)
+		}
+		res = append(res, &t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, logerror(err)
+	}
+	return res, nil
+}
+
 // User returns the User associated with the Tag's (UsersID).
 //
 // Generated from foreign key 'tags_users_id_fkey'.

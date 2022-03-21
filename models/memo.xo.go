@@ -151,6 +151,40 @@ func MemoByID(ctx context.Context, db DB, id int) (*Memo, error) {
 	return &m, nil
 }
 
+// MemosByUsersID retrieves a row from 'public.memos' as a Memo.
+//
+// Generated from index 'memos_users_id_idx'.
+func MemosByUsersID(ctx context.Context, db DB, usersID sql.NullInt64) ([]*Memo, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`id, subject, content, users_id, created_at, updated_at, notified_cnt, is_exposed, exposed_at ` +
+		`FROM public.memos ` +
+		`WHERE users_id = $1`
+	// run
+	logf(sqlstr, usersID)
+	rows, err := db.QueryContext(ctx, sqlstr, usersID)
+	if err != nil {
+		return nil, logerror(err)
+	}
+	defer rows.Close()
+	// process
+	var res []*Memo
+	for rows.Next() {
+		m := Memo{
+			_exists: true,
+		}
+		// scan
+		if err := rows.Scan(&m.ID, &m.Subject, &m.Content, &m.UsersID, &m.CreatedAt, &m.UpdatedAt, &m.NotifiedCnt, &m.IsExposed, &m.ExposedAt); err != nil {
+			return nil, logerror(err)
+		}
+		res = append(res, &m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, logerror(err)
+	}
+	return res, nil
+}
+
 // User returns the User associated with the Memo's (UsersID).
 //
 // Generated from foreign key 'memos_users_id_fkey'.
