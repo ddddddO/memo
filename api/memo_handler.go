@@ -255,15 +255,16 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteMemo := adapter.Memo{
-		ID: mid,
-	}
-	if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
+	// deleteMemo := adapter.Memo{
+	// 	ID: mid,
+	// }
+	// if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
+	// 	errResponse(w, http.StatusInternalServerError, "failed", err)
+	// 	return
+	// }
 
-	if err := h.repo.Delete(deleteMemo); err != nil {
+	if err := h.repo.Delete(mid); err != nil {
+		log.Println("failed to delete memo", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

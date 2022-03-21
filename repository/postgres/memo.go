@@ -7,9 +7,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/adapter"
 	"github.com/ddddddO/memo/models"
 )
 
@@ -162,41 +160,55 @@ func (pg *memoRepository) Create(memo *models.Memo, tagIDs []int) error {
 	return tx.Commit()
 }
 
-func (pg *memoRepository) Delete(memo adapter.Memo) error {
-	const deleteMemoQuery = `
-	DELETE FROM memos WHERE users_id = $1 AND id = $2;
-	`
-
+func (pg *memoRepository) Delete(memoID int) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	result, err := tx.Exec(deleteMemoQuery,
-		memo.UserID, memo.ID,
-	)
+	ctx := context.Background()
+	memo, err := models.MemoByID(ctx, tx, memoID)
 	if err != nil {
 		return err
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n != 1 {
-		return errors.New("unexpected")
 	}
 
+	// FIXME: using sq
 	const deleteMemoTagQuery = `
 	DELETE FROM memo_tag WHERE memos_id = $1
 	`
-
 	_, err = tx.Exec(deleteMemoTagQuery, memo.ID)
 	if err != nil {
 		return err
 	}
 
-	tx.Commit()
+	if err := memo.Delete(ctx, tx); err != nil {
+		return err
+	}
 
-	return nil
+	// const deleteMemoQuery = `
+	// DELETE FROM memos WHERE users_id = $1 AND id = $2;
+	// `
+
+	// tx, err := pg.db.Begin()
+	// if err != nil {
+	// 	return err
+	// }
+	// defer tx.Rollback()
+
+	// result, err := tx.Exec(deleteMemoQuery,
+	// 	memo.UserID, memo.ID,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	// n, err := result.RowsAffected()
+	// if err != nil {
+	// 	return err
+	// }
+	// if n != 1 {
+	// 	return errors.New("unexpected")
+	// }
+
+	return tx.Commit()
 }
