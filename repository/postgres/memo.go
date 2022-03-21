@@ -186,29 +186,5 @@ func (pg *memoRepository) Delete(memoID int) error {
 		return err
 	}
 
-	// const deleteMemoQuery = `
-	// DELETE FROM memos WHERE users_id = $1 AND id = $2;
-	// `
-
-	// tx, err := pg.db.Begin()
-	// if err != nil {
-	// 	return err
-	// }
-	// defer tx.Rollback()
-
-	// result, err := tx.Exec(deleteMemoQuery,
-	// 	memo.UserID, memo.ID,
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-	// n, err := result.RowsAffected()
-	// if err != nil {
-	// 	return err
-	// }
-	// if n != 1 {
-	// 	return errors.New("unexpected")
-	// }
-
 	return tx.Commit()
 }
