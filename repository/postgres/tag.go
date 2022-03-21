@@ -67,24 +67,36 @@ func (pg *tagRepository) Fetch(tagID int) (*models.Tag, error) {
 	return tag, nil
 }
 
-func (pg *tagRepository) Update(tag adapter.Tag) error {
-	const updateTagQuery = `
-	UPDATE tags SET name = $1 WHERE id = $2
-	`
-	result, err := pg.db.Exec(updateTagQuery,
-		tag.Name, tag.ID,
-	)
+func (pg *tagRepository) Update(tag *models.Tag) error {
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	n, err := result.RowsAffected()
-	if err != nil {
+	defer tx.Rollback()
+
+	ctx := context.Background()
+	if err := tag.Update(ctx, tx); err != nil {
 		return err
 	}
-	if n != 1 {
-		return errors.New("unexpected")
-	}
-	return nil
+	return tx.Commit()
+
+	// const updateTagQuery = `
+	// UPDATE tags SET name = $1 WHERE id = $2
+	// `
+	// result, err := pg.db.Exec(updateTagQuery,
+	// 	tag.Name, tag.ID,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	// n, err := result.RowsAffected()
+	// if err != nil {
+	// 	return err
+	// }
+	// if n != 1 {
+	// 	return errors.New("unexpected")
+	// }
+	// return nil
 }
 
 func (pg *tagRepository) Delete(tag adapter.Tag) error {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -109,7 +110,15 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(updatedTag); err != nil {
+	tag, err := h.repo.Fetch(tid)
+	if err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
+	tag.Name = updatedTag.Name
+
+	if err := h.repo.Update(tag); err != nil {
+		log.Println("failed to update tag", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
