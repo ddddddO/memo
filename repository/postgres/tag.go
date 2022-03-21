@@ -7,7 +7,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/adapter"
 	"github.com/ddddddO/memo/models"
 )
 
@@ -35,13 +34,13 @@ func (pg *tagRepository) FetchList(userID int) ([]*models.Tag, error) {
 	return tags, nil
 }
 
-// FIXME: using sq & models.Tag
-func (pg *tagRepository) FetchListByMemoID(memoID int) ([]adapter.Tag, error) {
+func (pg *tagRepository) FetchListByMemoID(memoID int) ([]*models.Tag, error) {
 	var (
 		rows *sql.Rows
-		tags []adapter.Tag
+		tags []*models.Tag
 		err  error
 	)
+	// FIXME: using sq
 	query := "SELECT id, name FROM tags WHERE id IN (SELECT tags_id FROM memo_tag WHERE memos_id=$1) ORDER BY id"
 	rows, err = pg.db.Query(query, memoID)
 	if err != nil {
@@ -49,11 +48,11 @@ func (pg *tagRepository) FetchListByMemoID(memoID int) ([]adapter.Tag, error) {
 	}
 
 	for rows.Next() {
-		var tag adapter.Tag
+		var tag models.Tag
 		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
 			return nil, err
 		}
-		tags = append(tags, tag)
+		tags = append(tags, &tag)
 	}
 	return tags, nil
 }

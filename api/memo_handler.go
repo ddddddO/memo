@@ -59,13 +59,22 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		ats := make([]adapter.Tag, len(tags))
+		for i, t := range tags {
+			at := adapter.Tag{
+				ID:   t.ID,
+				Name: t.Name,
+			}
+			ats[i] = at
+		}
+
 		am := adapter.Memo{
 			ID:          mm.ID,
 			Subject:     mm.Subject,
 			Content:     mm.Content,
 			IsExposed:   mm.IsExposed.Bool,
 			UserID:      int(mm.UsersID.Int64),
-			Tags:        tags,
+			Tags:        ats,
 			NotifiedCnt: int(mm.NotifiedCnt.Int64),
 			CreatedAt:   &mm.CreatedAt.Time,
 			UpdatedAt:   &mm.UpdatedAt.Time,
@@ -146,13 +155,23 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+
+	ats := make([]adapter.Tag, len(tags))
+	for i, t := range tags {
+		at := adapter.Tag{
+			ID:   t.ID,
+			Name: t.Name,
+		}
+		ats[i] = at
+	}
+
 	am := adapter.Memo{
 		ID:          memo.ID,
 		Subject:     memo.Subject,
 		Content:     memo.Content,
 		IsExposed:   memo.IsExposed.Bool,
 		UserID:      int(memo.UsersID.Int64),
-		Tags:        tags,
+		Tags:        ats,
 		NotifiedCnt: int(memo.NotifiedCnt.Int64),
 		CreatedAt:   &memo.CreatedAt.Time,
 		UpdatedAt:   &memo.UpdatedAt.Time,
