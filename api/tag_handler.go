@@ -42,10 +42,18 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	atags := make([]adapter.Tag, len(tags))
+	for i, tag := range tags {
+		atags[i] = adapter.Tag{
+			ID:   tag.ID,
+			Name: tag.Name,
+		}
+	}
+
 	res := struct {
 		Tags []adapter.Tag `json:"tags"`
 	}{
-		Tags: tags,
+		Tags: atags,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)

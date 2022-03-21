@@ -1,12 +1,14 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
 	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 )
 
 type tagRepository struct {
@@ -19,25 +21,17 @@ func NewTagRepository(db *sql.DB) *tagRepository {
 	}
 }
 
-func (pg *tagRepository) FetchList(userID int) ([]adapter.Tag, error) {
-	var (
-		rows *sql.Rows
-		tags []adapter.Tag
-		err  error
-	)
-	query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
-	rows, err = pg.db.Query(query, userID)
+func (pg *tagRepository) FetchList(userID int) ([]*models.Tag, error) {
+	ctx := context.Background()
+	usersID := sql.NullInt64{
+		Int64: int64(userID),
+		Valid: true,
+	}
+	tags, err := models.TagsByUsersID(ctx, pg.db, usersID)
 	if err != nil {
 		return nil, err
 	}
 
-	for rows.Next() {
-		var tag adapter.Tag
-		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
-			return nil, err
-		}
-		tags = append(tags, tag)
-	}
 	return tags, nil
 }
 
