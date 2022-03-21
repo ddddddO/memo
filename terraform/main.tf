@@ -2,18 +2,11 @@ module "cloud_sql" {
   source = "./modules/cloud_sql"
 }
 
-# NOTE: 以下３つでmoduleかなあ
-resource "random_password" "db_password" {
-  length  = 16
-  special = false
-}
-resource "google_sql_user" "user" {
-  name     = "appuser"
-  instance = module.cloud_sql.instance_name
-  password = "${random_password.db_password.result}"
-}
-output "db_appuser_passwd" {
-  value = "${random_password.db_password.result}"
+module "cloud_sql_user_app" {
+  source = "./modules/cloud_sql_user"
+
+  db_user_name            = "appuser"
+  cloud_sql_instance_name = module.cloud_sql.instance_name
 }
 
 # bucket
@@ -76,7 +69,7 @@ resource "google_cloudfunctions_function" "function" {
   }
 
   environment_variables = {
-    DBDSN = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
+    DBDSN = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${module.cloud_sql_user_app.db_user_name} password=${module.cloud_sql_user_app.db_user_passwd} sslmode=disable"
   }
 }
 
@@ -147,7 +140,7 @@ resource "google_cloud_run_service" "api" {
         }
         env {
           name  = "DBDSN"
-          value = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${google_sql_user.user.name} password=${random_password.db_password.result} sslmode=disable"
+          value = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${module.cloud_sql_user_app.db_user_name} password=${module.cloud_sql_user_app.db_user_passwd} sslmode=disable"
         }
       }
     }
