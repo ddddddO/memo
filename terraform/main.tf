@@ -9,16 +9,10 @@ module "cloud_sql_user_app" {
   cloud_sql_instance_name = module.cloud_sql.instance_name
 }
 
-# bucket
-resource "google_storage_bucket" "bucket" {
-  name = "tag-mng"
-}
-
 # Cloud PubSub topic for notified-cnt-incrementer
 resource "google_pubsub_topic" "topic" {
   name = "notified-cnt-incrementer-topic"
 }
-
 # Cloud Scheduler for notified-cnt-incrementer
 resource "google_cloud_scheduler_job" "job" {
   name        = "notified-cnt-incrementer-scheduler-job"
@@ -32,98 +26,23 @@ resource "google_cloud_scheduler_job" "job" {
     data       = base64encode("notified-cnt-incrementer-publish!!")
   }
 }
-
 # Cloud Functions for notified-cnt-incrementer
-## Archive multiple files.
-data "archive_file" "notified-cnt-incrementer" {
-  type = "zip"
-  # source_dir配下に、goのファイル持ってこないと無理っぽい
+module "cloud_functions_notified_cnt_incrementer" {
+  source = "./modules/cloud_functions"
+
   source_dir  = "${path.module}/files/notified-cnt-incrementer"
   output_path = "${path.module}/files/notified-cnt-incrementer.zip"
+
+  db_user_name   = module.cloud_sql_user_app.db_user_name
+  db_user_passwd = module.cloud_sql_user_app.db_user_passwd
+  topic_id       = google_pubsub_topic.topic.id
 }
-
-resource "google_storage_bucket_object" "archive" {
-  name   = "notified-cnt-incrementer.zip"
-  bucket = google_storage_bucket.bucket.name
-  source = "${path.module}/files/notified-cnt-incrementer.zip"
-}
-
-resource "google_cloudfunctions_function" "function" {
-  name        = "notified-cnt-incrementer-function"
-  region      = "asia-northeast1"
-  description = ""
-  runtime     = "go116"
-  depends_on  = [google_storage_bucket_object.archive]
-
-  available_memory_mb   = 128
-  source_archive_bucket = google_storage_bucket.bucket.name
-  source_archive_object = google_storage_bucket_object.archive.name
-  event_trigger {
-    event_type = "google.pubsub.topic.publish"
-    resource   = google_pubsub_topic.topic.id
-  }
-  timeout     = 300
-  entry_point = "Run"
-  labels = {
-    my-label = "notified-label"
-  }
-
-  environment_variables = {
-    DBDSN = "host=/cloudsql/tag-mng-243823:asia-northeast1:tag-mng-cloud dbname=tag-mng user=${module.cloud_sql_user_app.db_user_name} password=${module.cloud_sql_user_app.db_user_passwd} sslmode=disable"
-  }
-}
-
-/* terraform からGAEへvueをデプロイ出来なかった。なので、makeコマンドでGAEへデプロイする。
-# GAE for app
-## vueをGAEへデプロイする参考：https://cloudpack.media/45462
-data "archive_file" "app" {
-  type        = "zip"
-  source_dir  = "${path.module}/files/app/dist"
-  output_path = "${path.module}/files/app/dist.zip"
-}
-
-resource "google_storage_bucket_object" "app" {
-  name   = "dist.zip"
-  bucket = google_storage_bucket.bucket.name
-  source = "${path.module}/files/app/dist.zip"
-}
-
-resource "google_app_engine_standard_app_version" "app" {
-  version_id = "v1"
-  service    = "default"
-  runtime    = "php55"
-  #threadsafe = true
-
-  deployment {
-    zip {
-      source_url = "https://storage.googleapis.com/${google_storage_bucket.bucket.name}/${google_storage_bucket_object.app.name}"
-    }
-  }
-
-  // 書き方参考：https://github.com/terraform-providers/terraform-provider-google/issues/5716#issuecomment-590886082
-  handlers {
-    url_regex = "/"
-    static_files {
-      path              = "/index.html"
-      upload_path_regex = "/index.html"
-    }
-  }
-  handlers {
-    url_regex = "/(.*)"
-    static_files {
-      path              = "/"
-      upload_path_regex = "/(.*)"
-    }
-  }
-}
-*/
 
 # Cloud Run for api
 resource "random_string" "session_key" {
   length  = 32
   special = false
 }
-
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。で、cloud runをdestroy -> applyする
 resource "google_cloud_run_service" "api" {
   provider = google-beta
@@ -160,7 +79,6 @@ resource "google_cloud_run_service" "api" {
 
   autogenerate_revision_name = true
 }
-
 ## FIXME: 以下、一時的に
 data "google_iam_policy" "noauth" {
   binding {
@@ -170,7 +88,6 @@ data "google_iam_policy" "noauth" {
     ]
   }
 }
-
 resource "google_cloud_run_service_iam_policy" "noauth" {
   provider = google-beta
   location = google_cloud_run_service.api.location
