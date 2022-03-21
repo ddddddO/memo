@@ -78,8 +78,7 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, erro
 	return memos, nil
 }
 
-func (pg *memoRepository) Fetch(userID int, memoID int) (*models.Memo, error) {
-	_ = userID // FIXME:
+func (pg *memoRepository) Fetch(memoID int) (*models.Memo, error) {
 	ctx := context.Background()
 	memo, err := models.MemoByID(ctx, pg.db, memoID)
 	if err != nil {
@@ -88,30 +87,17 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (*models.Memo, error) {
 	return memo, nil
 }
 
-func (pg *memoRepository) Update(memo adapter.Memo) error {
+// FIXME: memoRepositoryでmemo_tagの操作やめる
+func (pg *memoRepository) Update(memo *models.Memo, tagIDs []int) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	const updateMemoQuery = `
-	UPDATE memos SET subject=$1, content=$2, is_exposed=$3
-	 WHERE id=$4 AND users_id=$5
-	`
-
-	result, err := tx.Exec(updateMemoQuery,
-		memo.Subject, memo.Content, memo.IsExposed, memo.ID, memo.UserID,
-	)
-	if err != nil {
+	ctx := context.Background()
+	if err := memo.Update(ctx, tx); err != nil {
 		return err
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n != 1 {
-		return errors.New("unexpected")
 	}
 
 	const deleteMemoTagQuery = `
@@ -129,8 +115,8 @@ func (pg *memoRepository) Update(memo adapter.Memo) error {
 	`
 
 	var values string
-	for _, tag := range memo.Tags {
-		values += fmt.Sprintf("(%v, %d),", memo.ID, tag.ID)
+	for _, tid := range tagIDs {
+		values += fmt.Sprintf("(%v, %d),", memo.ID, tid)
 	}
 	insertMemoTagQuery = fmt.Sprintf(insertMemoTagQuery, values[:len(values)-1])
 

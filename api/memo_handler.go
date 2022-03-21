@@ -1,7 +1,7 @@
 package api
 
 import (
-	// "database/sql"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"sort"
@@ -128,13 +128,14 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+	_ = uid // FIXME: 必要？
 	mid, err := strconv.Atoi(memoID)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
-	memo, err := h.repo.Fetch(uid, mid)
+	memo, err := h.repo.Fetch(mid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -186,7 +187,25 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(updatedMemo); err != nil {
+	memo, err := h.repo.Fetch(mid)
+	if err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
+
+	memo.Subject = updatedMemo.Subject
+	memo.Content = updatedMemo.Content
+	memo.IsExposed = sql.NullBool{
+		Bool:  updatedMemo.IsExposed,
+		Valid: true,
+	}
+
+	tagIDs := make([]int, len(updatedMemo.Tags))
+	for i, tag := range updatedMemo.Tags {
+		tagIDs[i] = tag.ID
+	}
+
+	if err := h.repo.Update(memo, tagIDs); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
