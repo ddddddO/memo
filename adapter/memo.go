@@ -4,6 +4,9 @@ import (
 	"time"
 )
 
+// NOTE: adapterの役割りは、repositoryから取得したmodelsを、apiやbatchで使いやすくするために変換する用
+//       api/batch用にそれぞれadapterを用意した方がよさそう
+
 // Memo is ...
 type Memo struct {
 	ID          int        `json:"id"`

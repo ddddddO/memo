@@ -1,24 +1,29 @@
 package api
 
 import (
+	// "database/sql"
 	"encoding/json"
 	"net/http"
+	"sort"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 	"github.com/ddddddO/memo/repository"
 )
 
 type memoHandler struct {
-	repo repository.MemoRepository
+	repo    repository.MemoRepository
+	tagRepo repository.TagRepository
 }
 
-func NewMemoHandler(repo repository.MemoRepository) *memoHandler {
+func NewMemoHandler(repo repository.MemoRepository, tagRepo repository.TagRepository) *memoHandler {
 	return &memoHandler{
-		repo: repo,
+		repo:    repo,
+		tagRepo: tagRepo,
 	}
 }
 
@@ -45,15 +50,62 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+	ams := make([]adapter.Memo, len(memos))
+	for i, mm := range memos {
+		tags, err := h.tagRepo.FetchListByMemoID(int(mm.ID))
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+
+		am := adapter.Memo{
+			ID:          mm.ID,
+			Subject:     mm.Subject,
+			Content:     mm.Content,
+			IsExposed:   mm.IsExposed.Bool,
+			UserID:      int(mm.UsersID.Int64),
+			Tags:        tags,
+			NotifiedCnt: int(mm.NotifiedCnt.Int64),
+			CreatedAt:   &mm.CreatedAt.Time,
+			UpdatedAt:   &mm.UpdatedAt.Time,
+			ExposedAt:   &mm.ExposedAt.Time,
+		}
+		setColor(mm, &am)
+		ams[i] = am
+	}
+
+	// NOTE: NotifiedCntでメモを昇順にソート
+	sort.SliceStable(ams,
+		func(i, j int) bool {
+			return ams[i].NotifiedCnt < ams[j].NotifiedCnt
+		},
+	)
 
 	res := struct {
 		Memos []adapter.Memo `json:"memo_list"`
 	}{
-		Memos: memos,
+		Memos: ams,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
+	}
+}
+
+func setColor(mm *models.Memo, am *adapter.Memo) {
+	switch int(mm.NotifiedCnt.Int64) {
+	case 0:
+		am.RowVariant = "danger"
+	case 1:
+		am.RowVariant = "warning"
+	case 2:
+		am.RowVariant = "primary"
+	case 3:
+		am.RowVariant = "info"
+	case 4:
+		am.RowVariant = "secondary"
+	case 5:
+		am.RowVariant = "success"
 	}
 }
 

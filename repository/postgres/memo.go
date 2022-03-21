@@ -1,9 +1,9 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 )
 
 type memoRepository struct {
@@ -23,62 +24,80 @@ func NewMemoRepository(db *sql.DB) *memoRepository {
 	}
 }
 
-func (pg *memoRepository) FetchList(userID int, tagID int) ([]adapter.Memo, error) {
+func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, error) {
 	var (
-		rows  *sql.Rows
-		memos []adapter.Memo
+		memos []*models.Memo
 		err   error
+		ctx   = context.Background()
 	)
+
+	usersID := sql.NullInt64{
+		Int64: int64(userID),
+		Valid: true,
+	}
+	memos, err = models.MemosByUsersID(ctx, pg.db, usersID)
+	if err != nil {
+		return nil, err
+	}
 	// NOTE: tagIdが設定されていない場合
-	if tagID == -1 {
-		query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
-		rows, err = pg.db.Query(query, userID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	// if tagID == -1 {
+	// 	query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
+	// 	rows, err = pg.db.Query(query, userID)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	ms := []*models.Memo{}
+	if tagID != -1 {
 		// NOTE: tagIdが設定されている場合
-		query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
-		rows, err = pg.db.Query(query, userID, tagID)
-		if err != nil {
-			return nil, err
+		// query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
+		// rows, err = pg.db.Query(query, userID, tagID)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		for _, memo := range memos {
+			memoTag := &models.MemoTag{
+				MemosID: sql.NullInt64{
+					Int64: int64(memo.ID),
+					Valid: true,
+				},
+				TagsID: sql.NullInt64{
+					Int64: int64(tagID),
+					Valid: true,
+				},
+			}
+
+			m, err := memoTag.Memo(ctx, pg.db)
+			if err != nil {
+				return nil, err
+			}
+			if m == nil {
+				continue
+			}
+
+			t, err := memoTag.Tag(ctx, pg.db)
+			if err != nil {
+				return nil, err
+			}
+			if t == nil {
+				continue
+			}
+			ms = append(ms, memo)
 		}
+	}
+	if len(ms) != 0 {
+		memos = ms
 	}
 
-	for rows.Next() {
-		var memo adapter.Memo
-		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
-			return nil, err
-		}
-		setColor(&memo)
-		memos = append(memos, memo)
-	}
-	// NOTE: NotifiedCntでメモを昇順にソート
-	sort.SliceStable(memos,
-		func(i, j int) bool {
-			return memos[i].NotifiedCnt < memos[j].NotifiedCnt
-		},
-	)
+	// for rows.Next() {
+	// 	var memo *models.Memo
+	// 	if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	setColor(&memo)
+	// 	memos = append(memos, memo)
+	// }
 
 	return memos, nil
-}
-
-// TODO: repositoryはデータの永続化・復元が責務だから、この変換はここではない。
-func setColor(m *adapter.Memo) {
-	switch m.NotifiedCnt {
-	case 0:
-		m.RowVariant = "danger"
-	case 1:
-		m.RowVariant = "warning"
-	case 2:
-		m.RowVariant = "primary"
-	case 3:
-		m.RowVariant = "info"
-	case 4:
-		m.RowVariant = "secondary"
-	case 5:
-		m.RowVariant = "success"
-	}
 }
 
 func (pg *memoRepository) Fetch(userID int, memoID int) (adapter.Memo, error) {

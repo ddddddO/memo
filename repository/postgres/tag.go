@@ -41,6 +41,29 @@ func (pg *tagRepository) FetchList(userID int) ([]adapter.Tag, error) {
 	return tags, nil
 }
 
+// FIXME:
+func (pg *tagRepository) FetchListByMemoID(memoID int) ([]adapter.Tag, error) {
+	var (
+		rows *sql.Rows
+		tags []adapter.Tag
+		err  error
+	)
+	query := "SELECT id, name FROM tags WHERE id IN (SELECT tags_id FROM memo_tag WHERE memos_id=$1) ORDER BY id"
+	rows, err = pg.db.Query(query, memoID)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var tag adapter.Tag
+		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
+			return nil, err
+		}
+		tags = append(tags, tag)
+	}
+	return tags, nil
+}
+
 func (pg *tagRepository) Fetch(tagID int) (adapter.Tag, error) {
 	var tag adapter.Tag
 	query := "SELECT id, name FROM tags WHERE id = $1"
