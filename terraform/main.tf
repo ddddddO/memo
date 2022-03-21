@@ -59,7 +59,7 @@ resource "google_cloudfunctions_function" "function" {
   name        = "notified-cnt-incrementer-function"
   region      = "asia-northeast1"
   description = ""
-  runtime     = "go113"
+  runtime     = "go116"
   depends_on  = [google_storage_bucket_object.archive]
 
   available_memory_mb   = 128
@@ -155,7 +155,7 @@ resource "google_cloud_run_service" "api" {
       annotations = {
         "autoscaling.knative.dev/maxScale" = "1000"
         # NOTE: Cloud Run -> Cloud SQLへ接続するために必要
-        "run.googleapis.com/cloudsql-instances" = "tag-mng-243823:asia-northeast1:${module.cloud_sql.instance_name}}"
+        "run.googleapis.com/cloudsql-instances" = "tag-mng-243823:asia-northeast1:${module.cloud_sql.instance_name}"
       }
     }
   }
