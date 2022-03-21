@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strconv"
-	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -39,21 +37,10 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, erro
 	if err != nil {
 		return nil, err
 	}
-	// NOTE: tagIdが設定されていない場合
-	// if tagID == -1 {
-	// 	query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 ORDER BY id"
-	// 	rows, err = pg.db.Query(query, userID)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
+
 	ms := []*models.Memo{}
+	// NOTE: tagIdが設定されている場合
 	if tagID != -1 {
-		// NOTE: tagIdが設定されている場合
-		// query := "SELECT id, subject, notified_cnt FROM memos WHERE users_id=$1 AND id IN (SELECT memos_id FROM memo_tag WHERE tags_id=$2) ORDER BY id"
-		// rows, err = pg.db.Query(query, userID, tagID)
-		// if err != nil {
-		// 	return nil, err
-		// }
 		for _, memo := range memos {
 			memoTag := &models.MemoTag{
 				MemosID: sql.NullInt64{
@@ -88,107 +75,17 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, erro
 		memos = ms
 	}
 
-	// for rows.Next() {
-	// 	var memo *models.Memo
-	// 	if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	setColor(&memo)
-	// 	memos = append(memos, memo)
-	// }
-
 	return memos, nil
 }
 
-func (pg *memoRepository) Fetch(userID int, memoID int) (adapter.Memo, error) {
-	// TODO: 見直す
-	const memoDetailQuery = `
-	SELECT
-	    m.id AS id,
-	    m.subject AS subject,
-		m.content AS content,
-		m.is_exposed AS is_exposed,
-		(SELECT jsonb_agg(DISTINCT(t.id))
-		  FROM memos m
-		  JOIN memo_tag mt
-		  ON m.id = mt.memos_id
-		  JOIN tags t
-		  ON mt.tags_id = t.id
-	      WHERE m.id = $1 AND m.users_id = $2
-		) AS tag_ids,
-		(SELECT jsonb_agg(DISTINCT(t.name))
-		  FROM memos m
-		  JOIN memo_tag mt
-		  ON m.id = mt.memos_id
-		  JOIN tags t
-		  ON mt.tags_id = t.id
-	      WHERE m.id = $1 AND m.users_id = $2
-		) AS tag_names
-		   FROM memos m
-		   JOIN memo_tag mt
-		   ON m.id = mt.memos_id
-		   JOIN tags t
-		   ON mt.tags_id = t.id
-		WHERE m.id = $1 AND m.users_id = $2
-		GROUP BY m.id
-	`
-
-	var (
-		memo     adapter.Memo
-		tagIDs   string
-		tagNames string
-	)
-	if err := pg.db.QueryRow(memoDetailQuery, memoID, userID).Scan(
-		&memo.ID, &memo.Subject, &memo.Content, &memo.IsExposed,
-		&tagIDs, &tagNames,
-	); err != nil {
-		return adapter.Memo{}, err
+func (pg *memoRepository) Fetch(userID int, memoID int) (*models.Memo, error) {
+	_ = userID // FIXME:
+	ctx := context.Background()
+	memo, err := models.MemoByID(ctx, pg.db, memoID)
+	if err != nil {
+		return nil, err
 	}
-
-	memo.Tags = toTags(tagIDs, tagNames)
-
 	return memo, nil
-}
-
-// TODO: 以下３つの変換用関数もここではない
-func toTags(ids, names string) []adapter.Tag {
-	convertedIDs := toInts(ids)
-	convertedNames := toStrings(names)
-
-	var tags []adapter.Tag
-	for i := range convertedIDs {
-		tag := adapter.Tag{}
-		tag.ID = convertedIDs[i]
-		tag.Name = convertedNames[i]
-
-		tags = append(tags, tag)
-	}
-	return tags
-}
-
-func toInts(s string) []int {
-	if len(s) <= 2 {
-		return []int{}
-	}
-
-	ss := strings.Split(s[1:len(s)-1], ",")
-	var nums []int
-	for _, strNum := range ss {
-		strNum = strings.TrimSpace(strNum)
-		num, err := strconv.Atoi(strNum)
-		if err != nil {
-			panic(err)
-		}
-		nums = append(nums, num)
-	}
-	return nums
-}
-
-func toStrings(s string) []string {
-	if len(s) <= 2 {
-		return []string{}
-	}
-	return strings.Split(s[1:len(s)-1], ",")
 }
 
 func (pg *memoRepository) Update(memo adapter.Memo) error {

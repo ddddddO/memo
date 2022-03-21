@@ -139,11 +139,28 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+	tags, err := h.tagRepo.FetchListByMemoID(mid)
+	if err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
+	am := adapter.Memo{
+		ID:          memo.ID,
+		Subject:     memo.Subject,
+		Content:     memo.Content,
+		IsExposed:   memo.IsExposed.Bool,
+		UserID:      int(memo.UsersID.Int64),
+		Tags:        tags,
+		NotifiedCnt: int(memo.NotifiedCnt.Int64),
+		CreatedAt:   &memo.CreatedAt.Time,
+		UpdatedAt:   &memo.UpdatedAt.Time,
+		ExposedAt:   &memo.ExposedAt.Time,
+	}
 
 	//ref: https://qiita.com/shohei-ojs/items/311ef080cd5cff1e0e16
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
-	if err := encoder.Encode(memo); err != nil {
+	if err := encoder.Encode(am); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
