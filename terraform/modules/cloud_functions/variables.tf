@@ -1,18 +1,18 @@
 variable "source_dir" {
-    type = string
+  type = string
 }
 variable "output_path" {
-    type = string
+  type = string
 }
 
 variable "db_user_name" {
-    type = string
+  type = string
 }
 
 variable "db_user_passwd" {
-    type = string
+  type = string
 }
 
 variable "topic_id" {
-    type = string
+  type = string
 }
