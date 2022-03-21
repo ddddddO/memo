@@ -35,7 +35,7 @@ func (pg *tagRepository) FetchList(userID int) ([]*models.Tag, error) {
 	return tags, nil
 }
 
-// FIXME:
+// FIXME: using sq & models.Tag
 func (pg *tagRepository) FetchListByMemoID(memoID int) ([]adapter.Tag, error) {
 	var (
 		rows *sql.Rows
@@ -127,22 +127,5 @@ func (pg *tagRepository) Create(tag *models.Tag) error {
 	if err := query.QueryRow().Scan(&tag.ID); err != nil {
 		return err
 	}
-
-	// const createTagQuery = `
-	// INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
-	// `
-	// result, err := pg.db.Exec(createTagQuery,
-	// 	tag.Name, tag.UserID,
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-	// n, err := result.RowsAffected()
-	// if err != nil {
-	// 	return err
-	// }
-	// if n != 1 {
-	// 	return errors.New("unexpected")
-	// }
 	return tx.Commit()
 }
