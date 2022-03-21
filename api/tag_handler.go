@@ -79,7 +79,11 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(tag); err != nil {
+	atag := adapter.Tag{
+		ID:   tag.ID,
+		Name: tag.Name,
+	}
+	if err := json.NewEncoder(w).Encode(atag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

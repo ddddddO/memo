@@ -58,11 +58,11 @@ func (pg *tagRepository) FetchListByMemoID(memoID int) ([]adapter.Tag, error) {
 	return tags, nil
 }
 
-func (pg *tagRepository) Fetch(tagID int) (adapter.Tag, error) {
-	var tag adapter.Tag
-	query := "SELECT id, name FROM tags WHERE id = $1"
-	if err := pg.db.QueryRow(query, tagID).Scan(&tag.ID, &tag.Name); err != nil {
-		return adapter.Tag{}, err
+func (pg *tagRepository) Fetch(tagID int) (*models.Tag, error) {
+	ctx := context.Background()
+	tag, err := models.TagByID(ctx, pg.db, tagID)
+	if err != nil {
+		return nil, err
 	}
 	return tag, nil
 }
