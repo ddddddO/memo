@@ -11,6 +11,6 @@ type TagRepository interface {
 	FetchListByMemoID(memoID int) ([]adapter.Tag, error)
 	Fetch(tagID int) (*models.Tag, error)
 	Update(tag *models.Tag) error
-	Delete(tag adapter.Tag) error
+	Delete(tagID int) error
 	Create(tag adapter.Tag) error
 }

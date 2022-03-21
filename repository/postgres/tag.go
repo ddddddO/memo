@@ -79,61 +79,35 @@ func (pg *tagRepository) Update(tag *models.Tag) error {
 		return err
 	}
 	return tx.Commit()
-
-	// const updateTagQuery = `
-	// UPDATE tags SET name = $1 WHERE id = $2
-	// `
-	// result, err := pg.db.Exec(updateTagQuery,
-	// 	tag.Name, tag.ID,
-	// )
-	// if err != nil {
-	// 	return err
-	// }
-	// n, err := result.RowsAffected()
-	// if err != nil {
-	// 	return err
-	// }
-	// if n != 1 {
-	// 	return errors.New("unexpected")
-	// }
-	// return nil
 }
 
-func (pg *tagRepository) Delete(tag adapter.Tag) error {
-	const deleteTagQuery = `
-	DELETE FROM tags WHERE id = $1
-	`
-
+func (pg *tagRepository) Delete(tagID int) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	result, err := tx.Exec(deleteTagQuery, tag.ID)
+	ctx := context.Background()
+	tag, err := models.TagByID(ctx, tx, tagID)
 	if err != nil {
 		return err
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n != 1 {
-		return errors.New("unexpected")
 	}
 
+	if err := tag.Delete(ctx, tx); err != nil {
+		return err
+	}
+
+	// FIXME: using sq
 	const deleteMemoTagQuery = `
 	DELETE FROM memo_tag WHERE tags_id = $1
 	`
-
 	_, err = tx.Exec(deleteMemoTagQuery, tag.ID)
 	if err != nil {
 		return err
 	}
 
-	tx.Commit()
-
-	return nil
+	return tx.Commit()
 }
 
 func (pg *tagRepository) Create(tag adapter.Tag) error {

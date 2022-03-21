@@ -138,10 +138,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteTag := adapter.Tag{
-		ID: tid,
-	}
-	if err := h.repo.Delete(deleteTag); err != nil {
+	if err := h.repo.Delete(tid); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
