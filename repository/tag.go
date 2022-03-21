@@ -12,5 +12,5 @@ type TagRepository interface {
 	Fetch(tagID int) (*models.Tag, error)
 	Update(tag *models.Tag) error
 	Delete(tagID int) error
-	Create(tag adapter.Tag) error
+	Create(tag *models.Tag) error
 }

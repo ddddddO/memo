@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 	"github.com/ddddddO/memo/repository"
 )
 
@@ -153,7 +155,14 @@ func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Create(createTag); err != nil {
+	tag := &models.Tag{
+		Name: createTag.Name,
+		UsersID: sql.NullInt64{
+			Int64: int64(createTag.UserID),
+			Valid: true,
+		},
+	}
+	if err := h.repo.Create(tag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

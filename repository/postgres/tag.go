@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 
 	"github.com/ddddddO/memo/adapter"
 	"github.com/ddddddO/memo/models"
@@ -110,22 +110,39 @@ func (pg *tagRepository) Delete(tagID int) error {
 	return tx.Commit()
 }
 
-func (pg *tagRepository) Create(tag adapter.Tag) error {
-	const createTagQuery = `
-	INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
-	`
-	result, err := pg.db.Exec(createTagQuery,
-		tag.Name, tag.UserID,
-	)
+func (pg *tagRepository) Create(tag *models.Tag) error {
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	n, err := result.RowsAffected()
-	if err != nil {
+	defer tx.Rollback()
+
+	query := sq.Insert("tags").
+		Columns("name", "users_id").
+		Values(tag.Name, tag.UsersID).
+		Suffix("RETURNING \"id\"").
+		RunWith(tx).
+		PlaceholderFormat(sq.Dollar)
+
+	if err := query.QueryRow().Scan(&tag.ID); err != nil {
 		return err
 	}
-	if n != 1 {
-		return errors.New("unexpected")
-	}
-	return nil
+
+	// const createTagQuery = `
+	// INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
+	// `
+	// result, err := pg.db.Exec(createTagQuery,
+	// 	tag.Name, tag.UserID,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	// n, err := result.RowsAffected()
+	// if err != nil {
+	// 	return err
+	// }
+	// if n != 1 {
+	// 	return errors.New("unexpected")
+	// }
+	return tx.Commit()
 }
