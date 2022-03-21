@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
@@ -130,28 +131,35 @@ func (pg *memoRepository) Update(memo *models.Memo, tagIDs []int) error {
 	return nil
 }
 
-func (pg *memoRepository) Create(memo adapter.Memo) error {
-	var createMemoQuery = `
-	WITH inserted AS (INSERT INTO memos(subject, content, users_id, is_exposed) VALUES($1, $2, $3, $4) RETURNING id)
-	INSERT INTO memo_tag(memos_id, tags_id) VALUES
-		((SELECT id FROM inserted), 1)
-		%s;
-	`
-
-	var values string
-	for _, tag := range memo.Tags {
-		values += fmt.Sprintf(",((SELECT id FROM inserted), %d)", tag.ID)
-	}
-	createMemoQuery = fmt.Sprintf(createMemoQuery, values)
-
-	_, err := pg.db.Exec(createMemoQuery,
-		memo.Subject, memo.Content, memo.UserID, memo.IsExposed,
-	)
+// FIXME: memo_tag handling
+func (pg *memoRepository) Create(memo *models.Memo, tagIDs []int) error {
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
-	return nil
+	query := sq.Insert("memos").
+		Columns("subject", "content", "users_id", "is_exposed").
+		Values(memo.Subject, memo.Content, memo.UsersID, memo.IsExposed).
+		Suffix("RETURNING \"id\"").
+		RunWith(tx).
+		PlaceholderFormat(sq.Dollar)
+
+	if err := query.QueryRow().Scan(&memo.ID); err != nil {
+		return err
+	}
+
+	// FIXME: using sq
+	insertMemoTagQuery := "INSERT INTO memo_tag(memos_id, tags_id) VALUES($1, $2)"
+	for _, tid := range tagIDs {
+		_, err := tx.Exec(insertMemoTagQuery, memo.ID, tid)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (pg *memoRepository) Delete(memo adapter.Memo) error {

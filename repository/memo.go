@@ -10,6 +10,6 @@ type MemoRepository interface {
 	FetchList(userID int, tagID int) ([]*models.Memo, error)
 	Fetch(memoID int) (*models.Memo, error)
 	Update(memo *models.Memo, tagIDs []int) error
-	Create(memo adapter.Memo) error
+	Create(memo *models.Memo, tagIDs []int) error
 	Delete(memo adapter.Memo) error
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"sort"
 	"strconv"
@@ -220,7 +221,21 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Create(createdMemo); err != nil {
+	memo := &models.Memo{
+		Subject: createdMemo.Subject,
+		Content: createdMemo.Content,
+		UsersID: sql.NullInt64{
+			Int64: int64(createdMemo.UserID),
+			Valid: true,
+		},
+	}
+	tagIDs := make([]int, len(createdMemo.Tags))
+	for i, tag := range createdMemo.Tags {
+		tagIDs[i] = tag.ID
+	}
+
+	if err := h.repo.Create(memo, tagIDs); err != nil {
+		log.Println("failed to create memo", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
