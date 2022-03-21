@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 	"github.com/ddddddO/memo/repository"
 )
 
@@ -43,7 +43,7 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := struct {
-		Tags []domain.Tag `json:"tags"`
+		Tags []adapter.Tag `json:"tags"`
 	}{
 		Tags: tags,
 	}
@@ -89,7 +89,7 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedTag := domain.Tag{
+	updatedTag := adapter.Tag{
 		ID: tid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
@@ -117,7 +117,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteTag := domain.Tag{
+	deleteTag := adapter.Tag{
 		ID: tid,
 	}
 	if err := h.repo.Delete(deleteTag); err != nil {
@@ -129,7 +129,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var createTag domain.Tag
+	var createTag adapter.Tag
 	if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return

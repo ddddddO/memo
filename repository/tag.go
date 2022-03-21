@@ -1,13 +1,13 @@
 package repository
 
 import (
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 )
 
 type TagRepository interface {
-	FetchList(userID int) ([]domain.Tag, error)
-	Fetch(tagID int) (domain.Tag, error)
-	Update(tag domain.Tag) error
-	Delete(tag domain.Tag) error
-	Create(tag domain.Tag) error
+	FetchList(userID int) ([]adapter.Tag, error)
+	Fetch(tagID int) (adapter.Tag, error)
+	Update(tag adapter.Tag) error
+	Delete(tag adapter.Tag) error
+	Create(tag adapter.Tag) error
 }

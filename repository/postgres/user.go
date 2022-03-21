@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 )
 
 type userRepository struct {
@@ -23,7 +23,7 @@ func NewUserRepository(db *sql.DB) *userRepository {
 	}
 }
 
-func (pg *userRepository) Fetch(name string, password string) (*domain.User, error) {
+func (pg *userRepository) Fetch(name string, password string) (*adapter.User, error) {
 	user, err := pg.fetchUser(name, genSecuredPassword(password, name))
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (pg *userRepository) Fetch(name string, password string) (*domain.User, err
 	return user, nil
 }
 
-func (pg *userRepository) fetchUser(name, password string) (*domain.User, error) {
+func (pg *userRepository) fetchUser(name, password string) (*adapter.User, error) {
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
 	rows, err := pg.db.Query(query, name, password)
 	if err != nil {
@@ -43,7 +43,7 @@ func (pg *userRepository) fetchUser(name, password string) (*domain.User, error)
 		return nil, errors.New("error !")
 	}
 
-	user := domain.User{}
+	user := adapter.User{}
 	if err := rows.Scan(&user.ID, &user.Name, &user.Password); err != nil {
 		log.Println(err)
 		return nil, err

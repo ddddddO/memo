@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 	"github.com/ddddddO/memo/repository"
 )
 
@@ -47,7 +47,7 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := struct {
-		Memos []domain.Memo `json:"memo_list"`
+		Memos []adapter.Memo `json:"memo_list"`
 	}{
 		Memos: memos,
 	}
@@ -109,7 +109,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedMemo := domain.Memo{
+	updatedMemo := adapter.Memo{
 		ID: mid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
@@ -126,7 +126,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var createdMemo domain.Memo
+	var createdMemo adapter.Memo
 	if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -152,7 +152,7 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteMemo := domain.Memo{
+	deleteMemo := adapter.Memo{
 		ID: mid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {

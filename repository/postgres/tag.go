@@ -6,7 +6,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 )
 
 type tagRepository struct {
@@ -19,10 +19,10 @@ func NewTagRepository(db *sql.DB) *tagRepository {
 	}
 }
 
-func (pg *tagRepository) FetchList(userID int) ([]domain.Tag, error) {
+func (pg *tagRepository) FetchList(userID int) ([]adapter.Tag, error) {
 	var (
 		rows *sql.Rows
-		tags []domain.Tag
+		tags []adapter.Tag
 		err  error
 	)
 	query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
@@ -32,7 +32,7 @@ func (pg *tagRepository) FetchList(userID int) ([]domain.Tag, error) {
 	}
 
 	for rows.Next() {
-		var tag domain.Tag
+		var tag adapter.Tag
 		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
 			return nil, err
 		}
@@ -41,16 +41,16 @@ func (pg *tagRepository) FetchList(userID int) ([]domain.Tag, error) {
 	return tags, nil
 }
 
-func (pg *tagRepository) Fetch(tagID int) (domain.Tag, error) {
-	var tag domain.Tag
+func (pg *tagRepository) Fetch(tagID int) (adapter.Tag, error) {
+	var tag adapter.Tag
 	query := "SELECT id, name FROM tags WHERE id = $1"
 	if err := pg.db.QueryRow(query, tagID).Scan(&tag.ID, &tag.Name); err != nil {
-		return domain.Tag{}, err
+		return adapter.Tag{}, err
 	}
 	return tag, nil
 }
 
-func (pg *tagRepository) Update(tag domain.Tag) error {
+func (pg *tagRepository) Update(tag adapter.Tag) error {
 	const updateTagQuery = `
 	UPDATE tags SET name = $1 WHERE id = $2
 	`
@@ -70,7 +70,7 @@ func (pg *tagRepository) Update(tag domain.Tag) error {
 	return nil
 }
 
-func (pg *tagRepository) Delete(tag domain.Tag) error {
+func (pg *tagRepository) Delete(tag adapter.Tag) error {
 	const deleteTagQuery = `
 	DELETE FROM tags WHERE id = $1
 	`
@@ -107,7 +107,7 @@ func (pg *tagRepository) Delete(tag domain.Tag) error {
 	return nil
 }
 
-func (pg *tagRepository) Create(tag domain.Tag) error {
+func (pg *tagRepository) Create(tag adapter.Tag) error {
 	const createTagQuery = `
 	INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
 	`

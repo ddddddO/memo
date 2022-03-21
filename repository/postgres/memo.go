@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 )
 
 type memoRepository struct {
@@ -23,10 +23,10 @@ func NewMemoRepository(db *sql.DB) *memoRepository {
 	}
 }
 
-func (pg *memoRepository) FetchList(userID int, tagID int) ([]domain.Memo, error) {
+func (pg *memoRepository) FetchList(userID int, tagID int) ([]adapter.Memo, error) {
 	var (
 		rows  *sql.Rows
-		memos []domain.Memo
+		memos []adapter.Memo
 		err   error
 	)
 	// NOTE: tagIdが設定されていない場合
@@ -46,7 +46,7 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]domain.Memo, error
 	}
 
 	for rows.Next() {
-		var memo domain.Memo
+		var memo adapter.Memo
 		if err := rows.Scan(&memo.ID, &memo.Subject, &memo.NotifiedCnt); err != nil {
 			return nil, err
 		}
@@ -64,7 +64,7 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]domain.Memo, error
 }
 
 // TODO: repositoryはデータの永続化・復元が責務だから、この変換はここではない。
-func setColor(m *domain.Memo) {
+func setColor(m *adapter.Memo) {
 	switch m.NotifiedCnt {
 	case 0:
 		m.RowVariant = "danger"
@@ -81,7 +81,7 @@ func setColor(m *domain.Memo) {
 	}
 }
 
-func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
+func (pg *memoRepository) Fetch(userID int, memoID int) (adapter.Memo, error) {
 	// TODO: 見直す
 	const memoDetailQuery = `
 	SELECT
@@ -115,7 +115,7 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 	`
 
 	var (
-		memo     domain.Memo
+		memo     adapter.Memo
 		tagIDs   string
 		tagNames string
 	)
@@ -123,7 +123,7 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 		&memo.ID, &memo.Subject, &memo.Content, &memo.IsExposed,
 		&tagIDs, &tagNames,
 	); err != nil {
-		return domain.Memo{}, err
+		return adapter.Memo{}, err
 	}
 
 	memo.Tags = toTags(tagIDs, tagNames)
@@ -132,13 +132,13 @@ func (pg *memoRepository) Fetch(userID int, memoID int) (domain.Memo, error) {
 }
 
 // TODO: 以下３つの変換用関数もここではない
-func toTags(ids, names string) []domain.Tag {
+func toTags(ids, names string) []adapter.Tag {
 	convertedIDs := toInts(ids)
 	convertedNames := toStrings(names)
 
-	var tags []domain.Tag
+	var tags []adapter.Tag
 	for i := range convertedIDs {
-		tag := domain.Tag{}
+		tag := adapter.Tag{}
 		tag.ID = convertedIDs[i]
 		tag.Name = convertedNames[i]
 
@@ -172,7 +172,7 @@ func toStrings(s string) []string {
 	return strings.Split(s[1:len(s)-1], ",")
 }
 
-func (pg *memoRepository) Update(memo domain.Memo) error {
+func (pg *memoRepository) Update(memo adapter.Memo) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
@@ -228,7 +228,7 @@ func (pg *memoRepository) Update(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *memoRepository) Create(memo domain.Memo) error {
+func (pg *memoRepository) Create(memo adapter.Memo) error {
 	var createMemoQuery = `
 	WITH inserted AS (INSERT INTO memos(subject, content, users_id, is_exposed) VALUES($1, $2, $3, $4) RETURNING id)
 	INSERT INTO memo_tag(memos_id, tags_id) VALUES
@@ -252,7 +252,7 @@ func (pg *memoRepository) Create(memo domain.Memo) error {
 	return nil
 }
 
-func (pg *memoRepository) Delete(memo domain.Memo) error {
+func (pg *memoRepository) Delete(memo adapter.Memo) error {
 	const deleteMemoQuery = `
 	DELETE FROM memos WHERE users_id = $1 AND id = $2;
 	`
