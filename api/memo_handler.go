@@ -17,14 +17,14 @@ import (
 )
 
 type memoHandler struct {
-	repo    repository.MemoRepository
-	tagRepo repository.TagRepository
+	memoRepo repository.MemoRepository
+	tagRepo  repository.TagRepository
 }
 
-func NewMemoHandler(repo repository.MemoRepository, tagRepo repository.TagRepository) *memoHandler {
+func NewMemoHandler(memoRepo repository.MemoRepository, tagRepo repository.TagRepository) *memoHandler {
 	return &memoHandler{
-		repo:    repo,
-		tagRepo: tagRepo,
+		memoRepo: memoRepo,
+		tagRepo:  tagRepo,
 	}
 }
 
@@ -49,13 +49,13 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	var memos []*models.Memo
 	if tid == -1 {
-		memos, err = h.repo.FetchList(uid)
+		memos, err = h.memoRepo.FetchList(uid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
 	} else {
-		memos, err = h.repo.FetchListByTagID(uid, tid)
+		memos, err = h.memoRepo.FetchListByTagID(uid, tid)
 		if err != nil {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
@@ -156,7 +156,7 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, err := h.repo.Fetch(mid)
+	memo, err := h.memoRepo.Fetch(mid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -218,7 +218,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memo, err := h.repo.Fetch(mid)
+	memo, err := h.memoRepo.Fetch(mid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -236,7 +236,7 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		tagIDs[i] = tag.ID
 	}
 
-	if err := h.repo.Update(memo, tagIDs); err != nil {
+	if err := h.memoRepo.Update(memo, tagIDs); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -264,7 +264,7 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		tagIDs[i] = tag.ID
 	}
 
-	if err := h.repo.Create(memo, tagIDs); err != nil {
+	if err := h.memoRepo.Create(memo, tagIDs); err != nil {
 		log.Println("failed to create memo", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -293,7 +293,7 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	if err := h.repo.Delete(mid); err != nil {
+	if err := h.memoRepo.Delete(mid); err != nil {
 		log.Println("failed to delete memo", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return

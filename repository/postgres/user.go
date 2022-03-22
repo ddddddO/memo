@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 )
 
 type userRepository struct {
@@ -23,7 +23,7 @@ func NewUserRepository(db *sql.DB) *userRepository {
 	}
 }
 
-func (pg *userRepository) Fetch(name string, password string) (*adapter.User, error) {
+func (pg *userRepository) Fetch(name string, password string) (*models.User, error) {
 	user, err := pg.fetchUser(name, genSecuredPassword(password, name))
 	if err != nil {
 		return nil, err
@@ -31,20 +31,22 @@ func (pg *userRepository) Fetch(name string, password string) (*adapter.User, er
 	return user, nil
 }
 
-func (pg *userRepository) fetchUser(name, password string) (*adapter.User, error) {
+// FIXME: users.nameにindex張ってxo実行。modelsからnameで取得するようにする
+func (pg *userRepository) fetchUser(name, password string) (*models.User, error) {
 	const query = "SELECT id, name, passwd FROM users WHERE name=$1 AND passwd=$2"
 	rows, err := pg.db.Query(query, name, password)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	// TODO: ユーザー登録をしてもらう or 正しいname/passwordを指定してもらう
 	if !rows.Next() {
 		return nil, errors.New("error !")
 	}
 
-	user := adapter.User{}
-	if err := rows.Scan(&user.ID, &user.Name, &user.Password); err != nil {
+	user := models.User{}
+	if err := rows.Scan(&user.ID, &user.Name, &user.Passwd); err != nil {
 		log.Println(err)
 		return nil, err
 	}

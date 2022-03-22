@@ -1,10 +1,9 @@
 package repository
 
 import (
-	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 )
 
-// TODO: adapter -> modelsに置き換える
 type UserRepository interface {
-	Fetch(name string, password string) (*adapter.User, error)
+	Fetch(name string, password string) (*models.User, error)
 }
