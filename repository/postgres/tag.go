@@ -1,12 +1,13 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 
+	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
-	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/models"
 )
 
 type tagRepository struct {
@@ -19,110 +20,111 @@ func NewTagRepository(db *sql.DB) *tagRepository {
 	}
 }
 
-func (pg *tagRepository) FetchList(userID int) ([]domain.Tag, error) {
+func (pg *tagRepository) FetchList(userID int) ([]*models.Tag, error) {
+	ctx := context.Background()
+	usersID := sql.NullInt64{
+		Int64: int64(userID),
+		Valid: true,
+	}
+	tags, err := models.TagsByUsersID(ctx, pg.db, usersID)
+	if err != nil {
+		return nil, err
+	}
+
+	return tags, nil
+}
+
+func (pg *tagRepository) FetchListByMemoID(memoID int) ([]*models.Tag, error) {
 	var (
 		rows *sql.Rows
-		tags []domain.Tag
+		tags []*models.Tag
 		err  error
 	)
-	query := "SELECT id, name FROM tags WHERE users_id = $1 ORDER BY id"
-	rows, err = pg.db.Query(query, userID)
+	// FIXME: using sq
+	query := "SELECT id, name FROM tags WHERE id IN (SELECT tags_id FROM memo_tag WHERE memos_id=$1) ORDER BY id"
+	rows, err = pg.db.Query(query, memoID)
 	if err != nil {
 		return nil, err
 	}
 
 	for rows.Next() {
-		var tag domain.Tag
+		var tag models.Tag
 		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
 			return nil, err
 		}
-		tags = append(tags, tag)
+		tags = append(tags, &tag)
 	}
 	return tags, nil
 }
 
-func (pg *tagRepository) Fetch(tagID int) (domain.Tag, error) {
-	var tag domain.Tag
-	query := "SELECT id, name FROM tags WHERE id = $1"
-	if err := pg.db.QueryRow(query, tagID).Scan(&tag.ID, &tag.Name); err != nil {
-		return domain.Tag{}, err
+func (pg *tagRepository) Fetch(tagID int) (*models.Tag, error) {
+	ctx := context.Background()
+	tag, err := models.TagByID(ctx, pg.db, tagID)
+	if err != nil {
+		return nil, err
 	}
 	return tag, nil
 }
 
-func (pg *tagRepository) Update(tag domain.Tag) error {
-	const updateTagQuery = `
-	UPDATE tags SET name = $1 WHERE id = $2
-	`
-	result, err := pg.db.Exec(updateTagQuery,
-		tag.Name, tag.ID,
-	)
-	if err != nil {
-		return err
-	}
-	n, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if n != 1 {
-		return errors.New("unexpected")
-	}
-	return nil
-}
-
-func (pg *tagRepository) Delete(tag domain.Tag) error {
-	const deleteTagQuery = `
-	DELETE FROM tags WHERE id = $1
-	`
-
+func (pg *tagRepository) Update(tag *models.Tag) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
 
-	result, err := tx.Exec(deleteTagQuery, tag.ID)
+	ctx := context.Background()
+	if err := tag.Update(ctx, tx); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (pg *tagRepository) Delete(tagID int) error {
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	n, err := result.RowsAffected()
+	defer tx.Rollback()
+
+	ctx := context.Background()
+	tag, err := models.TagByID(ctx, tx, tagID)
 	if err != nil {
 		return err
-	}
-	if n != 1 {
-		return errors.New("unexpected")
 	}
 
+	if err := tag.Delete(ctx, tx); err != nil {
+		return err
+	}
+
+	// FIXME: using sq
 	const deleteMemoTagQuery = `
 	DELETE FROM memo_tag WHERE tags_id = $1
 	`
-
 	_, err = tx.Exec(deleteMemoTagQuery, tag.ID)
 	if err != nil {
 		return err
 	}
 
-	tx.Commit()
-
-	return nil
+	return tx.Commit()
 }
 
-func (pg *tagRepository) Create(tag domain.Tag) error {
-	const createTagQuery = `
-	INSERT INTO tags(name, users_id) VALUES($1, $2) RETURNING id
-	`
-	result, err := pg.db.Exec(createTagQuery,
-		tag.Name, tag.UserID,
-	)
+func (pg *tagRepository) Create(tag *models.Tag) error {
+	tx, err := pg.db.Begin()
 	if err != nil {
 		return err
 	}
-	n, err := result.RowsAffected()
-	if err != nil {
+	defer tx.Rollback()
+
+	query := sq.Insert("tags").
+		Columns("name", "users_id").
+		Values(tag.Name, tag.UsersID).
+		Suffix("RETURNING \"id\"").
+		RunWith(tx).
+		PlaceholderFormat(sq.Dollar)
+
+	if err := query.QueryRow().Scan(&tag.ID); err != nil {
 		return err
 	}
-	if n != 1 {
-		return errors.New("unexpected")
-	}
-	return nil
+	return tx.Commit()
 }

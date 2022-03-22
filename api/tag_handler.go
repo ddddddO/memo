@@ -1,14 +1,17 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 	"github.com/ddddddO/memo/repository"
 )
 
@@ -42,10 +45,18 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	atags := make([]adapter.Tag, len(tags))
+	for i, tag := range tags {
+		atags[i] = adapter.Tag{
+			ID:   tag.ID,
+			Name: tag.Name,
+		}
+	}
+
 	res := struct {
-		Tags []domain.Tag `json:"tags"`
+		Tags []adapter.Tag `json:"tags"`
 	}{
-		Tags: tags,
+		Tags: atags,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
@@ -71,7 +82,11 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(tag); err != nil {
+	atag := adapter.Tag{
+		ID:   tag.ID,
+		Name: tag.Name,
+	}
+	if err := json.NewEncoder(w).Encode(atag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -89,7 +104,7 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedTag := domain.Tag{
+	updatedTag := adapter.Tag{
 		ID: tid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
@@ -97,7 +112,15 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.repo.Update(updatedTag); err != nil {
+	tag, err := h.repo.Fetch(tid)
+	if err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
+		return
+	}
+	tag.Name = updatedTag.Name
+
+	if err := h.repo.Update(tag); err != nil {
+		log.Println("failed to update tag", err)
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -117,10 +140,7 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deleteTag := domain.Tag{
-		ID: tid,
-	}
-	if err := h.repo.Delete(deleteTag); err != nil {
+	if err := h.repo.Delete(tid); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
 		return
 	}
@@ -129,13 +149,20 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var createTag domain.Tag
+	var createTag adapter.Tag
 	if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
-	if err := h.repo.Create(createTag); err != nil {
+	tag := &models.Tag{
+		Name: createTag.Name,
+		UsersID: sql.NullInt64{
+			Int64: int64(createTag.UserID),
+			Valid: true,
+		},
+	}
+	if err := h.repo.Create(tag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

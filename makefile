@@ -59,7 +59,7 @@ buildapi:
 
 deployapp:
 	gcloud config set project tag-mng-243823 && \
-	cd app && npm run build && gcloud app deploy -q
+	cd app && NODE_ENV=production npm run build && gcloud app deploy -q
 
 # このタスク実行前に、make connvmでvmにログインし、sudo supervisorctl stop exposerで一旦止めること。
 # デプロイ後、sudo supervisorctl start exposer の実行を忘れないこと。
