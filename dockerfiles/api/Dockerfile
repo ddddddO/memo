@@ -3,6 +3,7 @@ WORKDIR /go/src/github.com/ddddddO/memo
 COPY cmd/api/main.go go.* ./
 COPY api/ api/
 COPY adapter/ adapter/
+COPY models/ models/
 COPY repository/ repository/
 RUN go build -o rest-api main.go
 
