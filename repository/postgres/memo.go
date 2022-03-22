@@ -21,7 +21,7 @@ func NewMemoRepository(db *sql.DB) *memoRepository {
 	}
 }
 
-func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, error) {
+func (pg *memoRepository) FetchList(userID int) ([]*models.Memo, error) {
 	var (
 		memos []*models.Memo
 		err   error
@@ -37,41 +37,30 @@ func (pg *memoRepository) FetchList(userID int, tagID int) ([]*models.Memo, erro
 		return nil, err
 	}
 
-	ms := []*models.Memo{}
-	// NOTE: tagIdが設定されている場合
-	if tagID != -1 {
-		for _, memo := range memos {
-			memoTag := &models.MemoTag{
-				MemosID: sql.NullInt64{
-					Int64: int64(memo.ID),
-					Valid: true,
-				},
-				TagsID: sql.NullInt64{
-					Int64: int64(tagID),
-					Valid: true,
-				},
-			}
+	return memos, nil
+}
 
-			m, err := memoTag.Memo(ctx, pg.db)
-			if err != nil {
-				return nil, err
-			}
-			if m == nil {
-				continue
-			}
+func (pg *memoRepository) FetchListByTagID(userID, tagID int) ([]*models.Memo, error) {
+	// FIXME: using sq
+	query := `select id, subject, content, users_id, created_at, updated_at, notified_cnt, is_exposed, exposed_at from memos where id in (select memos_id from memo_tag where tags_id = $1)`
+	rows, err := pg.db.Query(query, tagID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-			t, err := memoTag.Tag(ctx, pg.db)
-			if err != nil {
-				return nil, err
-			}
-			if t == nil {
-				continue
-			}
-			ms = append(ms, memo)
+	var memos []*models.Memo
+	for rows.Next() {
+		m := models.Memo{}
+		if err := rows.Scan(&m.ID, &m.Subject, &m.Content, &m.UsersID, &m.CreatedAt, &m.UpdatedAt, &m.NotifiedCnt, &m.IsExposed, &m.ExposedAt); err != nil {
+			return nil, err
+		}
+		if m.UsersID.Int64 == int64(userID) {
+			memos = append(memos, &m)
 		}
 	}
-	if len(ms) != 0 {
-		memos = ms
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return memos, nil

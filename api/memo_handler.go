@@ -46,11 +46,22 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tid = -1
 	}
-	memos, err := h.repo.FetchList(uid, tid)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
+
+	var memos []*models.Memo
+	if tid == -1 {
+		memos, err = h.repo.FetchList(uid)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
+	} else {
+		memos, err = h.repo.FetchListByTagID(uid, tid)
+		if err != nil {
+			errResponse(w, http.StatusInternalServerError, "failed", err)
+			return
+		}
 	}
+
 	ams := make([]adapter.Memo, len(memos))
 	for i, mm := range memos {
 		tags, err := h.tagRepo.FetchListByMemoID(int(mm.ID))
