@@ -2,7 +2,7 @@ FROM golang:1.18 as builder
 WORKDIR /go/src/github.com/ddddddO/memo
 COPY cmd/api/main.go go.* ./
 COPY api/ api/
-COPY domain/ domain/
+COPY adapter/ adapter/
 COPY repository/ repository/
 RUN go build -o rest-api main.go
 

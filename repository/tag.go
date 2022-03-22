@@ -1,13 +1,14 @@
 package repository
 
 import (
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/models"
 )
 
 type TagRepository interface {
-	FetchList(userID int) ([]domain.Tag, error)
-	Fetch(tagID int) (domain.Tag, error)
-	Update(tag domain.Tag) error
-	Delete(tag domain.Tag) error
-	Create(tag domain.Tag) error
+	FetchList(userID int) ([]*models.Tag, error)
+	FetchListByMemoID(memoID int) ([]*models.Tag, error)
+	Fetch(tagID int) (*models.Tag, error)
+	Update(tag *models.Tag) error
+	Delete(tagID int) error
+	Create(tag *models.Tag) error
 }

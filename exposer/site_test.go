@@ -5,9 +5,9 @@ import (
 )
 
 func TestCnvFileName(t *testing.T) {
-	tests := []struct{
+	tests := []struct {
 		input string
-		want string
+		want  string
 	}{
 		{input: "aaa/bbb", want: "aaa_bbb"},
 		{input: "aaa/bbb/ccc", want: "aaa_bbb_ccc"},

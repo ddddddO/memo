@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/domain"
+	"github.com/ddddddO/memo/adapter"
 )
 
 func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
@@ -71,7 +71,7 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	return removeMarkdowns, nil
 }
 
-func generateMarkdowns(memos []domain.Memo) error {
+func generateMarkdowns(memos []adapter.Memo) error {
 	if len(memos) == 0 {
 		return nil
 	}
@@ -85,7 +85,7 @@ func generateMarkdowns(memos []domain.Memo) error {
 	return nil
 }
 
-func generateMarkdown(memo domain.Memo) error {
+func generateMarkdown(memo adapter.Memo) error {
 	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 
@@ -137,7 +137,7 @@ func generateMarkdown(memo domain.Memo) error {
 
 const layout = "2006-1-2"
 
-func buildContent(memo domain.Memo) string {
+func buildContent(memo adapter.Memo) string {
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 	memoCreatedAt := memo.CreatedAt.In(jst).Format(layout)
 	memoUpdatedAt := memo.UpdatedAt.In(jst).Format(layout)
