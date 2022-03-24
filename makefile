@@ -52,7 +52,7 @@ genclouddata:
 	sleep 3 && gsutil cp gs://tag-mng/cloud_sql_dump.sql /home/ochi/github.com/ddddddO/memo/_data/cloud_sql_dump.sql
 
 ## NOTE: apiに変更があった場合は、make buildapiでイメージを更新&GCRへpushする。そして、cloud runをdestroy -> applyする
-## terraform destroy -target google_cloud_run_service.api -> terraform apply
+## terraform destroy -target module.cloud_run_api.google_cloud_run_service.api -> terraform apply
 buildapi:
 	docker build -t gcr.io/tag-mng-243823/api --no-cache=true -f dockerfiles/api/Dockerfile .
 	docker push gcr.io/tag-mng-243823/api
