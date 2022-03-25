@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	_ "github.com/lib/pq"
@@ -116,6 +117,22 @@ func (pg *memoRepository) Update(memo *models.Memo, tagIDs []int) error {
 	tx.Commit()
 
 	return nil
+}
+
+func (pg *memoRepository) UpdateExposedAt(memo *models.Memo) error {
+	tx, err := pg.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	ctx := context.Background()
+	memo.ExposedAt = sql.NullTime{Valid: true, Time: time.Now()}
+	if err := memo.Update(ctx, tx); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 // FIXME: memo_tag handling

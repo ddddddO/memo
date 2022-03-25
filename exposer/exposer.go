@@ -1,6 +1,7 @@
 package exposer
 
 import (
+	"database/sql"
 	"log"
 	"os"
 	"os/signal"
@@ -9,7 +10,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/exposer/datasource"
+	"github.com/ddddddO/memo/models"
+	"github.com/ddddddO/memo/repository"
+	"github.com/ddddddO/memo/repository/postgres"
 )
 
 type Config struct {
@@ -18,10 +21,11 @@ type Config struct {
 }
 
 func Run(conf Config) error {
-	postgres, err := datasource.NewPostgres(conf.Dsn)
+	db, err := sql.Open("postgres", conf.Dsn)
 	if err != nil {
-		return errors.Wrap(err, "db connection error")
+		return err
 	}
+	memoRepository := postgres.NewMemoRepository(db)
 
 	ticker := time.NewTicker(conf.Interval)
 	defer ticker.Stop()
@@ -38,7 +42,7 @@ func Run(conf Config) error {
 	defer signal.Stop(sig)
 
 	// 初回起動時
-	if err := run(postgres); err != nil {
+	if err := run(memoRepository); err != nil {
 		return errors.WithStack(err)
 	}
 	log.Println("succeeded")
@@ -46,7 +50,7 @@ func Run(conf Config) error {
 	for {
 		select {
 		case <-ticker.C:
-			if err := run(postgres); err != nil {
+			if err := run(memoRepository); err != nil {
 				return errors.WithStack(err)
 			}
 			log.Println("succeeded")
@@ -62,10 +66,23 @@ func Run(conf Config) error {
 	return nil
 }
 
-func run(ds datasource.DataSource) error {
-	subjects, err := ds.FetchAllExposedMemoSubjects()
+const myUserID = 1
+
+// TODO: ここで使うメソッドとしては過剰なinterfaceだから、絞ってもいいかも
+func run(repo repository.MemoRepository) error {
+	memos, err := repo.FetchList(myUserID)
 	if err != nil {
-		return errors.Wrap(err, "db error")
+		return errors.WithStack(err)
+	}
+
+	subjects := []string{}
+	for _, m := range memos {
+		if !m.IsExposed.Valid {
+			continue
+		}
+		if m.IsExposed.Bool {
+			subjects = append(subjects, m.Subject)
+		}
 	}
 
 	removedMarkdowns, err := removeMarkdwonsNotIncluded(subjects)
@@ -76,16 +93,34 @@ func run(ds datasource.DataSource) error {
 	// 念のため。。
 	time.Sleep(3 * time.Second)
 
-	memos, err := ds.FetchMemos()
-	if err != nil {
-		return errors.Wrap(err, "db error")
+	var exposeMemos []*models.Memo
+	for _, m := range memos {
+		if !m.IsExposed.Valid {
+			continue
+		}
+
+		if m.IsExposed.Bool && !m.ExposedAt.Valid {
+			exposeMemos = append(exposeMemos, m)
+			continue
+		}
+
+		if !m.ExposedAt.Valid {
+			continue
+		}
+		if !m.UpdatedAt.Valid {
+			continue
+		}
+
+		if m.IsExposed.Bool && (m.UpdatedAt.Time.After(m.ExposedAt.Time)) {
+			exposeMemos = append(exposeMemos, m)
+		}
 	}
 
-	if err := generateMarkdowns(memos); err != nil {
+	if err := generateMarkdowns(exposeMemos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
 
-	if len(memos) == 0 && len(removedMarkdowns) == 0 {
+	if len(exposeMemos) == 0 && len(removedMarkdowns) == 0 {
 		return nil
 	}
 
@@ -97,8 +132,10 @@ func run(ds datasource.DataSource) error {
 		return errors.Wrap(err, "upload site error")
 	}
 
-	if err := ds.UpdateMemosExposedAt(memos); err != nil {
-		return errors.Wrap(err, "db error")
+	for _, m := range exposeMemos {
+		if err := repo.UpdateExposedAt(m); err != nil {
+			return errors.WithStack(err)
+		}
 	}
 
 	return nil
