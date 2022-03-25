@@ -111,7 +111,10 @@ func run(repo repository.MemoRepository) error {
 			continue
 		}
 
-		if m.IsExposed.Bool && (m.UpdatedAt.Time.After(m.ExposedAt.Time)) {
+		// NOTE: すべて消してしまったら以下をコメントイン
+		// exposeMemos = append(exposeMemos, m)
+		// NOTE: すべて消してしまったら以下をコメントアウト
+		if m.IsExposed.Bool && (m.UpdatedAt.Time.After(m.ExposedAt.Time) || m.UpdatedAt.Time.Equal(m.ExposedAt.Time)) {
 			exposeMemos = append(exposeMemos, m)
 		}
 	}

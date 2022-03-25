@@ -77,7 +77,6 @@ func generateMarkdowns(memos []*models.Memo) error {
 	}
 
 	for _, memo := range memos {
-		// TODO: ここを並列処理でいけないか
 		if err := generateMarkdown(memo); err != nil {
 			return errors.WithStack(err)
 		}
