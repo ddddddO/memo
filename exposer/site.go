@@ -10,7 +10,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/models"
 )
 
 func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
@@ -71,13 +71,12 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	return removeMarkdowns, nil
 }
 
-func generateMarkdowns(memos []adapter.Memo) error {
+func generateMarkdowns(memos []*models.Memo) error {
 	if len(memos) == 0 {
 		return nil
 	}
 
 	for _, memo := range memos {
-		// TODO: ここを並列処理でいけないか
 		if err := generateMarkdown(memo); err != nil {
 			return errors.WithStack(err)
 		}
@@ -85,7 +84,7 @@ func generateMarkdowns(memos []adapter.Memo) error {
 	return nil
 }
 
-func generateMarkdown(memo adapter.Memo) error {
+func generateMarkdown(memo *models.Memo) error {
 	subject := cnvFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 
@@ -137,10 +136,10 @@ func generateMarkdown(memo adapter.Memo) error {
 
 const layout = "2006-1-2"
 
-func buildContent(memo adapter.Memo) string {
+func buildContent(memo *models.Memo) string {
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
-	memoCreatedAt := memo.CreatedAt.In(jst).Format(layout)
-	memoUpdatedAt := memo.UpdatedAt.In(jst).Format(layout)
+	memoCreatedAt := memo.CreatedAt.Time.In(jst).Format(layout)
+	memoUpdatedAt := memo.UpdatedAt.Time.In(jst).Format(layout)
 
 	contentHeaderTemplate := `
 | 新規作成 | 最終更新 |

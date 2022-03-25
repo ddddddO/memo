@@ -9,6 +9,7 @@ type MemoRepository interface {
 	FetchListByTagID(userID, tagID int) ([]*models.Memo, error)
 	Fetch(memoID int) (*models.Memo, error)
 	Update(memo *models.Memo, tagIDs []int) error
+	UpdateExposedAt(memo *models.Memo) error // FIXME:
 	Create(memo *models.Memo, tagIDs []int) error
 	Delete(memoID int) error
 }
