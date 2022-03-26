@@ -28,4 +28,5 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to expose memos\n%+v", err)
 	}
+	log.Println("shutdown")
 }

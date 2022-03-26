@@ -41,19 +41,14 @@ func Run(conf Config) error {
 	)
 	defer signal.Stop(sig)
 
-	// 初回起動時
-	if err := run(memoRepository); err != nil {
-		return errors.WithStack(err)
-	}
-	log.Println("succeeded")
-
 	for {
+		if err := run(memoRepository); err != nil {
+			return errors.WithStack(err)
+		}
+		log.Println("succeeded")
+
 		select {
 		case <-ticker.C:
-			if err := run(memoRepository); err != nil {
-				return errors.WithStack(err)
-			}
-			log.Println("succeeded")
 		case s := <-sig:
 			switch s {
 			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
@@ -75,6 +70,44 @@ func run(repo repository.MemoRepository) error {
 		return errors.WithStack(err)
 	}
 
+	subjects := filterExposedSubjects(memos)
+
+	removedMarkdowns, err := removeMarkdwonsNotIncludedInDB(subjects)
+	if err != nil {
+		return errors.Wrap(err, "remove md file error")
+	}
+
+	// 念のため。。
+	time.Sleep(3 * time.Second)
+
+	exposeMemos := filterExposeMemos(memos)
+
+	if err := generateMarkdowns(exposeMemos); err != nil {
+		return errors.Wrap(err, "generate md file error")
+	}
+
+	if len(exposeMemos) == 0 && len(removedMarkdowns) == 0 {
+		return nil
+	}
+
+	if err := generateSites(); err != nil {
+		return errors.Wrap(err, "generate html error")
+	}
+
+	if err := uploadSites(); err != nil {
+		return errors.Wrap(err, "upload site error")
+	}
+
+	for _, m := range exposeMemos {
+		if err := repo.UpdateExposedAt(m); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
+	return nil
+}
+
+func filterExposedSubjects(memos []*models.Memo) []string {
 	subjects := []string{}
 	for _, m := range memos {
 		if !m.IsExposed.Valid {
@@ -84,15 +117,10 @@ func run(repo repository.MemoRepository) error {
 			subjects = append(subjects, m.Subject)
 		}
 	}
+	return subjects
+}
 
-	removedMarkdowns, err := removeMarkdwonsNotIncluded(subjects)
-	if err != nil {
-		return errors.Wrap(err, "remove md file error")
-	}
-
-	// 念のため。。
-	time.Sleep(3 * time.Second)
-
+func filterExposeMemos(memos []*models.Memo) []*models.Memo {
 	var exposeMemos []*models.Memo
 	for _, m := range memos {
 		if !m.IsExposed.Valid {
@@ -118,28 +146,5 @@ func run(repo repository.MemoRepository) error {
 			exposeMemos = append(exposeMemos, m)
 		}
 	}
-
-	if err := generateMarkdowns(exposeMemos); err != nil {
-		return errors.Wrap(err, "generate md file error")
-	}
-
-	if len(exposeMemos) == 0 && len(removedMarkdowns) == 0 {
-		return nil
-	}
-
-	if err := generateSites(); err != nil {
-		return errors.Wrap(err, "generate html error")
-	}
-
-	if err := uploadSites(); err != nil {
-		return errors.Wrap(err, "upload site error")
-	}
-
-	for _, m := range exposeMemos {
-		if err := repo.UpdateExposedAt(m); err != nil {
-			return errors.WithStack(err)
-		}
-	}
-
-	return nil
+	return exposeMemos
 }

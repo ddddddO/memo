@@ -14,7 +14,7 @@ import (
 	"github.com/ddddddO/memo/models"
 )
 
-func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
+func removeMarkdwonsNotIncludedInDB(subjects []string) ([]string, error) {
 	if len(subjects) == 0 {
 		return nil, nil
 	}
