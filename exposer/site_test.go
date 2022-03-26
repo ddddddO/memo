@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestCnvFileName(t *testing.T) {
+func TestNewFileName(t *testing.T) {
 	tests := []struct {
 		input string
 		want  string
@@ -15,7 +15,7 @@ func TestCnvFileName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := cnvFileName(tt.input)
+		got := newFileName(tt.input)
 		if got != tt.want {
 			t.Errorf("want: %s, got: %s", tt.want, got)
 		}
