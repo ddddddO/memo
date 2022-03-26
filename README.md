@@ -3,7 +3,7 @@ private & public memo system
 
 
 ## Components
-![1](/doc/arc.png)
+![1](/doc/arc.svg)
 
 ### Back-end(Go)
 - REST API
