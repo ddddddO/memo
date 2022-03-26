@@ -254,6 +254,10 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	memo := &models.Memo{
 		Subject: createdMemo.Subject,
 		Content: createdMemo.Content,
+		IsExposed: sql.NullBool{
+			Bool:  createdMemo.IsExposed,
+			Valid: true,
+		},
 		UsersID: sql.NullInt64{
 			Int64: int64(createdMemo.UserID),
 			Valid: true,
@@ -270,7 +274,7 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 }
 
 func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -284,14 +288,6 @@ func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
-
-	// deleteMemo := adapter.Memo{
-	// 	ID: mid,
-	// }
-	// if err := json.NewDecoder(r.Body).Decode(&deleteMemo); err != nil {
-	// 	errResponse(w, http.StatusInternalServerError, "failed", err)
-	// 	return
-	// }
 
 	if err := h.repo.Delete(mid); err != nil {
 		log.Println("failed to delete memo", err)

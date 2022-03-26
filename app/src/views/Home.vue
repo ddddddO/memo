@@ -20,7 +20,7 @@ export default {
 -->
 <template>
   <div class="home">
-    <LoginForm title="Welcom to Tag-Mng App"/>
+    <LoginForm title="memo"/>
   </div>
 </template>
 

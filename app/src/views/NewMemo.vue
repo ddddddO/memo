@@ -8,7 +8,7 @@
           name="tags"
         >
           <!-- TODO: タグの選択は、別にモーダルを表示してそこで選択したい。タグが多すぎる -->
-          <b-form-checkbox v-for="tag in tags" :key=tag.name :value=tag.id>{{ tag.name }}</b-form-checkbox>
+          <b-form-checkbox v-for="tag in tags" :key="tag.name" :value="tag.id">{{ tag.name }}</b-form-checkbox>
         </b-form-checkbox-group>
       </b-form-group>
     </div>
