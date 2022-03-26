@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -18,9 +19,9 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 		return nil, nil
 	}
 
-	var convSubjects []string
+	var newFileNames []string
 	for _, subject := range subjects {
-		convSubjects = append(convSubjects, cnvFileName(subject))
+		newFileNames = append(newFileNames, newFileName(subject))
 	}
 
 	dir, err := os.Getwd()
@@ -28,32 +29,31 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	absDirPath := fmt.Sprintf("%s/content/posts/", dir)
-	files, err := ioutil.ReadDir(absDirPath)
+	fullDirPath := filepath.Join(dir, "content", "posts")
+	files, err := ioutil.ReadDir(fullDirPath)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	var fileNames []string
+	var existingFileNames []string
 	for _, file := range files {
-		name := file.Name()
-		if strings.HasSuffix(name, ".md") {
-			fileNames = append(fileNames, strings.TrimSuffix(name, ".md"))
+		if strings.HasSuffix(file.Name(), ".md") {
+			existingFileNames = append(existingFileNames, strings.TrimSuffix(file.Name(), ".md"))
 		}
 	}
 
 	var removeMarkdowns []string
-	for _, fileName := range fileNames {
+	for _, existing := range existingFileNames {
 		isRemoving := false
-		for _, subject := range convSubjects {
-			if fileName == subject {
+		for _, new := range newFileNames {
+			if existing == new {
 				isRemoving = false
 				break
 			}
 			isRemoving = true
 		}
 		if isRemoving {
-			removeMarkdowns = append(removeMarkdowns, fmt.Sprintf("%s.md", fileName))
+			removeMarkdowns = append(removeMarkdowns, fmt.Sprintf("%s.md", existing))
 		}
 	}
 
@@ -62,8 +62,8 @@ func removeMarkdwonsNotIncluded(subjects []string) ([]string, error) {
 	}
 
 	for _, fileName := range removeMarkdowns {
-		absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
-		if err := exec.Command("rm", absFilePath).Run(); err != nil {
+		fullFilePath := filepath.Join(dir, "content", "posts", fileName)
+		if err := exec.Command("rm", fullFilePath).Run(); err != nil {
 			return nil, errors.WithStack(err)
 		}
 	}
@@ -85,36 +85,36 @@ func generateMarkdowns(memos []*models.Memo) error {
 }
 
 func generateMarkdown(memo *models.Memo) error {
-	subject := cnvFileName(memo.Subject)
+	subject := newFileName(memo.Subject)
 	fileName := fmt.Sprintf("%s.md", subject)
 
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	absFilePath := fmt.Sprintf("%s/content/posts/%s", dir, fileName)
+	fullFilePath := filepath.Join(dir, "content", "posts", fileName)
 
 	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
-	if exists(absFilePath) {
-		err := exec.Command("rm", absFilePath).Run()
+	if exists(fullFilePath) {
+		err := exec.Command("rm", fullFilePath).Run()
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
 
 	// hugo new site hogehoge で生成したhogehogeディレクトリ内でhugo new fuga.md　しないと失敗する。
-	err = exec.Command("hugo", "new", fmt.Sprintf("posts/%s", fileName)).Run()
+	err = exec.Command("hugo", "new", filepath.Join("posts", fileName)).Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	f, err := os.OpenFile(absFilePath, os.O_RDWR, 0644)
+	f, err := os.OpenFile(fullFilePath, os.O_RDWR, 0644)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	defer f.Close()
 	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	title := `title: "` + memo.Subject + `"`
+	title := fmt.Sprintf("title: \"%s\"", memo.Subject)
 	_, err = f.WriteAt([]byte(title), 4)
 	if err != nil {
 		return errors.WithStack(err)
@@ -124,9 +124,8 @@ func generateMarkdown(memo *models.Memo) error {
 		return errors.WithStack(err)
 	}
 
-	content := buildContent(memo)
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(content), inf.Size())
+	_, err = f.WriteAt([]byte(content(memo)), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -134,24 +133,30 @@ func generateMarkdown(memo *models.Memo) error {
 	return nil
 }
 
-const layout = "2006-1-2"
+func content(memo *models.Memo) string {
+	return header(memo.CreatedAt.Time, memo.UpdatedAt.Time) +
+		"\n\n" +
+		"---" +
+		"\n\n" +
+		memo.Content
+}
 
-func buildContent(memo *models.Memo) string {
-	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
-	memoCreatedAt := memo.CreatedAt.Time.In(jst).Format(layout)
-	memoUpdatedAt := memo.UpdatedAt.Time.In(jst).Format(layout)
-
-	contentHeaderTemplate := `
+const (
+	layout         = "2006-1-2"
+	headerTemplate = `
 | 新規作成 | 最終更新 |
 | -- | -- |
 | %s | %s |
 `
+)
 
-	contentHeader := fmt.Sprintf(contentHeaderTemplate, memoCreatedAt, memoUpdatedAt)
-	contentBody := memo.Content
-
-	content := contentHeader + "\n\n" + "---" + "\n\n" + contentBody
-	return content
+func header(createdAt, updatedAt time.Time) string {
+	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
+	return fmt.Sprintf(
+		headerTemplate,
+		createdAt.In(jst).Format(layout),
+		updatedAt.In(jst).Format(layout),
+	)
 }
 
 func exists(filePath string) bool {
@@ -161,35 +166,33 @@ func exists(filePath string) bool {
 
 const (
 	invalidChars = "/"
-	cnvChar      = "_"
+	sep          = "_"
 )
 
-func cnvFileName(fileName string) string {
-	if !strings.ContainsAny(fileName, invalidChars) {
-		return fileName
+func newFileName(old string) string {
+	if !strings.ContainsAny(old, invalidChars) {
+		return old
 	}
 
-	cnvFileName := fileName
-	i := strings.IndexAny(cnvFileName, invalidChars)
+	new := old
+	i := strings.IndexAny(new, invalidChars)
 	for i != -1 {
-		cnvFileName = cnvFileName[:i] + cnvChar + cnvFileName[i+1:]
-		i = strings.IndexAny(cnvFileName, invalidChars)
+		new = new[:i] + sep + new[i+1:]
+		i = strings.IndexAny(new, invalidChars)
 	}
-	return cnvFileName
+	return new
 }
 
 func generateSites() error {
 	err := exec.Command("hugo", "-D", "--cleanDestinationDir").Run()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	return errors.WithStack(err)
 }
 
+const (
+	gcs = "gs://www.dododo.site"
+)
+
 func uploadSites() error {
-	err := exec.Command("gsutil", "-h", "Cache-Control:public, max-age=180", "rsync", "-d", "-r", "public", "gs://www.dododo.site").Run()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
+	err := exec.Command("gsutil", "-h", "Cache-Control:public, max-age=180", "rsync", "-d", "-r", "public", gcs).Run()
+	return errors.WithStack(err)
 }
