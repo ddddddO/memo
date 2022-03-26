@@ -71,7 +71,6 @@ func run(repo repository.MemoRepository) error {
 	}
 
 	subjects := filterExposedSubjects(memos)
-
 	removedMarkdowns, err := removeMarkdwonsNotIncludedInDB(subjects)
 	if err != nil {
 		return errors.Wrap(err, "remove md file error")
@@ -81,7 +80,10 @@ func run(repo repository.MemoRepository) error {
 	time.Sleep(3 * time.Second)
 
 	exposeMemos := filterExposeMemos(memos)
-
+	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
+	if err := removeExistingFiles(exposeMemos); err != nil {
+		return errors.WithStack(err)
+	}
 	if err := generateMarkdowns(exposeMemos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
@@ -93,7 +95,6 @@ func run(repo repository.MemoRepository) error {
 	if err := generateSites(); err != nil {
 		return errors.Wrap(err, "generate html error")
 	}
-
 	if err := uploadSites(); err != nil {
 		return errors.Wrap(err, "upload site error")
 	}

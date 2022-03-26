@@ -20,30 +20,50 @@ func removeMarkdwonsNotIncludedInDB(subjects []string) ([]string, error) {
 	}
 
 	var newFileNames []string
-	for _, subject := range subjects {
-		newFileNames = append(newFileNames, newFileName(subject))
+	for _, s := range subjects {
+		newFileNames = append(newFileNames, newFileName(s))
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-
-	fullDirPath := filepath.Join(dir, "content", "posts")
-	files, err := ioutil.ReadDir(fullDirPath)
+	existingMarkdowns, err := seachExistingMarkdowns(dir)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	var existingFileNames []string
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".md") {
-			existingFileNames = append(existingFileNames, strings.TrimSuffix(file.Name(), ".md"))
-		}
+	removeMarkdowns := filterRemoveMarkdowns(existingMarkdowns, newFileNames)
+	if len(removeMarkdowns) == 0 {
+		return nil, nil
 	}
 
+	if err := removeContentFiles(dir, removeMarkdowns); err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	return removeMarkdowns, nil
+}
+
+func seachExistingMarkdowns(dir string) ([]string, error) {
+	path := filepath.Join(dir, "content", "posts")
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
+	var existingMarkdowns []string
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".md") {
+			existingMarkdowns = append(existingMarkdowns, strings.TrimSuffix(f.Name(), ".md"))
+		}
+	}
+	return existingMarkdowns, nil
+}
+
+func filterRemoveMarkdowns(existingMarkdowns, newFileNames []string) []string {
 	var removeMarkdowns []string
-	for _, existing := range existingFileNames {
+	for _, existing := range existingMarkdowns {
 		isRemoving := false
 		for _, new := range newFileNames {
 			if existing == new {
@@ -56,54 +76,72 @@ func removeMarkdwonsNotIncludedInDB(subjects []string) ([]string, error) {
 			removeMarkdowns = append(removeMarkdowns, fmt.Sprintf("%s.md", existing))
 		}
 	}
-
-	if len(removeMarkdowns) == 0 {
-		return nil, nil
-	}
-
-	for _, fileName := range removeMarkdowns {
-		fullFilePath := filepath.Join(dir, "content", "posts", fileName)
-		if err := exec.Command("rm", fullFilePath).Run(); err != nil {
-			return nil, errors.WithStack(err)
-		}
-	}
-
-	return removeMarkdowns, nil
+	return removeMarkdowns
 }
 
-func generateMarkdowns(memos []*models.Memo) error {
-	if len(memos) == 0 {
-		return nil
-	}
-
-	for _, memo := range memos {
-		if err := generateMarkdown(memo); err != nil {
+func removeContentFiles(dir string, fileNames []string) error {
+	for _, f := range fileNames {
+		path := filepath.Join(dir, "content", "posts", f)
+		if err := exec.Command("rm", path).Run(); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	return nil
 }
 
-func generateMarkdown(memo *models.Memo) error {
-	subject := newFileName(memo.Subject)
-	fileName := fmt.Sprintf("%s.md", subject)
-
+func removeExistingFiles(memos []*models.Memo) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return errors.WithStack(err)
 	}
-	fullFilePath := filepath.Join(dir, "content", "posts", fileName)
 
-	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
-	if exists(fullFilePath) {
-		err := exec.Command("rm", fullFilePath).Run()
+	for _, m := range memos {
+		fileName := fmt.Sprintf("%s.md", newFileName(m.Subject))
+		fullFilePath := filepath.Join(dir, "content", "posts", fileName)
+
+		// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
+		if err := removeExistingFile(fullFilePath); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	return nil
+}
+
+func removeExistingFile(path string) error {
+	if exists(path) {
+		err := exec.Command("rm", path).Run()
 		if err != nil {
 			return errors.WithStack(err)
 		}
 	}
+	return nil
+}
 
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func generateMarkdowns(memos []*models.Memo) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	for _, m := range memos {
+		fileName := fmt.Sprintf("%s.md", newFileName(m.Subject))
+		fullFilePath := filepath.Join(dir, "content", "posts", fileName)
+
+		if err := generateMarkdown(fileName, fullFilePath, m.Subject, m.Content, m.CreatedAt.Time, m.UpdatedAt.Time); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+	return nil
+}
+
+func generateMarkdown(fileName, fullFilePath, subject, body string, createdAt, updatedAt time.Time) error {
 	// hugo new site hogehoge で生成したhogehogeディレクトリ内でhugo new fuga.md　しないと失敗する。
-	err = exec.Command("hugo", "new", filepath.Join("posts", fileName)).Run()
+	err := exec.Command("hugo", "new", filepath.Join("posts", fileName)).Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -113,8 +151,9 @@ func generateMarkdown(memo *models.Memo) error {
 		return errors.WithStack(err)
 	}
 	defer f.Close()
+
+	title := fmt.Sprintf("title: \"%s\"", subject)
 	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	title := fmt.Sprintf("title: \"%s\"", memo.Subject)
 	_, err = f.WriteAt([]byte(title), 4)
 	if err != nil {
 		return errors.WithStack(err)
@@ -125,49 +164,13 @@ func generateMarkdown(memo *models.Memo) error {
 	}
 
 	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = f.WriteAt([]byte(content(memo)), inf.Size())
+	_, err = f.WriteAt([]byte(content(body, createdAt, updatedAt)), inf.Size())
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
 	return nil
 }
-
-func content(memo *models.Memo) string {
-	return header(memo.CreatedAt.Time, memo.UpdatedAt.Time) +
-		"\n\n" +
-		"---" +
-		"\n\n" +
-		memo.Content
-}
-
-const (
-	layout         = "2006-1-2"
-	headerTemplate = `
-| 新規作成 | 最終更新 |
-| -- | -- |
-| %s | %s |
-`
-)
-
-func header(createdAt, updatedAt time.Time) string {
-	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
-	return fmt.Sprintf(
-		headerTemplate,
-		createdAt.In(jst).Format(layout),
-		updatedAt.In(jst).Format(layout),
-	)
-}
-
-func exists(filePath string) bool {
-	_, err := os.Stat(filePath)
-	return err == nil
-}
-
-const (
-	invalidChars = "/"
-	sep          = "_"
-)
 
 func newFileName(old string) string {
 	if !strings.ContainsAny(old, invalidChars) {
@@ -181,6 +184,38 @@ func newFileName(old string) string {
 		i = strings.IndexAny(new, invalidChars)
 	}
 	return new
+}
+
+const (
+	invalidChars = "/"
+	sep          = "_"
+)
+
+func content(body string, createdAt, updatedAt time.Time) string {
+	return header(createdAt, updatedAt) +
+		"\n\n" +
+		"---" +
+		"\n\n" +
+		body
+}
+
+const (
+	layout         = "2006-1-2"
+	headerTemplate = `
+| 新規作成 | 最終更新 |
+| -- | -- |
+| %s | %s |
+`
+)
+
+var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
+
+func header(createdAt, updatedAt time.Time) string {
+	return fmt.Sprintf(
+		headerTemplate,
+		createdAt.In(jst).Format(layout),
+		updatedAt.In(jst).Format(layout),
+	)
 }
 
 func generateSites() error {
