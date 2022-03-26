@@ -73,8 +73,14 @@ func run(repo memoRepository) error {
 		return errors.WithStack(err)
 	}
 
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.WithStack(err)
+	}
+	gce := newGCE(dir)
+
 	subjects := filterExposedSubjects(memos)
-	removedMarkdowns, err := removeMarkdwonsNotIncludedInDB(subjects)
+	removedMarkdowns, err := gce.removeMarkdwonsNotIncludedInDB(subjects)
 	if err != nil {
 		return errors.Wrap(err, "remove md file error")
 	}
@@ -84,10 +90,10 @@ func run(repo memoRepository) error {
 
 	exposeMemos := filterExposeMemos(memos)
 	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
-	if err := removeExistingFiles(exposeMemos); err != nil {
+	if err := gce.removeExistingFiles(exposeMemos); err != nil {
 		return errors.WithStack(err)
 	}
-	if err := generateMarkdowns(exposeMemos); err != nil {
+	if err := gce.generateMarkdowns(exposeMemos); err != nil {
 		return errors.Wrap(err, "generate md file error")
 	}
 
@@ -95,10 +101,10 @@ func run(repo memoRepository) error {
 		return nil
 	}
 
-	if err := generateSites(); err != nil {
+	if err := gce.generateSites(); err != nil {
 		return errors.Wrap(err, "generate html error")
 	}
-	if err := uploadSites(); err != nil {
+	if err := gce.uploadSites(); err != nil {
 		return errors.Wrap(err, "upload site error")
 	}
 
