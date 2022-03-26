@@ -7,15 +7,20 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/repository"
+	"github.com/ddddddO/memo/models"
 )
 
+// TODO: adapter -> modelsに置き換える
+type userRepository interface {
+	Fetch(name string, password string) (*models.User, error)
+}
+
 type authHandler struct {
-	repo  repository.UserRepository
+	repo  userRepository
 	store sessions.Store
 }
 
-func NewAuthHandler(repo repository.UserRepository, store sessions.Store) *authHandler {
+func NewAuthHandler(repo userRepository, store sessions.Store) *authHandler {
 	return &authHandler{
 		repo:  repo,
 		store: store,

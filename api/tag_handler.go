@@ -10,16 +10,24 @@ import (
 	"github.com/go-chi/chi"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/adapter"
+	"github.com/ddddddO/memo/api/adapter"
 	"github.com/ddddddO/memo/models"
-	"github.com/ddddddO/memo/repository"
 )
 
-type tagHandler struct {
-	repo repository.TagRepository
+type tagRepository interface {
+	FetchList(userID int) ([]*models.Tag, error)
+	FetchListByMemoID(memoID int) ([]*models.Tag, error)
+	Fetch(tagID int) (*models.Tag, error)
+	Update(tag *models.Tag) error
+	Delete(tagID int) error
+	Create(tag *models.Tag) error
 }
 
-func NewTagHandler(repo repository.TagRepository) *tagHandler {
+type tagHandler struct {
+	repo tagRepository
+}
+
+func NewTagHandler(repo tagRepository) *tagHandler {
 	return &tagHandler{
 		repo: repo,
 	}

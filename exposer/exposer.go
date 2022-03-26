@@ -11,7 +11,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/ddddddO/memo/models"
-	"github.com/ddddddO/memo/repository"
 	"github.com/ddddddO/memo/repository/postgres"
 )
 
@@ -61,10 +60,14 @@ func Run(conf Config) error {
 	return nil
 }
 
+type memoRepository interface {
+	FetchList(userID int) ([]*models.Memo, error)
+	UpdateExposedAt(memo *models.Memo) error
+}
+
 const myUserID = 1
 
-// TODO: ここで使うメソッドとしては過剰なinterfaceだから、絞ってもいいかも
-func run(repo repository.MemoRepository) error {
+func run(repo memoRepository) error {
 	memos, err := repo.FetchList(myUserID)
 	if err != nil {
 		return errors.WithStack(err)

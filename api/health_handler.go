@@ -5,15 +5,17 @@ import (
 	"net/http"
 
 	_ "github.com/lib/pq"
-
-	"github.com/ddddddO/memo/repository"
 )
 
-type healthHandler struct {
-	repo repository.HealthRepository
+type healthRepository interface {
+	Check() error
 }
 
-func NewHealthHandler(repo repository.HealthRepository) *healthHandler {
+type healthHandler struct {
+	repo healthRepository
+}
+
+func NewHealthHandler(repo healthRepository) *healthHandler {
 	return &healthHandler{
 		repo: repo,
 	}
