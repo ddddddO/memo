@@ -87,7 +87,7 @@ func (g *gce) searchExistingMarkdowns() ([]string, error) {
 	return existingMarkdowns, nil
 }
 
-func (g *gce) filterRemoveMarkdowns(existingMarkdowns, newFileNames []string) []string {
+func (*gce) filterRemoveMarkdowns(existingMarkdowns, newFileNames []string) []string {
 	var removeMarkdowns []string
 	for _, existing := range existingMarkdowns {
 		isRemoving := false
@@ -108,11 +108,16 @@ func (g *gce) filterRemoveMarkdowns(existingMarkdowns, newFileNames []string) []
 func (g *gce) removeContentFiles(fileNames []string) error {
 	for _, f := range fileNames {
 		path := filepath.Join(g.currentDir, "content", "posts", f)
-		if err := exec.Command("rm", path).Run(); err != nil {
+		if err := g.removeFile(path); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	return nil
+}
+
+func (*gce) removeFile(path string) error {
+	err := exec.Command("rm", path).Run()
+	return errors.WithStack(err)
 }
 
 func (g *gce) removeExistingFiles(memos []*models.Memo) error {
@@ -130,7 +135,7 @@ func (g *gce) removeExistingFiles(memos []*models.Memo) error {
 
 func (g *gce) removeExistingFile(path string) error {
 	if exists(path) {
-		err := exec.Command("rm", path).Run()
+		err := g.removeFile(path)
 		if err != nil {
 			return errors.WithStack(err)
 		}
@@ -162,9 +167,7 @@ func (g *gce) generateMarkdown(fileName, fullFilePath, subject, body string, cre
 		return errors.WithStack(err)
 	}
 
-	title := fmt.Sprintf("title: \"%s\"", subject)
-	content := content(body, createdAt, updatedAt)
-	md, err := newMarkdown(fullFilePath, title, content)
+	md, err := newMarkdown(fullFilePath, subject, body, createdAt, updatedAt)
 	if err != nil {
 		return errors.WithStack(err)
 	}
@@ -174,75 +177,7 @@ func (g *gce) generateMarkdown(fileName, fullFilePath, subject, body string, cre
 	return errors.WithStack(err)
 }
 
-func content(body string, createdAt, updatedAt time.Time) string {
-	return header(createdAt, updatedAt) +
-		"\n\n" +
-		"---" +
-		"\n\n" +
-		body
-}
-
-const (
-	layout         = "2006-1-2"
-	headerTemplate = `
-| 新規作成 | 最終更新 |
-| -- | -- |
-| %s | %s |
-`
-)
-
-var jst = time.FixedZone("Asia/Tokyo", 9*60*60)
-
-func header(createdAt, updatedAt time.Time) string {
-	return fmt.Sprintf(
-		headerTemplate,
-		createdAt.In(jst).Format(layout),
-		updatedAt.In(jst).Format(layout),
-	)
-}
-
-type markdown struct {
-	f       *os.File
-	title   string
-	content string
-}
-
-func newMarkdown(path, title, content string) (*markdown, error) {
-	f, err := os.OpenFile(path, os.O_RDWR, 0644)
-	if err != nil {
-		return nil, errors.WithStack(err)
-	}
-	return &markdown{
-		f:       f,
-		title:   title,
-		content: content,
-	}, nil
-}
-
-func (m *markdown) write() error {
-	// HUGOで生成したmdファイルに、titleへメモのsubjectを書き出すため(4バイト目から)
-	_, err := m.f.WriteAt([]byte(m.title), 4)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	inf, err := m.f.Stat()
-	if err != nil {
-		return errors.WithStack(err)
-	}
-
-	// メモのcontentを追記するために、ファイルの最後尾から書き出す(inf.Size())
-	_, err = m.f.WriteAt([]byte(m.content), inf.Size())
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	return nil
-}
-
-func (m *markdown) close() error {
-	return m.f.Close()
-}
-
-func (g *gce) generateSites() error {
+func (*gce) generateSites() error {
 	err := exec.Command("hugo", "-D", "--cleanDestinationDir").Run()
 	return errors.WithStack(err)
 }
@@ -251,7 +186,7 @@ const (
 	gcs = "gs://www.dododo.site"
 )
 
-func (g *gce) uploadSites() error {
+func (*gce) uploadSites() error {
 	err := exec.Command("gsutil", "-h", "Cache-Control:public, max-age=180", "rsync", "-d", "-r", "public", gcs).Run()
 	return errors.WithStack(err)
 }
