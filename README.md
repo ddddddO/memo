@@ -1,5 +1,5 @@
 # memo
-private & public memo system
+private & public memo system.
 
 
 ## Components
@@ -10,9 +10,10 @@ private & public memo system
 - Batch
     - `exposer`
         - Change memos from private to public.
+        - Delete memos that has been changed to private.
     - `notified-cnt-incrementer`
         - Increase the number since the last update date of the memo.
-        - TODO: remove or rename and refactor.
+        - TODO: remove or refactor.
 
 ### Front-end(Vue.js)
 - Manage private memos
