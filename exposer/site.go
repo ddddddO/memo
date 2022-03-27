@@ -16,12 +16,12 @@ import (
 
 // FIXME: gceだと具体すぎる気がする。
 type gce struct {
-	currentDir string
+	markdownDir string
 }
 
 func newGCE(current string) *gce {
 	return &gce{
-		currentDir: current,
+		markdownDir: filepath.Join(current, "content", "posts"),
 	}
 }
 
@@ -72,8 +72,7 @@ func newFileName(old string) string {
 }
 
 func (g *gce) searchExistingMarkdowns() ([]string, error) {
-	path := filepath.Join(g.currentDir, "content", "posts")
-	files, err := ioutil.ReadDir(path)
+	files, err := ioutil.ReadDir(g.markdownDir)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -107,7 +106,7 @@ func (*gce) filterRemoveMarkdowns(existingMarkdowns, newFileNames []string) []st
 
 func (g *gce) removeContentFiles(fileNames []string) error {
 	for _, f := range fileNames {
-		path := filepath.Join(g.currentDir, "content", "posts", f)
+		path := filepath.Join(g.markdownDir, f)
 		if err := g.removeFile(path); err != nil {
 			return errors.WithStack(err)
 		}
@@ -120,17 +119,20 @@ func (*gce) removeFile(path string) error {
 	return errors.WithStack(err)
 }
 
-func (g *gce) removeExistingFiles(memos []*models.Memo) error {
+func (g *gce) removeExistingMarkdowns(memos []*models.Memo) error {
 	for _, m := range memos {
-		fileName := fmt.Sprintf("%s.md", newFileName(m.Subject))
-		fullFilePath := filepath.Join(g.currentDir, "content", "posts", fileName)
-
+		path := g.markdownPath(m.Subject)
 		// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
-		if err := g.removeExistingFile(fullFilePath); err != nil {
+		if err := g.removeExistingFile(path); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	return nil
+}
+
+func (g *gce) markdownPath(subject string) string {
+	name := fmt.Sprintf("%s.md", newFileName(subject))
+	return filepath.Join(g.markdownDir, name)
 }
 
 func (g *gce) removeExistingFile(path string) error {
@@ -150,24 +152,22 @@ func exists(path string) bool {
 
 func (g *gce) generateMarkdowns(memos []*models.Memo) error {
 	for _, m := range memos {
-		fileName := fmt.Sprintf("%s.md", newFileName(m.Subject))
-		fullFilePath := filepath.Join(g.currentDir, "content", "posts", fileName)
-
-		if err := g.generateMarkdown(fileName, fullFilePath, m.Subject, m.Content, m.CreatedAt.Time, m.UpdatedAt.Time); err != nil {
+		path := g.markdownPath(m.Subject)
+		if err := g.generateMarkdown(path, m.Subject, m.Content, m.CreatedAt.Time, m.UpdatedAt.Time); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	return nil
 }
 
-func (g *gce) generateMarkdown(fileName, fullFilePath, subject, body string, createdAt, updatedAt time.Time) error {
+func (g *gce) generateMarkdown(path, subject, body string, createdAt, updatedAt time.Time) error {
 	// hugo new site hogehoge で生成したhogehogeディレクトリ内でhugo new fuga.md　しないと失敗する。
-	err := exec.Command("hugo", "new", filepath.Join("posts", fileName)).Run()
+	err := exec.Command("hugo", "new", path).Run()
 	if err != nil {
 		return errors.WithStack(err)
 	}
 
-	md, err := newMarkdown(fullFilePath, subject, body, createdAt, updatedAt)
+	md, err := newMarkdown(path, subject, body, createdAt, updatedAt)
 	if err != nil {
 		return errors.WithStack(err)
 	}

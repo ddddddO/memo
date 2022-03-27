@@ -85,12 +85,9 @@ func run(repo memoRepository) error {
 		return errors.Wrap(err, "remove md file error")
 	}
 
-	// 念のため。。
-	time.Sleep(3 * time.Second)
-
 	exposeMemos := filterExposeMemos(memos)
 	// 既に同名のmdファイルが存在していた場合、hugo new fuga.mdは失敗する。なので、削除する。
-	if err := gce.removeExistingFiles(exposeMemos); err != nil {
+	if err := gce.removeExistingMarkdowns(exposeMemos); err != nil {
 		return errors.WithStack(err)
 	}
 	if err := gce.generateMarkdowns(exposeMemos); err != nil {
