@@ -8,6 +8,7 @@
       <b-card title="ALL">
         <b-form-input v-model="keyword" placeholder="Enter serch word" size="sm"></b-form-input>
         <b-button pill style="margin: 10px" to="/new_memo" size="sm" variant="primary" >New!</b-button>
+        <b-button pill style="margin: 10px" v-on:click="fetchDataByExposed" size="sm" variant="primary">Exposed</b-button>
         <div class="list"> <!--TODO: このb-table近辺をコンポーネント化して以下で使いまわすようにする-->
           <b-table
             id="memo-list-table"
@@ -250,6 +251,40 @@ export default {
         try {
           data = await fetch(
             this.endpoint,
+            {
+              mode: 'cors',
+              credentials: 'include',
+              headers: { 'Accept': 'application/json' }
+            })
+            .then(function (resp) {
+              return resp.json()
+            })
+            .then(function (json) {
+              const tmp = JSON.stringify(json)
+              return tmp
+            })
+            .then(function (sJson) {
+              const tmp = JSON.parse(sJson)
+              return tmp.memo_list
+            })
+        } catch (err) {
+          console.error(err)
+        }
+        this.memoList = data
+        this.fetchDataByCondition(data)
+        this.loading = false
+      }
+      fetchFunc()
+    },
+    fetchDataByExposed: function (tagID) {
+      this.loading = true
+      this.memoList = null
+      this.buildEndpoint(tagID)
+      let data = null
+      const fetchFunc = async () => {
+        try {
+          data = await fetch(
+            this.endpoint + '&status=exposed', // FIXME:
             {
               mode: 'cors',
               credentials: 'include',

@@ -38,21 +38,28 @@ func NewMemoHandler(repo memoRepository, tagRepo tagRepository) *memoHandler {
 
 func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
+
 	userID := params.Get("userId")
 	if len(userID) == 0 {
 		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 		return
 	}
-	tagID := params.Get("tagId")
-
 	uid, err := strconv.Atoi(userID)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+
+	tagID := params.Get("tagId")
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
 		tid = -1
+	}
+
+	status := params.Get("status")
+	isExposed := false
+	if status == "exposed" {
+		isExposed = true
 	}
 
 	var memos []*models.Memo
@@ -68,6 +75,10 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 			errResponse(w, http.StatusInternalServerError, "failed", err)
 			return
 		}
+	}
+
+	if isExposed {
+		memos = filterExposed(memos)
 	}
 
 	ams := make([]adapter.Memo, len(memos))
@@ -119,6 +130,19 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
+}
+
+func filterExposed(memos []*models.Memo) []*models.Memo {
+	var mm []*models.Memo
+	for _, m := range memos {
+		if !m.IsExposed.Valid {
+			continue
+		}
+		if m.IsExposed.Bool {
+			mm = append(mm, m)
+		}
+	}
+	return mm
 }
 
 func setColor(mm *models.Memo, am *adapter.Memo) {
