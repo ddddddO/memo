@@ -68,7 +68,11 @@ export default {
           const tmp3 = JSON.parse(sj)
           const tagList = tmp3.tags
           // ALLを除外するため
-          tagList.shift()
+          for (let i = 0; i < tagList.length; i++) {
+            if (tagList[i].id === 1) {
+              tagList.splice(i, 1)
+            }
+          }
           return tagList
         })
     } catch (err) {

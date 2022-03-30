@@ -71,7 +71,11 @@ export default {
           const tmp3 = JSON.parse(sj)
           const tagList = tmp3.tags
           // ALLを除外するため
-          tagList.shift()
+          for (let i = 0; i < tagList.length; i++) {
+            if (tagList[i].id === 1) {
+              tagList.splice(i, 1)
+            }
+          }
           return tagList
         })
     } catch (err) {
@@ -81,11 +85,14 @@ export default {
   },
   methods: {
     createMemo: function () {
-      let selectedTags = []
+      const tagAll = { 'id': 1 }
+      let selectedTags = [tagAll]
       for (const id of this.selectedTagIDs) {
         let tag = { id: id }
         selectedTags.push(tag)
       }
+
+      console.log(selectedTags)
 
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
