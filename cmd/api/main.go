@@ -178,7 +178,7 @@ func genPostgresStore(db *sql.DB) (sessions.Store, error) {
 //      https://github.com/go-chi/chi#middleware-handlers
 func checkSession(store sessions.Store) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fn := func(w http.ResponseWriter, r *http.Request) {
 			log.Println("in checkSession")
 			if r.Method == "OPTIONS" {
 				next.ServeHTTP(w, r)
@@ -200,6 +200,7 @@ func checkSession(store sessions.Store) func(next http.Handler) http.Handler {
 			}
 
 			next.ServeHTTP(w, r)
-		})
+		}
+		return http.HandlerFunc(fn)
 	}
 }
