@@ -85,14 +85,12 @@ export default {
   },
   methods: {
     createMemo: function () {
-      const tagAll = { 'id': 1 }
-      let selectedTags = [tagAll]
+      const tagIDAll = { 'id': 1 }
+      let selectedTags = [tagIDAll]
       for (const id of this.selectedTagIDs) {
         let tag = { id: id }
         selectedTags.push(tag)
       }
-
-      console.log(selectedTags)
 
       fetch(this.endpoint, {
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
