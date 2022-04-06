@@ -1,11 +1,8 @@
 package postgres
 
 import (
-	"crypto/sha256"
 	"database/sql"
-	"encoding/hex"
 	"log"
-	"strings"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -24,7 +21,7 @@ func NewUserRepository(db *sql.DB) *userRepository {
 }
 
 func (pg *userRepository) Fetch(name string, password string) (*models.User, error) {
-	user, err := pg.fetchUser(name, genSecuredPassword(password, name))
+	user, err := pg.fetchUser(name, password)
 	if err != nil {
 		return nil, err
 	}
@@ -51,15 +48,4 @@ func (pg *userRepository) fetchUser(name, password string) (*models.User, error)
 	}
 
 	return &user, nil
-}
-
-// TODO:
-func genSecuredPassword(name, password string) string {
-	secStrPass := name + password
-	secPass := sha256.Sum256([]byte(secStrPass))
-	for i := 0; i < 99999; i++ {
-		secStrPass = hex.EncodeToString(secPass[:])
-		secPass = sha256.Sum256([]byte(secStrPass))
-	}
-	return strings.ToLower(hex.EncodeToString(secPass[:]))
 }

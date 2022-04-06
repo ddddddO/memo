@@ -78,7 +78,8 @@ func main() {
 
 	// 認証API
 	userRepository := postgres.NewUserRepository(db)
-	authHandler := api.NewAuthHandler(userRepository, store)
+	userUsecase := usecase.NewUserUsecase(userRepository)
+	authHandler := api.NewAuthHandler(userUsecase, store)
 	router.Post("/auth", authHandler.Auth)
 
 	memoRepository := postgres.NewMemoRepository(db)

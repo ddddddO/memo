@@ -7,23 +7,22 @@ import (
 	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
 
-	"github.com/ddddddO/memo/models"
+	"github.com/ddddddO/memo/api/adapter"
 )
 
-// TODO: adapter -> modelsに置き換える
-type userRepository interface {
-	Fetch(name string, password string) (*models.User, error)
+type userUsecase interface {
+	Fetch(name string, password string) (*adapter.User, error)
 }
 
 type authHandler struct {
-	repo  userRepository
-	store sessions.Store
+	userUsecase userUsecase
+	store       sessions.Store
 }
 
-func NewAuthHandler(repo userRepository, store sessions.Store) *authHandler {
+func NewAuthHandler(uc userUsecase, store sessions.Store) *authHandler {
 	return &authHandler{
-		repo:  repo,
-		store: store,
+		userUsecase: uc,
+		store:       store,
 	}
 }
 
@@ -41,7 +40,7 @@ func (h *authHandler) Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.repo.Fetch(name, password)
+	user, err := h.userUsecase.Fetch(name, password)
 	if err != nil {
 		errResponse(w, http.StatusUnauthorized, "failed", err)
 		return
