@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/antonlindstrom/pgstore"
@@ -120,9 +123,27 @@ func main() {
 		port = "8082"
 	}
 
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", port), router); err != nil {
+	srv := &http.Server{
+		Addr:    fmt.Sprintf(":%s", port),
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, os.Interrupt)
+	<-quit
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatal(err)
 	}
+	log.Println("gracefully shutdown...")
 }
 
 func genDB() (*sql.DB, error) {
