@@ -1,9 +1,7 @@
 package api
 
 import (
-	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -11,25 +9,23 @@ import (
 	_ "github.com/lib/pq"
 
 	"github.com/ddddddO/memo/api/adapter"
-	"github.com/ddddddO/memo/models"
 )
 
-type tagRepository interface {
-	FetchList(userID int) ([]*models.Tag, error)
-	FetchListByMemoID(memoID int) ([]*models.Tag, error)
-	Fetch(tagID int) (*models.Tag, error)
-	Update(tag *models.Tag) error
+type tagUsecase interface {
+	List(userID int) ([]adapter.Tag, error)
+	Detail(tagID int) (*adapter.Tag, error)
+	Update(updatedTag adapter.Tag) error
 	Delete(tagID int) error
-	Create(tag *models.Tag) error
+	Create(createTag adapter.Tag) error
 }
 
 type tagHandler struct {
-	repo tagRepository
+	usecase tagUsecase
 }
 
-func NewTagHandler(repo tagRepository) *tagHandler {
+func NewTagHandler(uc tagUsecase) *tagHandler {
 	return &tagHandler{
-		repo: repo,
+		usecase: uc,
 	}
 }
 
@@ -40,25 +36,16 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
 		return
 	}
-
 	uid, err := strconv.Atoi(userID)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
-	tags, err := h.repo.FetchList(uid)
+	atags, err := h.usecase.List(uid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
-	}
-
-	atags := make([]adapter.Tag, len(tags))
-	for i, tag := range tags {
-		atags[i] = adapter.Tag{
-			ID:   tag.ID,
-			Name: tag.Name,
-		}
 	}
 
 	res := struct {
@@ -78,22 +65,18 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 		errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
 		return
 	}
-
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
-	tag, err := h.repo.Fetch(tid)
+
+	atag, err := h.usecase.Detail(tid)
 	if err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
-	atag := adapter.Tag{
-		ID:   tag.ID,
-		Name: tag.Name,
-	}
 	if err := json.NewEncoder(w).Encode(atag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
@@ -120,15 +103,7 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tag, err := h.repo.Fetch(tid)
-	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
-		return
-	}
-	tag.Name = updatedTag.Name
-
-	if err := h.repo.Update(tag); err != nil {
-		log.Println("failed to update tag", err)
+	if err := h.usecase.Update(updatedTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
@@ -144,12 +119,12 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
-	if err := h.repo.Delete(tid); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to connect db 1", err)
+	if err := h.usecase.Delete(tid); err != nil {
+		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}
 
@@ -163,14 +138,7 @@ func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tag := &models.Tag{
-		Name: createTag.Name,
-		UsersID: sql.NullInt64{
-			Int64: int64(createTag.UserID),
-			Valid: true,
-		},
-	}
-	if err := h.repo.Create(tag); err != nil {
+	if err := h.usecase.Create(createTag); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

@@ -7,22 +7,22 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type healthRepository interface {
-	Check() error
+type healthUsecase interface {
+	Ping() error
 }
 
 type healthHandler struct {
-	repo healthRepository
+	usecase healthUsecase
 }
 
-func NewHealthHandler(repo healthRepository) *healthHandler {
+func NewHealthHandler(uc healthUsecase) *healthHandler {
 	return &healthHandler{
-		repo: repo,
+		usecase: uc,
 	}
 }
 
 func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
-	if err := h.repo.Check(); err != nil {
+	if err := h.usecase.Ping(); err != nil {
 		errResponse(w, http.StatusInternalServerError, "failed", err)
 		return
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/rs/cors"
 
 	"github.com/ddddddO/memo/api"
+	"github.com/ddddddO/memo/api/usecase"
 	"github.com/ddddddO/memo/repository/postgres"
 )
 
@@ -71,7 +72,8 @@ func main() {
 
 	// ヘルスチェック
 	healthRepository := postgres.NewHealthRepository(db)
-	healthHandler := api.NewHealthHandler(healthRepository)
+	healthUsecase := usecase.NewHealthUsecase(healthRepository)
+	healthHandler := api.NewHealthHandler(healthUsecase)
 	router.Get("/health", healthHandler.Check)
 
 	// 認証API
@@ -81,7 +83,10 @@ func main() {
 
 	memoRepository := postgres.NewMemoRepository(db)
 	tagRepository := postgres.NewTagRepository(db)
-	memoHandler := api.NewMemoHandler(memoRepository, tagRepository)
+	memoUsecase := usecase.NewMemoUsecase(memoRepository, tagRepository)
+	tagUsecase := usecase.NewTagUsecase(tagRepository)
+
+	memoHandler := api.NewMemoHandler(memoUsecase)
 	router.Route("/memos", func(r chi.Router) {
 		// メモ一覧返却API
 		r.Get("/", memoHandler.List)
@@ -95,7 +100,7 @@ func main() {
 		r.Get("/{id}", memoHandler.Detail)
 	})
 
-	tagHandler := api.NewTagHandler(tagRepository)
+	tagHandler := api.NewTagHandler(tagUsecase)
 	router.Route("/tags", func(r chi.Router) {
 		// タグ一覧返却API
 		r.Get("/", tagHandler.List)
