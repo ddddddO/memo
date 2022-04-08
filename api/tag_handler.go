@@ -33,18 +33,18 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userID := params.Get("userId")
 	if len(userID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 	uid, err := strconv.Atoi(userID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	atags, err := h.usecase.List(uid)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 		Tags: atags,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -62,23 +62,24 @@ func (h *tagHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 	tagID := chi.URLParam(r, "id")
 	if len(tagID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'tagId'")
 		return
 	}
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	atag, err := h.usecase.Detail(tid)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		// TODO: error handling
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(atag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -86,12 +87,12 @@ func (h *tagHandler) Detail(w http.ResponseWriter, r *http.Request) {
 func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 	tagID := chi.URLParam(r, "id")
 	if len(tagID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'tagId'")
 		return
 	}
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -99,12 +100,12 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 		ID: tid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updatedTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := h.usecase.Update(updatedTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -114,17 +115,17 @@ func (h *tagHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	tagID := chi.URLParam(r, "id")
 	if len(tagID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'tagId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'tagId'")
 		return
 	}
 	tid, err := strconv.Atoi(tagID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := h.usecase.Delete(tid); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -134,12 +135,12 @@ func (h *tagHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *tagHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createTag adapter.Tag
 	if err := json.NewDecoder(r.Body).Decode(&createTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := h.usecase.Create(createTag); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 

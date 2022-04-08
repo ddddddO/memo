@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func errResponse(w http.ResponseWriter, status int, message string, err error) {
+func errResponse(w http.ResponseWriter, status int, message string) {
 	res := struct {
 		Message string `json:"message"`
 	}{

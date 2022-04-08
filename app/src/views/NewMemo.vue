@@ -37,6 +37,8 @@ button {
 </style>
 
 <script>
+import router from '../router'
+
 export default {
   name: 'createMemo',
   data: () => ({
@@ -60,6 +62,11 @@ export default {
         credentials: 'include'
       })
         .then(function (resp) {
+          if (!resp.ok) {
+            router.push('/')
+            return
+          }
+
           const tmp1 = resp.json()
           return tmp1
         })

@@ -33,12 +33,12 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 	params := r.URL.Query()
 	userID := params.Get("userId")
 	if len(userID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 	uid, err := strconv.Atoi(userID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	tagID := params.Get("tagId")
@@ -50,7 +50,7 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	ams, err := h.usecase.List(uid, tid, status)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 		Memos: ams,
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -68,30 +68,31 @@ func (h *memoHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 	memoID := chi.URLParam(r, "id")
 	if len(memoID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'memoId'")
 		return
 	}
 	mid, err := strconv.Atoi(memoID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	params := r.URL.Query()
 	userID := params.Get("userId")
 	if len(userID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'userId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'userId'")
 		return
 	}
 	uid, err := strconv.Atoi(userID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 	_ = uid // FIXME: 必要？
 
 	am, err := h.usecase.Detail(mid)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		// TODO: error handling
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -99,7 +100,7 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 	encoder := json.NewEncoder(w)
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(am); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }
@@ -107,12 +108,12 @@ func (h *memoHandler) Detail(w http.ResponseWriter, r *http.Request) {
 func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 	memoID := chi.URLParam(r, "id")
 	if len(memoID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'memoId'")
 		return
 	}
 	mid, err := strconv.Atoi(memoID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -120,12 +121,12 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 		ID: mid,
 	}
 	if err := json.NewDecoder(r.Body).Decode(&updatedMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json", err)
+		errResponse(w, http.StatusInternalServerError, "failed to unmarshal json")
 		return
 	}
 
 	if err := h.usecase.Update(updatedMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -135,12 +136,12 @@ func (h *memoHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createdMemo adapter.Memo
 	if err := json.NewDecoder(r.Body).Decode(&createdMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := h.usecase.Create(createdMemo); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -150,17 +151,17 @@ func (h *memoHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *memoHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	memoID := chi.URLParam(r, "id")
 	if len(memoID) == 0 {
-		errResponse(w, http.StatusBadRequest, "empty value 'memoId'", nil)
+		errResponse(w, http.StatusBadRequest, "empty value 'memoId'")
 		return
 	}
 	mid, err := strconv.Atoi(memoID)
 	if err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
 	if err := h.usecase.Delete(mid); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 

@@ -23,7 +23,7 @@ func NewHealthHandler(uc healthUsecase) *healthHandler {
 
 func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
 	if err := h.usecase.Ping(); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 
@@ -33,7 +33,7 @@ func (h *healthHandler) Check(w http.ResponseWriter, r *http.Request) {
 		Message: "health ok!",
 	}
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		errResponse(w, http.StatusInternalServerError, "failed", err)
+		errResponse(w, http.StatusInternalServerError, "failed")
 		return
 	}
 }

@@ -188,6 +188,8 @@ body {
 </style>
 
 <script>
+import router from '../router'
+
 export default {
   name: 'memos',
   data: () => ({
@@ -257,6 +259,10 @@ export default {
               headers: { 'Accept': 'application/json' }
             })
             .then(function (resp) {
+              if (!resp.ok) {
+                router.push('/')
+                return
+              }
               return resp.json()
             })
             .then(function (json) {

@@ -94,6 +94,7 @@ button {
 
 <script>
 import marked from 'marked'
+import router from '../router'
 
 export default {
   name: 'memoDetail',
@@ -121,6 +122,10 @@ export default {
           headers: { 'Accept': 'application/json' }
         })
         .then(function (resp) {
+          if (!resp.ok) {
+            router.push('/')
+            return
+          }
           return resp.json()
         })
         .then(function (json) {

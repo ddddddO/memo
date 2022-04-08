@@ -26,7 +26,7 @@ func NewUserUsecase(repo userRepository) *userUsecase {
 }
 
 func (u userUsecase) Fetch(name string, password string) (*adapter.User, error) {
-	user, err := u.repo.Fetch(name, genSecuredPassword(password, name))
+	user, err := u.repo.Fetch(name, genSecuredPassword(name, password))
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -40,7 +40,7 @@ func (u userUsecase) Fetch(name string, password string) (*adapter.User, error) 
 
 // TODO: rubyで旧memoアプリ作ってた時の名残。ライブラリを使うようにする。
 func genSecuredPassword(name, password string) string {
-	secStrPass := name + password
+	secStrPass := password + name
 	secPass := sha256.Sum256([]byte(secStrPass))
 	for i := 0; i < 99999; i++ {
 		secStrPass = hex.EncodeToString(secPass[:])
