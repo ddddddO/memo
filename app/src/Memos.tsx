@@ -15,8 +15,36 @@ import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import FolderIcon from '@mui/icons-material/Folder';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { FixedSizeList, ListChildComponentProps } from 'react-window';
+import ListItemButton from '@mui/material/ListItemButton';
 
 export default class Memos extends React.Component {
+  renderRow(props: ListChildComponentProps) {
+    const { index, style } = props;
+
+    return (
+      <ListItem
+        style={style} key={index} component="div" disablePadding
+        secondaryAction={
+          <IconButton edge="end" aria-label="delete">
+            <DeleteIcon />
+          </IconButton>
+        }
+      >
+        <ListItemAvatar>
+          <Avatar>
+            <FolderIcon />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText
+          primary={`Item ${index + 1}`}
+          secondary='Secondary text'
+        />
+      </ListItem>
+    );
+  }
+
+
   generate(element: React.ReactElement) {
     return [0, 1, 2].map((value) =>
       React.cloneElement(element, {
@@ -28,28 +56,16 @@ export default class Memos extends React.Component {
   render() {
     return (
       <Container maxWidth="sm">
-        <Box>
-          <List dense={true}>
-            {this.generate(
-              <ListItem
-                secondaryAction={
-                  <IconButton edge="end" aria-label="delete">
-                    <DeleteIcon />
-                  </IconButton>
-                }
-              >
-                <ListItemAvatar>
-                  <Avatar>
-                    <FolderIcon />
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary="Single-line item"
-                  secondary='Secondary text'
-                />
-              </ListItem>,
-            )}
-          </List>
+        <Box sx={{ width: '100%', height: 400, maxWidth: 360, bgcolor: 'background.paper' }}>
+          <FixedSizeList
+            height={400}
+            width={360}
+            itemSize={46}
+            itemCount={1000}
+            overscanCount={5}
+          >
+            {this.renderRow}
+          </FixedSizeList>
         </Box>
       </Container>
     );
