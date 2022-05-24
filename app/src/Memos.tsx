@@ -17,41 +17,41 @@ import FolderIcon from '@mui/icons-material/Folder';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 export default class Memos extends React.Component {
-    generate(element: React.ReactElement) {
-        return [0, 1, 2].map((value) =>
-          React.cloneElement(element, {
-            key: value,
-          })
-        );
-    }
+  generate(element: React.ReactElement) {
+    return [0, 1, 2].map((value) =>
+      React.cloneElement(element, {
+        key: value,
+      })
+    );
+  }
 
-    render() {
-        return (
-            <Container maxWidth="sm">
-            <Box>
-                <List dense={true}>
-                {this.generate(
-                    <ListItem
-                    secondaryAction={
-                        <IconButton edge="end" aria-label="delete">
-                        <DeleteIcon />
-                        </IconButton>
-                    }
-                    >
-                    <ListItemAvatar>
-                        <Avatar>
-                        <FolderIcon />
-                        </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                        primary="Single-line item"
-                        secondary='Secondary text'
-                    />
-                    </ListItem>,
-                )}
-                </List>
-            </Box>
-            </Container>
-        );
-    }
+  render() {
+    return (
+      <Container maxWidth="sm">
+        <Box>
+          <List dense={true}>
+            {this.generate(
+              <ListItem
+                secondaryAction={
+                  <IconButton edge="end" aria-label="delete">
+                    <DeleteIcon />
+                  </IconButton>
+                }
+              >
+                <ListItemAvatar>
+                  <Avatar>
+                    <FolderIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary="Single-line item"
+                  secondary='Secondary text'
+                />
+              </ListItem>,
+            )}
+          </List>
+        </Box>
+      </Container>
+    );
+  }
 }
