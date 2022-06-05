@@ -18,8 +18,5 @@ func NewHealthRepository(db *sql.DB) *healthRepository {
 
 func (pg *healthRepository) Check() error {
 	_, err := pg.db.Query("SELECT 1")
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
