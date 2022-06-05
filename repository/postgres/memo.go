@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -23,28 +22,24 @@ func NewMemoRepository(db *sql.DB) *memoRepository {
 }
 
 func (pg *memoRepository) FetchList(userID int) ([]*models.Memo, error) {
-	var (
-		memos []*models.Memo
-		err   error
-		ctx   = context.Background()
-	)
-
 	usersID := sql.NullInt64{
 		Int64: int64(userID),
 		Valid: true,
 	}
-	memos, err = models.MemosByUsersID(ctx, pg.db, usersID)
+	ctx := context.Background()
+	return models.MemosByUsersID(ctx, pg.db, usersID)
+}
+
+func (pg *memoRepository) FetchListByTagID(userID, tagID int) ([]*models.Memo, error) {
+	query, args, err := sq.Select("id, subject, content, users_id, created_at, updated_at, notified_cnt, is_exposed, exposed_at").Distinct().
+		From("memos m").
+		InnerJoin("memo_tag mt on mt.memos_id = m.id").
+		Where(sq.Eq{"mt.tags_id": tagID}).PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
-	return memos, nil
-}
-
-func (pg *memoRepository) FetchListByTagID(userID, tagID int) ([]*models.Memo, error) {
-	// FIXME: using sq
-	query := `select id, subject, content, users_id, created_at, updated_at, notified_cnt, is_exposed, exposed_at from memos where id in (select memos_id from memo_tag where tags_id = $1)`
-	rows, err := pg.db.Query(query, tagID)
+	rows, err := pg.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -69,11 +64,7 @@ func (pg *memoRepository) FetchListByTagID(userID, tagID int) ([]*models.Memo, e
 
 func (pg *memoRepository) Fetch(memoID int) (*models.Memo, error) {
 	ctx := context.Background()
-	memo, err := models.MemoByID(ctx, pg.db, memoID)
-	if err != nil {
-		return nil, err
-	}
-	return memo, nil
+	return models.MemoByID(ctx, pg.db, memoID)
 }
 
 // FIXME: memoRepositoryでmemo_tagの操作やめる
@@ -89,34 +80,35 @@ func (pg *memoRepository) Update(memo *models.Memo, tagIDs []int) error {
 		return err
 	}
 
-	const deleteMemoTagQuery = `
-	DELETE FROM memo_tag WHERE memos_id=$1 AND tags_id <> 1
-	`
-
-	_, err = tx.Exec(deleteMemoTagQuery, memo.ID)
+	const tagAll = 1
+	deleteQuery, args, err := sq.Delete("memo_tag").Where(sq.And{sq.Eq{"memos_id": memo.ID}, sq.NotEq{"tags_id": tagAll}}).PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return err
 	}
 
-	var insertMemoTagQuery = `
-	INSERT INTO memo_tag(memos_id, tags_id) VALUES
-	%s
-	`
-
-	var values string
-	for _, tid := range tagIDs {
-		values += fmt.Sprintf("(%v, %d),", memo.ID, tid)
-	}
-	insertMemoTagQuery = fmt.Sprintf(insertMemoTagQuery, values[:len(values)-1])
-
-	_, err = tx.Exec(insertMemoTagQuery)
+	_, err = tx.Exec(deleteQuery, args...)
 	if err != nil {
 		return err
 	}
 
-	tx.Commit()
+	insert := sq.Insert("memo_tag").Columns("memos_id", "tags_id")
+	for _, tagID := range tagIDs {
+		insert = insert.Values(
+			memo.ID,
+			tagID,
+		)
+	}
+	insertQuery, args, err := insert.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
 
-	return nil
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (pg *memoRepository) UpdateExposedAt(memo *models.Memo) error {
@@ -135,7 +127,6 @@ func (pg *memoRepository) UpdateExposedAt(memo *models.Memo) error {
 	return tx.Commit()
 }
 
-// FIXME: memo_tag handling
 func (pg *memoRepository) Create(memo *models.Memo, tagIDs []int) error {
 	tx, err := pg.db.Begin()
 	if err != nil {
@@ -154,13 +145,21 @@ func (pg *memoRepository) Create(memo *models.Memo, tagIDs []int) error {
 		return err
 	}
 
-	// FIXME: using sq
-	insertMemoTagQuery := "INSERT INTO memo_tag(memos_id, tags_id) VALUES($1, $2)"
-	for _, tid := range tagIDs {
-		_, err := tx.Exec(insertMemoTagQuery, memo.ID, tid)
-		if err != nil {
-			return err
-		}
+	insert := sq.Insert("memo_tag").Columns("memos_id", "tags_id")
+	for _, tagID := range tagIDs {
+		insert = insert.Values(
+			memo.ID,
+			tagID,
+		)
+	}
+	insertQuery, args, err := insert.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(insertQuery, args...)
+	if err != nil {
+		return err
 	}
 
 	return tx.Commit()
@@ -179,11 +178,11 @@ func (pg *memoRepository) Delete(memoID int) error {
 		return err
 	}
 
-	// FIXME: using sq
-	const deleteMemoTagQuery = `
-	DELETE FROM memo_tag WHERE memos_id = $1
-	`
-	_, err = tx.Exec(deleteMemoTagQuery, memo.ID)
+	deleteQuery, args, err := sq.Delete("memo_tag").Where(sq.Eq{"memos_id": memo.ID}).PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(deleteQuery, args...)
 	if err != nil {
 		return err
 	}

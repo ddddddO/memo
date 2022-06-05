@@ -26,27 +26,27 @@ func (pg *tagRepository) FetchList(userID int) ([]*models.Tag, error) {
 		Int64: int64(userID),
 		Valid: true,
 	}
-	tags, err := models.TagsByUsersID(ctx, pg.db, usersID)
-	if err != nil {
-		return nil, err
-	}
-
-	return tags, nil
+	return models.TagsByUsersID(ctx, pg.db, usersID)
 }
 
 func (pg *tagRepository) FetchListByMemoID(memoID int) ([]*models.Tag, error) {
-	var (
-		rows *sql.Rows
-		tags []*models.Tag
-		err  error
-	)
-	// FIXME: using sq
-	query := "SELECT id, name FROM tags WHERE id IN (SELECT tags_id FROM memo_tag WHERE memos_id=$1) ORDER BY id"
-	rows, err = pg.db.Query(query, memoID)
+	query, args, err := sq.Select("id, name").Distinct().
+		From("tags t").
+		InnerJoin("memo_tag mt on mt.tags_id = t.id").
+		Where(sq.Eq{"mt.memos_id": memoID}).
+		OrderBy("id").
+		PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
 		return nil, err
 	}
 
+	rows, err := pg.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	tags := []*models.Tag{}
 	for rows.Next() {
 		var tag models.Tag
 		if err := rows.Scan(&tag.ID, &tag.Name); err != nil {
@@ -59,11 +59,7 @@ func (pg *tagRepository) FetchListByMemoID(memoID int) ([]*models.Tag, error) {
 
 func (pg *tagRepository) Fetch(tagID int) (*models.Tag, error) {
 	ctx := context.Background()
-	tag, err := models.TagByID(ctx, pg.db, tagID)
-	if err != nil {
-		return nil, err
-	}
-	return tag, nil
+	return models.TagByID(ctx, pg.db, tagID)
 }
 
 func (pg *tagRepository) Update(tag *models.Tag) error {
@@ -97,11 +93,12 @@ func (pg *tagRepository) Delete(tagID int) error {
 		return err
 	}
 
-	// FIXME: using sq
-	const deleteMemoTagQuery = `
-	DELETE FROM memo_tag WHERE tags_id = $1
-	`
-	_, err = tx.Exec(deleteMemoTagQuery, tag.ID)
+	deleteQuery, args, err := sq.Delete("memo_tag").Where(sq.Eq{"tags_id": tag.ID}).PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(deleteQuery, args...)
 	if err != nil {
 		return err
 	}
