@@ -11,3 +11,4 @@ dbconfig.yml
 terraform.tfvars
 *.zip
 vault.yml
+tmp/
