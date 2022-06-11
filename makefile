@@ -89,3 +89,6 @@ proxy_cloudpg:
 # DB_PASSWD="xxxxxxxx" make xo
 xo:
 	xo schema postgres://appuser:$(DB_PASSWD)@localhost:15432/tag-mng?sslmode=disable
+
+runapi:
+	air -c .air.toml
