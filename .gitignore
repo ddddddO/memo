@@ -12,3 +12,4 @@ terraform.tfvars
 *.zip
 vault.yml
 tmp/
+out/
