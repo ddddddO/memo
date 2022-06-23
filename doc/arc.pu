@@ -1,36 +1,42 @@
 @startuml
 
 'Skin
-!include ./skin.pu
+'!include ./skin.pu
+
+'GCP
+!define GCPPuml https://raw.githubusercontent.com/davidholsgrove/gcp-icons-for-plantuml/master/dist
+!includeurl GCPPuml/GCPCommon.puml
+!includeurl GCPPuml/Storage/CloudStorage.puml
+!includeurl GCPPuml/Databases/CloudSQL.puml
+!includeurl GCPPuml/Compute/AppEngine.puml
+!includeurl GCPPuml/Compute/CloudRun.puml
+!includeurl GCPPuml/Compute/ComputeEngine.puml
+!includeurl GCPPuml/Compute/CloudFunctions.puml
+!includeurl GCPPuml/DataAnalytics/CloudPubSub.puml
+!includeurl GCPPuml/DeveloperTools/CloudScheduler.puml
+'e.g.
+'CloudSQL(unique_name, "Label", "Technology", "Optional Description")
 
 'MODULEs
 actor "browser"
 
 package "GCP" {
-  database "Postgres\nusing Cloud SQL" as db {
-  }
+  CloudSQL(db, "", "PostgreSQL")
 
   package "Private Memos" {
-    node "APP(Vue.js)\nusing GAE" as app {
-    }
-    node "API(Go)\nusing Cloud Run" as api {
-    }
+    AppEngine(app, "", "APP(Vue.js)")
+    CloudRun(api, "", "REST API(Go)")
   }
 
   package "Public Memos" {
-    node "HTML/CSS\nusing Cloud Storage" as gcs {
-    }
-    node "memo exposer program\nusing Compute Engine" as gce {
-    }
+    CloudStorage(gcs, "", "HTML/CSS")
+    ComputeEngine(gce, "", "memo exposer program")
   }
 
   package "Batch" {
-    node "Cloud Scheduler\nexecute am 00:00" as scheduler {
-    }
-    node "Cloud PubSub" as pubsub {
-    }
-    node "Cloud Functions" as function {
-    }
+    CloudScheduler(scheduler, "", "execute am 00:00")
+    CloudPubSub(pubsub, "", "")
+    CloudFunctions(function, "", "")
   }
 }
 
