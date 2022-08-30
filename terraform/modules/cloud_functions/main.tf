@@ -1,6 +1,7 @@
 ## bucket
 resource "google_storage_bucket" "bucket" {
   name = "tag-mng"
+  force_destroy = true
 }
 ## Archive multiple files.
 data "archive_file" "notified-cnt-incrementer" {
