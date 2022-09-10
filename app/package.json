@@ -24,7 +24,7 @@
     "@vue/cli-plugin-babel": "^3.12.0",
     "@vue/cli-plugin-eslint": "^3.12.0",
     "@vue/cli-plugin-pwa": "^3.12.0",
-    "@vue/cli-plugin-unit-mocha": "^3.12.0",
+    "@vue/cli-plugin-unit-mocha": "^5.0.8",
     "@vue/cli-service": "^3.12.0",
     "@vue/eslint-config-standard": "^4.0.0",
     "@vue/test-utils": "1.0.0-beta.29",
